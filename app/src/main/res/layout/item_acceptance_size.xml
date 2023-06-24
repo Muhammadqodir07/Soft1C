@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="2dp"
+    android:background="@color/commandTint"
+    android:orientation="horizontal"
+    android:paddingBottom="1dp">
+
+    <TextView
+        android:id="@+id/txt_seat_number"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="1dp"
+        android:layout_weight="2"
+        android:background="@color/white"
+        android:paddingHorizontal="4dp"
+        android:text="@string/app_name"
+        android:textSize="17sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/txt_length"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="1dp"
+        android:layout_weight="2"
+        android:background="@color/white"
+        android:paddingHorizontal="4dp"
+        android:text="@string/app_name"
+        android:textSize="17sp" />
+
+    <TextView
+        android:id="@+id/txt_width"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="1dp"
+        android:layout_weight="2"
+        android:background="@color/white"
+        android:paddingHorizontal="4dp"
+        android:text="@string/app_name"
+        android:textSize="17sp" />
+
+    <TextView
+        android:id="@+id/txt_height"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="1dp"
+        android:layout_weight="2"
+        android:background="@color/white"
+        android:paddingHorizontal="4dp"
+        android:text="@string/app_name"
+        android:textSize="17sp" />
+
+    <TextView
+        android:id="@+id/txt_weight"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:layout_marginHorizontal="1dp"
+        android:layout_weight="2"
+        android:background="@color/white"
+        android:paddingHorizontal="4dp"
+        android:paddingTop="2dp"
+        android:text="@string/app_name"
+        android:textSize="15sp" />
+
+</LinearLayout>

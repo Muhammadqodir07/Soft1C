@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/elayout_mac_address"
+        android:layout_width="match_parent"
+        android:layout_marginHorizontal="20dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textColorHint="@color/black">
+
+        <com.phearme.macaddressedittext.MacAddressEditText
+            android:id="@+id/item_mac_addres"
+            style="@style/TextInputDefault"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/text_mac_address"
+            android:inputType="text" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+</androidx.cardview.widget.CardView>

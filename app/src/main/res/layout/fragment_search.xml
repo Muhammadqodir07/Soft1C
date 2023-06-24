@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/include_toolbar"
+        layout="@layout/toolbar_custom" />
+
+    <SearchView
+        android:id="@+id/sv_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:iconifiedByDefault="false"
+        android:padding="4dp"
+        android:queryHint="@string/text_for_search" />
+
+    <ListView
+        android:id="@+id/listview_result"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+        android:layout_margin="@dimen/default_margin" />
+
+</LinearLayout>

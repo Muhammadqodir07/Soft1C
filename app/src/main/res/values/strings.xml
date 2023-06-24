@@ -1,0 +1,80 @@
+<resources>
+    <string name="app_lang">eng</string>
+    <string name="app_name">Soft 1C</string>
+    <string name="text_adress">address</string>
+    <string name="text_port">port</string>
+    <string name="text_basename">basename</string>
+    <string name="text_username">username</string>
+    <string name="text_password">password</string>
+    <string name="text_log_in">Log in</string>
+    <string name="text_title_auth">Authorization</string>
+    <string name="text_title_acceptance_list">Acceptance of goods</string>
+    <string name="text_title_acceptance">Acceptance of good</string>
+    <string name="text_title_test">Test</string>
+    <string name="text_title_search">Search</string>
+    <string name="text_field_is_empyt">Field required</string>
+    <string name="text_for_search">Enter for search</string>
+    <string name="text_submit">Submit</string>
+    <string name="text_submitted">Submitted</string>
+    <string name="text_acceptance">Acceptance</string>
+    <string name="text_weight">Weight</string>
+    <string name="text_size">Size</string>
+    <string name="text_document_number">Document number</string>
+    <string name="text_empty" />
+    <string name="text_code_client">Code client</string>
+    <string name="text_code_client_in_list">Code client</string>
+    <string name="text_number_of_seats">Number of seats</string>
+    <string name="text_id_card_number">Id card number</string>
+    <string name="text_passport">Passport</string>
+    <string name="text_zone">Zone</string>
+    <string name="text_number_of_auto">Number of auto</string>
+    <string name="text_number">Number</string>
+    <string name="text_exclamation">!!!</string>
+    <string name="text_currency">$</string>
+    <string name="text_arrow">↑↑</string>
+    <string name="text_brand">Brand</string>
+    <string name="text_z">Z</string>
+    <string name="text_store_address">Store address</string>
+    <string name="text_store_number">Store number</string>
+    <string name="text_representative">Representative</string>
+    <string name="text_store_phone">Store phone number</string>
+    <string name="text_product_type">Product type</string>
+    <string name="text_package">Package</string>
+    <string name="text_package_count">Package count</string>
+    <string name="text_count_in_package">Count in package</string>
+    <string name="text_save">Save</string>
+    <string name="text_close">Close</string>
+    <string name="text_downloading">Downloading…</string>
+    <string name="text_downloading_text">Downloading %s…</string>
+    <string name="text_print">Print</string>
+    <string name="text_address">Address</string>
+    <string name="text_element_not_found">Element not found</string>
+    <string name="text_m3">m3</string>
+    <string name="text_price_title">Price for m3:</string>
+    <string name="text_zero">0</string>
+    <string name="text_capacity">Capacity</string>
+    <string name="text_successfully_saved">Successfully saved</string>
+    <string name="text_empty_document">Document has not chosen</string>
+    <string name="text_code">Code</string>
+    <string name="txt_number">№</string>
+    <string name="text_date">Date</string>
+    <string name="text_page_nums">Number of pages</string>
+    <string name="text_mac_address">MAC address</string>
+    <string name="text_enter_mac_address">Enter MAC address</string>
+    <string name="text_seats">Seats</string>
+    <string name="text_scan">Scan</string>
+
+    <array name="protocols">
+        <item>http</item>
+        <item>https</item>
+    </array>
+    <string name="choose_file">Choose file</string>
+    <string name="text_barcode">Barcode</string>
+    <string name="txt_loading">Loading</string>
+    <string name="text_warehouse">Warehouse</string>
+    <string name="text_sender_warehouse">Sender\'s warehouse</string>
+    <string name="text_getter_warehouse">Receiving warehouse</string>
+    <string name="text_title_loading_list">Loading of goods</string>
+    <string name="text_no_rights">No rights</string>
+
+</resources>
