@@ -230,12 +230,7 @@ class BaseRepository(private val lang: String) {
     companion object{
         const val ACCEPTANCE_RIGHT = "PriemkiAccess"
         const val LOADING_RIGHT = "PogruzkiAccess"
-        const val ACCEPTANCE_EDIT = "ИзменениеПриемка"
-        const val LOADING_EDIT = "ИзменениеПогрузка"
-        const val SIZE_EDIT = "ИзменениеРазмер"
-        const val WEIGHT_EDIT = "ИзменениеВес"
         const val ACCEPTANCE_ADD= "PriemkiCargo"
-        const val LOADING_ADD= "PogruzkaCargo"
         const val SIZE_ADD = "MeasureCargo"
         const val WEIGHT_ADD = "Weighing"
         const val IS_ADMIN = "ЭтоАдмин"

@@ -19,6 +19,7 @@ import com.example.soft1c.repository.model.ItemClicked
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.viewmodel.AcceptanceViewModel
 import com.google.android.material.textfield.TextInputEditText
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 class AcceptanceListFragment :
@@ -52,7 +53,7 @@ class AcceptanceListFragment :
     private fun observeViewModels() {
         viewModel.toastLiveData.observe(viewLifecycleOwner, ::toast)
         viewModel.acceptanceListLiveData.observe(viewLifecycleOwner) { it ->
-            val list = it.sortedByDescending { LocalDateTime.parse(it.date) }
+            val list = it.filter { !(it.weight && it.capacity) }.sortedByDescending { LocalDateTime.parse(it.date) }
             showAcceptanceList(list)
             acceptanceList = list
         }
@@ -74,7 +75,7 @@ class AcceptanceListFragment :
         val acceptance = pair.first
         closeDialogLoading()
         binding.etxtDocumentNumber.text?.clear()
-        if (acceptance.ref.isNotEmpty())
+        if (acceptance.ref.isNotEmpty() && LocalDateTime.parse(acceptance.date).toLocalDate() == LocalDate.now())
             onItemClicked(ItemClicked.ITEM, acceptance)
         else
             toast(resources.getString(R.string.text_element_not_found))
