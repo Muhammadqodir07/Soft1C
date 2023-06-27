@@ -27,6 +27,7 @@ class AcceptanceListFragment :
 
     private lateinit var acceptanceAdapter: AcceptanceAdapter
     private var acceptanceList: List<Acceptance>? = null
+    private var sortedList: List<Acceptance> = emptyList()
     private val viewModel: AcceptanceViewModel by viewModels()
     private var showColumnZone = true
     private var showText = true
@@ -45,16 +46,19 @@ class AcceptanceListFragment :
 //            resources.getString(R.string.text_title_acceptance_list)
         initUI()
         observeViewModels()
-        val sortedList = acceptanceAdapter.sortListByDocumentNumber(false)
-        showAcceptanceList(sortedList)
     }
 
 
     private fun observeViewModels() {
         viewModel.toastLiveData.observe(viewLifecycleOwner, ::toast)
         viewModel.acceptanceListLiveData.observe(viewLifecycleOwner) { it ->
-            val list = it.filter { !(it.weight && it.capacity) }.sortedByDescending { LocalDateTime.parse(it.date) }
-            showAcceptanceList(list)
+            val list = it.sortedByDescending { LocalDateTime.parse(it.date) }
+            if (sortedList.isNotEmpty() && !Utils.refreshList) {
+                showAcceptanceList(sortedList)
+            } else {
+                sortedList = list
+                showAcceptanceList(list)
+            }
             acceptanceList = list
         }
         viewModel.acceptanceLiveData.observe(viewLifecycleOwner, ::acceptanceByNumber)
@@ -65,12 +69,12 @@ class AcceptanceListFragment :
             AcceptanceAdapter.ACCEPTANCE_GUID = list[0].ref
         }
         showPbLoading(false)
-        acceptanceAdapter.sortListByDocumentNumber(false)
-        acceptanceAdapter.submitList(list)
+        acceptanceAdapter.submitList(checkMarks(list))
         showColumnZone()
         showText()
     }
 
+    // TODO: Сделать сравнение не с локальной датой, а с серверной
     private fun acceptanceByNumber(pair: Pair<Acceptance, List<AcceptanceEnableVisible>>) {
         val acceptance = pair.first
         closeDialogLoading()
@@ -98,8 +102,8 @@ class AcceptanceListFragment :
                     chbWeight.isChecked = isWeight
                     chbSize.isChecked = isCapacity
                 }
+                showAcceptanceList(sortedList)
             }
-
         }
         with(binding) {
             chbAcceptance.setOnClickListener(chbListener)
@@ -152,57 +156,55 @@ class AcceptanceListFragment :
                 showText()
             }
             ivRefresh.setOnClickListener {
+                initRvList()
                 acceptanceList?.let {
-                    showAcceptanceList(it);
+                    showAcceptanceList(it)
+                    sortedList = it
                     return@setOnClickListener }
                 showPbLoading(true)
                 viewModel.getAcceptanceList()
             }
             txtZone.setOnClickListener {
-                // Toggle the sort order
                 isAscending = !isAscending
-
-                // Sort the list and update the RecyclerView
-                val sortedList = acceptanceAdapter.sortListByZone(isAscending)
-                showAcceptanceList(sortedList)
+                showAcceptanceList(sortList("zone", isAscending))
             }
             txtDocumentNumber.setOnClickListener {
                 isAscending = !isAscending
-                val sortedList = acceptanceAdapter.sortListByDocumentNumber(isAscending)
-                showAcceptanceList(sortedList)
+                showAcceptanceList(sortList("documentNumber", isAscending))
             }
 
             txtClient.setOnClickListener {
                 isAscending = !isAscending
-                val sortedList = acceptanceAdapter.sortListByClient(isAscending)
-                showAcceptanceList(sortedList)
+                showAcceptanceList(sortList("client", isAscending))
             }
 
             txtPackage.setOnClickListener {
                 isAscending = !isAscending
-                val sortedList = acceptanceAdapter.sortListByPackage(isAscending)
-                showAcceptanceList(sortedList)
+                showAcceptanceList(sortList("package", isAscending))
             }
             txtEmptyWeight.setOnClickListener {
                 isAscending = !isAscending
-                val sortedList = acceptanceAdapter.sortListByWeight(isAscending)
-                showAcceptanceList(sortedList)
+                showAcceptanceList(sortList("weight", isAscending))
             }
             txtEmptyCapacity.setOnClickListener {
                 isAscending = !isAscending
-                val sortedList = acceptanceAdapter.sortListByCapacity(isAscending)
-                showAcceptanceList(sortedList)
+                showAcceptanceList(sortList("capacity", isAscending))
             }
 
             ivSearch.setOnClickListener {
-                val sortedList = acceptanceAdapter.updateFilteredItems()
+                sortedList = acceptanceAdapter.updateFilteredItems()
                 showAcceptanceList(sortedList)
+                ivSearchOff.isEnabled = true
+                AcceptanceAdapter.IS_CLICKABLE = true
             }
             ivSearchOff.setOnClickListener {
                 initRvList()
                 acceptanceList?.let {
                         it1 ->
+                    sortedList = it1
                     showAcceptanceList(it1) }
+                ivSearchOff.isEnabled = false
+                AcceptanceAdapter.IS_CLICKABLE = false
             }
             ivBack.setOnClickListener { closeActivity() }
         }
@@ -222,6 +224,15 @@ class AcceptanceListFragment :
             adapter = acceptanceAdapter
             layoutManager = LinearLayoutManager(requireContext())
         }
+    }
+
+    private fun checkMarks(list: List<Acceptance>): List<Acceptance> {
+        if (binding.chbWeight.isChecked) {
+            return list.filter { !it.weight }
+        } else if (binding.chbSize.isChecked) {
+            return list.filter { !it.capacity }
+        }
+        return list
     }
 
     private fun findOpenDocumentByNumber(eView: View, key: Int, event: KeyEvent): Boolean {
@@ -280,6 +291,24 @@ class AcceptanceListFragment :
             rvAcceptanceList.isVisible = !show
             pbLoading.isVisible = show
         }
+    }
+    private fun sortList(sortBy: String, ascending: Boolean): List<Acceptance> {
+        sortedList = sortedList.sortedWith(
+            when (sortBy) {
+                "client" -> compareBy { it.client.trimStart('0').toInt() }
+                "zone" -> compareBy { it.zone.toIntOrNull() ?: Int.MIN_VALUE }
+                "documentNumber" -> compareBy { it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt() }
+                "package" -> compareBy { it._package.substringAfterLast(' ').toIntOrNull() }
+                "weight" -> compareBy { it.weight }
+                "capacity" -> compareBy<Acceptance> { it.capacity }
+                else -> throw IllegalArgumentException("Invalid sort parameter: $sortBy")
+            }.thenBy { it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt() }
+        )
+
+        if (!ascending)
+            sortedList = sortedList.reversed()
+
+        return sortedList
     }
 
 }

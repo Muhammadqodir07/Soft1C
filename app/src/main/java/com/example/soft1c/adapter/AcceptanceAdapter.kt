@@ -103,13 +103,17 @@ class AcceptanceAdapter(
         return holder
     }
 
-    fun changeBackgroundColor(textView: TextView) {
-        if (selectedTextView?.id == binding.ivWeight.id) {
-            selectedTextView!!.setBackgroundResource(R.color.weight)
-        } else if (selectedTextView?.id == binding.ivCapacity.id) {
-            selectedTextView!!.setBackgroundResource(R.color.capacity)
-        } else {
-            selectedTextView?.setBackgroundResource(0)
+    private fun changeBackgroundColor(textView: TextView) {
+        when (selectedTextView?.id) {
+            binding.ivWeight.id -> {
+                selectedTextView!!.setBackgroundResource(R.color.weight)
+            }
+            binding.ivCapacity.id -> {
+                selectedTextView!!.setBackgroundResource(R.color.capacity)
+            }
+            else -> {
+                selectedTextView?.setBackgroundResource(0)
+            }
         } // Reset background of previously selected TextView
         selectedTextView = textView
         selectedTextView?.setBackgroundResource(R.color.selected)
@@ -122,56 +126,7 @@ class AcceptanceAdapter(
         }
     }
 
-    fun sortListByZone(ascending: Boolean): List<Acceptance> {
-        val sortedList = currentList.sortedWith(
-            compareBy<Acceptance> {
-                it.zone.toIntOrNull() ?: Int.MIN_VALUE
-            }.thenBy { it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt() }
-        )
-        return if (!ascending) sortedList.reversed() else sortedList
-    }
 
-    fun sortListByDocumentNumber(ascending: Boolean): List<Acceptance> {
-        val sortedList = currentList.sortedWith(
-            compareBy { it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt() }
-        )
-        return if (!ascending) sortedList.reversed() else sortedList
-    }
-
-    fun sortListByClient(ascending: Boolean): List<Acceptance> {
-        val sortedList = currentList.sortedWith(
-            compareBy<Acceptance> { it.client.trimStart('0').toInt() }.thenBy { it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt() }
-        )
-        return if (!ascending) sortedList.reversed() else sortedList
-    }
-
-    fun sortListByPackage(ascending: Boolean): List<Acceptance> {
-        val sortedList = currentList.sortedWith(
-            compareBy<Acceptance> { it._package.substringAfterLast(' ').toIntOrNull() }.thenBy {
-                it.number.replace(
-                    "[A-Z]".toRegex(),
-                    ""
-                ).trimStart('0').toInt()
-            }
-        )
-        return if (!ascending) sortedList.reversed() else sortedList
-    }
-
-    fun sortListByWeight(ascending: Boolean): List<Acceptance> {
-        val sortedList = currentList.sortedWith(
-            compareBy<Acceptance> { it.weight }
-                .thenBy { it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt() }
-        )
-        return if (ascending) sortedList else sortedList.reversed()
-    }
-
-    fun sortListByCapacity(ascending: Boolean): List<Acceptance> {
-        val sortedList = currentList.sortedWith(
-            compareBy<Acceptance> { it.capacity }
-                .thenBy { it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt() }
-        )
-        return if (ascending) sortedList else sortedList.reversed()
-    }
 
     fun updateFilteredItems(): List<Acceptance> {
         if (selectedTextView != null) {
@@ -198,5 +153,6 @@ class AcceptanceAdapter(
 
     companion object {
         var ACCEPTANCE_GUID = ""
+        var IS_CLICKABLE = false
     }
 }
