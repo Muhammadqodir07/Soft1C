@@ -67,37 +67,64 @@ class AcceptanceAdapter(
         binding = ItemAcceptanceBinding.bind(view)
         val holder = AcceptanceHolder(onItemClicked, showColumnZone, binding)
 
-        // Назначение слушателей здесь
         binding.txtClient.setOnClickListener {
-            changeBackgroundColor(it as TextView)
+            if (IS_CLICKABLE) {
+                changeBackgroundColor(it as TextView)
+            } else {
+                holder.itemView.performClick()
+            }
         }
 
         binding.txtPackage.setOnClickListener {
-            changeBackgroundColor(it as TextView)
+            if (IS_CLICKABLE) {
+                changeBackgroundColor(it as TextView)
+            } else {
+                holder.itemView.performClick()
+            }
         }
 
         binding.txtZone.setOnClickListener {
-            changeBackgroundColor(it as TextView)
+            if (IS_CLICKABLE) {
+                changeBackgroundColor(it as TextView)
+            } else {
+                holder.itemView.performClick()
+            }
         }
 
         binding.ivWeight.setOnClickListener {
-            selectedTextView?.setBackgroundResource(0) // Сброс фона предыдущего выбранного TextView
-            selectedTextView = it as TextView
-            selectedTextView!!.setBackgroundResource(R.color.selectedWeight)
+            if (IS_CLICKABLE) {
+                selectedTextView?.setBackgroundResource(0) // Сброс фона предыдущего выбранного TextView
+                selectedTextView = it as TextView
+                selectedTextView!!.setBackgroundResource(R.color.selectedWeight)
+            } else {
+                holder.itemView.performClick()
+            }
         }
 
         binding.txtEmptyWeight.setOnClickListener {
-            changeBackgroundColor(it as TextView)
+            if (IS_CLICKABLE) {
+                changeBackgroundColor(it as TextView)
+            } else {
+                holder.itemView.performClick()
+            }
         }
 
         binding.txtEmptyCapacity.setOnClickListener {
-            changeBackgroundColor(it as TextView)
+            if (IS_CLICKABLE) {
+                changeBackgroundColor(it as TextView)
+            } else {
+                holder.itemView.performClick()
+            }
         }
 
         binding.ivCapacity.setOnClickListener {
-            selectedTextView?.setBackgroundResource(0) // Сброс фона предыдущего выбранного TextView
-            selectedTextView = it as TextView
-            selectedTextView!!.setBackgroundResource(R.color.selectedCapacity)
+            if (IS_CLICKABLE) {
+                selectedTextView?.setBackgroundResource(0) // Сброс фона предыдущего выбранного TextView
+                selectedTextView = it as TextView
+                selectedTextView!!.setBackgroundResource(R.color.selectedCapacity)
+            } else {
+                holder.itemView.performClick()
+            }
         }
 
         return holder
@@ -119,14 +146,12 @@ class AcceptanceAdapter(
         selectedTextView?.setBackgroundResource(R.color.selected)
     }
 
-    override fun onBindViewHolder(holder: AcceptanceHolder, position: Int) {
+    override fun onBindViewHolder(holder: AcceptanceAdapter.AcceptanceHolder, position: Int) {
         holder.onBind(currentList[position])
         if (selectedTextView != null) {
             selectedTextView = null
         }
     }
-
-
 
     fun updateFilteredItems(): List<Acceptance> {
         if (selectedTextView != null) {

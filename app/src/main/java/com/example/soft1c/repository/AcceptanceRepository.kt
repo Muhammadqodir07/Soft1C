@@ -251,6 +251,8 @@ class AcceptanceRepository {
         val packageName = getPackageNameFromUid(packageUid)
         val zoneUid = acceptJson.getString(ZONE_KEY)
         val zoneName = getZoneNameFromUid(zoneUid)
+        val weight = acceptJson.getBoolean(WEIGHT_KEY)
+        val capacity = acceptJson.getBoolean(CAPACITY_KEY)
         if (hasAdditionalFields) {
             val autoNumber = acceptJson.getString(AUTO_NUMBER_KEY)
             val idCard = acceptJson.getString(ID_CARD_KEY)
@@ -300,11 +302,11 @@ class AcceptanceRepository {
                 client = client,
                 zoneUid = zoneUid,
                 representativeName = representativeName,
-                isPrinted = isPrinted
+                isPrinted = isPrinted,
+                weight = weight,
+                capacity = capacity
             )
         }
-        val weight = acceptJson.getBoolean(WEIGHT_KEY)
-        val capacity = acceptJson.getBoolean(CAPACITY_KEY)
         return Acceptance(
             _package = packageName,
             zoneUid = zoneUid,

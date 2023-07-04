@@ -182,6 +182,7 @@ class AcceptanceSizeFragment :
     private fun fillList() {
         if (!checkedFillFields()) return
         val listData = acceptanceSize.dataArray.toMutableList()
+        var lastChangedItemIndex = -1
         with(binding) {
             val seatNumberText = etxtChangeColumnsNumber.text.toString()
             val length = etxtLength.text.toString().toInt()
@@ -210,6 +211,7 @@ class AcceptanceSizeFragment :
                         listElement.height = height
                         listElement.weight = length * width * height * 0.000001
                         indexSeatNumber += 1
+                        lastChangedItemIndex = indexList
                     }
                 }
             }
@@ -221,6 +223,8 @@ class AcceptanceSizeFragment :
         }
         sizeAdapter.submitList(listData)
         sizeAdapter.notifyDataSetChanged()
+        binding.rvMain.scrollToPosition(lastChangedItemIndex)
+        sizeAdapter.focusNumber = sizeAdapter.currentList[lastChangedItemIndex+1].seatNumber
         acceptanceSize.dataArray = listData
     }
 

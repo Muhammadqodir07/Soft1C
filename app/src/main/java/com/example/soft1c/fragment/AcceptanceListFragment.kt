@@ -1,11 +1,14 @@
 package com.example.soft1c.fragment
 
+import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.KeyEvent
 import android.view.View
 import android.widget.CheckBox
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -33,6 +36,7 @@ class AcceptanceListFragment :
     private var showText = true
     private var isAscending = false
     private val user = Utils.user
+    private var icon :Drawable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +51,6 @@ class AcceptanceListFragment :
         initUI()
         observeViewModels()
     }
-
 
     private fun observeViewModels() {
         viewModel.toastLiveData.observe(viewLifecycleOwner, ::toast)
@@ -79,8 +82,11 @@ class AcceptanceListFragment :
         val acceptance = pair.first
         closeDialogLoading()
         binding.etxtDocumentNumber.text?.clear()
-        if (acceptance.ref.isNotEmpty() && LocalDateTime.parse(acceptance.date).toLocalDate() == LocalDate.now())
+        if (acceptance.ref.isNotEmpty()) {
+            AcceptanceFragment.IS_TODAY =
+                LocalDateTime.parse(acceptance.date).toLocalDate() == LocalDate.now()
             onItemClicked(ItemClicked.ITEM, acceptance)
+        }
         else
             toast(resources.getString(R.string.text_element_not_found))
     }
@@ -89,7 +95,7 @@ class AcceptanceListFragment :
         if (Utils.refreshList) viewModel.getAcceptanceList()
         showPbLoading(true)
         initRvList()
-
+        icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_search_off)
         val chbListener = View.OnClickListener {
             with(binding)
             {
@@ -192,19 +198,32 @@ class AcceptanceListFragment :
             }
 
             ivSearch.setOnClickListener {
+                AcceptanceAdapter.IS_CLICKABLE = true
                 sortedList = acceptanceAdapter.updateFilteredItems()
                 showAcceptanceList(sortedList)
                 ivSearchOff.isEnabled = true
-                AcceptanceAdapter.IS_CLICKABLE = true
+                icon?.setTint(Color.parseColor("#007D2D"))
+                ivSearchOff.setImageDrawable(icon)
             }
             ivSearchOff.setOnClickListener {
                 initRvList()
+                AcceptanceAdapter.IS_CLICKABLE = false
                 acceptanceList?.let {
                         it1 ->
                     sortedList = it1
                     showAcceptanceList(it1) }
                 ivSearchOff.isEnabled = false
-                AcceptanceAdapter.IS_CLICKABLE = false
+                icon?.setTint(Color.parseColor("#5C2920"))
+                ivSearchOff.setImageDrawable(icon)
+            }
+
+            if (AcceptanceAdapter.IS_CLICKABLE){
+                icon?.setTint(Color.parseColor("#007D2D"))
+                ivSearchOff.setImageDrawable(icon)
+            }else{
+                icon?.setTint(Color.parseColor("#5C2920"))
+                ivSearchOff.setImageDrawable(icon)
+                ivSearchOff.isEnabled = false
             }
             ivBack.setOnClickListener { closeActivity() }
         }
@@ -260,18 +279,18 @@ class AcceptanceListFragment :
                     putString(AcceptanceSizeFragment.KEY_ACCEPTANCE_GUID, acceptance.ref)
                 }
                 AcceptanceFragment.IS_TODAY = true
-                openAcceptanceDetail(args)
+                openAcceptanceDetail(args, acceptance.weight, acceptance.capacity)
             }
             else -> return
         }
     }
 
-    private fun openAcceptanceDetail(bundle: Bundle) {
+    private fun openAcceptanceDetail(bundle: Bundle, weight: Boolean, capacity: Boolean) {
         with(binding) {
             val action = when {
                 chbAcceptance.isChecked && (user.acceptanceCargo || user.isAdmin) -> R.id.action_acceptanceFragment_to_acceptanceFragment
-                chbWeight.isChecked && (user.weightAccess || user.isAdmin) -> R.id.action_acceptanceListFragment_to_acceptanceWeightFragment
-                chbSize.isChecked && (user.measureCargo || user.isAdmin) -> R.id.action_acceptanceListFragment_to_acceptanceSizeFragment
+                chbWeight.isChecked && (!weight || AcceptanceFragment.IS_TODAY) && (user.weightAccess || user.isAdmin) -> R.id.action_acceptanceListFragment_to_acceptanceWeightFragment
+                chbSize.isChecked && (!capacity || AcceptanceFragment.IS_TODAY) && (user.measureCargo || user.isAdmin) -> R.id.action_acceptanceListFragment_to_acceptanceSizeFragment
                 else -> {
                     toast(getString(R.string.text_no_rights))
                     return
