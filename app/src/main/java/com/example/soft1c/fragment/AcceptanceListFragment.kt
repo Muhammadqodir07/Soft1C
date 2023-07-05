@@ -83,6 +83,8 @@ class AcceptanceListFragment :
         closeDialogLoading()
         binding.etxtDocumentNumber.text?.clear()
         if (acceptance.ref.isNotEmpty()) {
+            AcceptanceFragment.IS_TODAY =
+                LocalDateTime.parse(acceptance.date).toLocalDate() == LocalDate.now()
             onItemClicked(ItemClicked.ITEM, acceptance)
         }
         else
@@ -276,8 +278,7 @@ class AcceptanceListFragment :
                     putString(AcceptanceFragment.KEY_ACCEPTANCE_NUMBER, acceptance.number)
                     putString(AcceptanceSizeFragment.KEY_ACCEPTANCE_GUID, acceptance.ref)
                 }
-                AcceptanceFragment.IS_TODAY =
-                    LocalDateTime.parse(acceptance.date).toLocalDate() == LocalDate.now()
+                AcceptanceFragment.IS_TODAY = true
                 openAcceptanceDetail(args, acceptance.weight, acceptance.capacity)
             }
             else -> return

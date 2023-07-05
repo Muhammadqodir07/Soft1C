@@ -1,6 +1,5 @@
 package com.example.soft1c.adapter
 
-import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.view.isVisible
@@ -68,7 +67,7 @@ class AcceptanceAdapter(
         binding = ItemAcceptanceBinding.bind(view)
         val holder = AcceptanceHolder(onItemClicked, showColumnZone, binding)
 
-        val selectCell: (View) -> Unit = {
+        binding.txtClient.setOnClickListener {
             if (IS_CLICKABLE) {
                 changeBackgroundColor(it as TextView)
             } else {
@@ -76,18 +75,43 @@ class AcceptanceAdapter(
             }
         }
 
-        binding.txtClient.setOnClickListener(selectCell)
-        binding.txtPackage.setOnClickListener(selectCell)
-        binding.txtZone.setOnClickListener(selectCell)
-        binding.txtEmptyWeight.setOnClickListener(selectCell)
-        binding.txtEmptyCapacity.setOnClickListener(selectCell)
+        binding.txtPackage.setOnClickListener {
+            if (IS_CLICKABLE) {
+                changeBackgroundColor(it as TextView)
+            } else {
+                holder.itemView.performClick()
+            }
+        }
 
+        binding.txtZone.setOnClickListener {
+            if (IS_CLICKABLE) {
+                changeBackgroundColor(it as TextView)
+            } else {
+                holder.itemView.performClick()
+            }
+        }
 
         binding.ivWeight.setOnClickListener {
             if (IS_CLICKABLE) {
                 selectedTextView?.setBackgroundResource(0) // Сброс фона предыдущего выбранного TextView
                 selectedTextView = it as TextView
                 selectedTextView!!.setBackgroundResource(R.color.selectedWeight)
+            } else {
+                holder.itemView.performClick()
+            }
+        }
+
+        binding.txtEmptyWeight.setOnClickListener {
+            if (IS_CLICKABLE) {
+                changeBackgroundColor(it as TextView)
+            } else {
+                holder.itemView.performClick()
+            }
+        }
+
+        binding.txtEmptyCapacity.setOnClickListener {
+            if (IS_CLICKABLE) {
+                changeBackgroundColor(it as TextView)
             } else {
                 holder.itemView.performClick()
             }
