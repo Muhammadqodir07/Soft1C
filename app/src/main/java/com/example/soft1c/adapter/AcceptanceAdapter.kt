@@ -75,7 +75,7 @@ class AcceptanceAdapter(
                 holder.itemView.performClick()
             }
         }
-
+        
         binding.txtClient.setOnClickListener(selectCell)
         binding.txtPackage.setOnClickListener(selectCell)
         binding.txtZone.setOnClickListener(selectCell)
