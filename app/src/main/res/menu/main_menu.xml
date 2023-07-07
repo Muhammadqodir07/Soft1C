@@ -15,6 +15,6 @@
         android:id="@+id/item_macAddress"
         android:title="Mac address" />
     <item
-        android:title="1.1.6"
+        android:title="1.1.6.1"
         android:enabled="false"/>
 </menu>

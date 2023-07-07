@@ -27,6 +27,7 @@ class AcceptanceSizeFragment :
     private lateinit var acceptance: Acceptance
     private lateinit var sizeAdapter: AcceptanceSizeAdapter
     private var indexSeatNumber = 0
+    private var focusedEditText: EditText? = null
     private var hasFocusCanSave = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,11 +90,35 @@ class AcceptanceSizeFragment :
     private fun fillIndexSeatNumber() {
         indexSeatNumber = 0
         if (indexSeatNumber == 0) {
-            indexSeatNumber =
-                if (acceptanceSize.dataArray.isEmpty()) 1 else acceptanceSize.dataArray[0].seatNumber
+            if (acceptanceSize.dataArray.isEmpty())
+                indexSeatNumber = 1
+            else {
+                val sizeAcceptance = acceptanceSize.dataArray[0]
+                indexSeatNumber = sizeAcceptance.seatNumber
+                with(binding) {
+                    etxtLength.setText(sizeAcceptance.length.toString())
+                    etxtHeight.setText(sizeAcceptance.height.toString())
+                    etxtWidth.setText(sizeAcceptance.width.toString())
+                }
+            }
         }
         binding.etxtCurrentIndex.setText(indexSeatNumber.toString())
     }
+
+    private fun fillIndexSeatNumber(index: Int) {
+        if (acceptanceSize.dataArray.isNotEmpty()) {
+            if (acceptanceSize.dataArray.size > index) {
+                val sizeAcceptance = acceptanceSize.dataArray[index]
+                indexSeatNumber = sizeAcceptance.seatNumber
+                with(binding) {
+                    etxtLength.setText(sizeAcceptance.length.toString())
+                    etxtHeight.setText(sizeAcceptance.height.toString())
+                    etxtWidth.setText(sizeAcceptance.width.toString())
+                }
+            }
+        }
+    }
+
 
     private fun setAutoCompleteFocusListener(view: View, hasFocus: Boolean) {
         view as AutoCompleteTextView
@@ -111,11 +136,30 @@ class AcceptanceSizeFragment :
         }
     }
 
+    private fun setEditTextFocusListener(view: View, hasFocus: Boolean){
+        view as EditText
+        if (hasFocus){
+            view.setSelection(view.text.length)
+            focusedEditText = view
+        }else {
+            focusedEditText = null
+        }
+    }
+
     private fun sizeItemClicked(sizeAcceptance: SizeAcceptance.SizeData, itemClicked: ItemClicked) {
         when (itemClicked) {
             ItemClicked.SIZE_ITEM -> {
                 indexSeatNumber = sizeAcceptance.seatNumber
-                binding.etxtCurrentIndex.setText(indexSeatNumber.toString())
+                with(binding) {
+                    etxtCurrentIndex.setText(indexSeatNumber.toString())
+                    etxtLength.setText(sizeAcceptance.length.toString())
+                    etxtHeight.setText(sizeAcceptance.height.toString())
+                    etxtWidth.setText(sizeAcceptance.width.toString())
+                    focusedEditText?.let { editText ->
+                        editText.setSelection(editText.text.length)
+                    }
+                }
+
             }
             else -> {}
         }
@@ -150,6 +194,7 @@ class AcceptanceSizeFragment :
             }
             etxtWidth.setOnFocusChangeListener { _, hasFocus ->
                 if (hasFocus) {
+                    etxtWidth.setSelection(etxtWidth.text.length)
                     if (acceptanceSize.dataArray.last().seatNumber < indexSeatNumber) {
                         ivSave.requestFocus()
                     } else if (etxtLength.text.isEmpty()) {
@@ -157,6 +202,10 @@ class AcceptanceSizeFragment :
                     }
                 }
             }
+            etxtLength.setOnFocusChangeListener(::setEditTextFocusListener)
+            etxtHeight.setOnFocusChangeListener(::setEditTextFocusListener)
+            etxtChangeColumnsNumber.setOnFocusChangeListener(::setEditTextFocusListener)
+
         }
     }
 
@@ -168,6 +217,7 @@ class AcceptanceSizeFragment :
                     etxtSave -> {
                         fillList()
                         etxtLength.requestFocus()
+                        etxtLength.setSelection(etxtLength.text.length)
                         return true
                     }
                     else -> false
@@ -224,7 +274,13 @@ class AcceptanceSizeFragment :
         sizeAdapter.submitList(listData)
         sizeAdapter.notifyDataSetChanged()
         binding.rvMain.scrollToPosition(lastChangedItemIndex)
-        sizeAdapter.focusNumber = sizeAdapter.currentList[lastChangedItemIndex+1].seatNumber
+        if (lastChangedItemIndex + 1 < sizeAdapter.currentList.size) {
+            sizeAdapter.focusNumber = sizeAdapter.currentList[lastChangedItemIndex + 1].seatNumber
+            fillIndexSeatNumber(lastChangedItemIndex+1)
+        } else {
+            sizeAdapter.focusNumber = sizeAdapter.currentList[lastChangedItemIndex].seatNumber
+            fillIndexSeatNumber(lastChangedItemIndex)
+        }
         acceptanceSize.dataArray = listData
     }
 
@@ -250,7 +306,7 @@ class AcceptanceSizeFragment :
 
     private fun enableFields() {
         with(binding) {
-            if (acceptanceSize.recordAllowed) etxtLength.requestFocus()
+            if (acceptanceSize.recordAllowed) {etxtLength.requestFocus(); etxtLength.setSelection(etxtLength.text.length)}
             etxtLength.isEnabled = acceptanceSize.recordAllowed
             etxtWidth.isEnabled = acceptanceSize.recordAllowed
             etxtHeight.isEnabled = acceptanceSize.recordAllowed
@@ -262,8 +318,8 @@ class AcceptanceSizeFragment :
         }
     }
 
-    private fun checkEditRights(fieldsAccess: FieldsAccess){
-        if((!fieldsAccess.isCreator && !user.isAdmin) || !user.measureCargo || (!user.isAdmin && !fieldsAccess.sizeEnable) || !AcceptanceFragment.IS_TODAY){
+    private fun checkEditRights(fieldsAccess: FieldsAccess) {
+        if ((!fieldsAccess.isCreator && !user.isAdmin) || !user.measureCargo || (!user.isAdmin && !fieldsAccess.sizeEnable) || !AcceptanceFragment.IS_TODAY) {
             binding.containerMain.isEnabled = false
             binding.rvMain.isEnabled = true
             binding.ivSave.isEnabled = true

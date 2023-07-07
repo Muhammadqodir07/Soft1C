@@ -156,7 +156,6 @@
                     android:enabled="false"
                     android:hint="@string/text_zero"
                     android:inputType="number"
-                    android:textAlignment="textEnd"
                     android:textStyle="bold" />
 
                 <EditText
@@ -165,8 +164,7 @@
                     android:layout_height="wrap_content"
                     android:autofillHints="name"
                     android:hint="@string/text_zero"
-                    android:inputType="number"
-                    android:textAlignment="textEnd" />
+                    android:inputType="number" />
 
                 <EditText
                     android:id="@+id/etxt_width"
@@ -174,8 +172,7 @@
                     android:layout_height="wrap_content"
                     android:autofillHints="name"
                     android:hint="@string/text_zero"
-                    android:inputType="number"
-                    android:textAlignment="textEnd" />
+                    android:inputType="number" />
 
                 <EditText
                     android:id="@+id/etxt_height"
@@ -183,8 +180,7 @@
                     android:layout_height="wrap_content"
                     android:autofillHints="name"
                     android:hint="@string/text_zero"
-                    android:inputType="number"
-                    android:textAlignment="textEnd" />
+                    android:inputType="number" />
 
                 <EditText
                     android:id="@+id/etxt_change_columns_number"
@@ -193,7 +189,6 @@
                     android:autofillHints="name"
                     android:hint="@string/text_zero"
                     android:inputType="number"
-                    android:textAlignment="textEnd"
                     android:textStyle="bold" />
 
                 <com.google.android.material.textfield.TextInputLayout
