@@ -18,11 +18,12 @@ import com.example.soft1c.adapter.AcceptanceAdapter
 import com.example.soft1c.databinding.FragmentAcceptanceListBinding
 import com.example.soft1c.repository.model.Acceptance
 import com.example.soft1c.repository.model.AcceptanceEnableVisible
+import com.example.soft1c.repository.model.Filter
+import com.example.soft1c.repository.model.Filter.ascending
 import com.example.soft1c.repository.model.ItemClicked
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.viewmodel.AcceptanceViewModel
 import com.google.android.material.textfield.TextInputEditText
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 class AcceptanceListFragment :
@@ -36,11 +37,12 @@ class AcceptanceListFragment :
     private var showText = true
     private var isAscending = false
     private val user = Utils.user
-    private var icon :Drawable? = null
+    private var icon: Drawable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel.getAcceptanceList()
+        resetFilter()
     }
 
 
@@ -56,13 +58,14 @@ class AcceptanceListFragment :
         viewModel.toastLiveData.observe(viewLifecycleOwner, ::toast)
         viewModel.acceptanceListLiveData.observe(viewLifecycleOwner) { it ->
             val list = it.sortedByDescending { LocalDateTime.parse(it.date) }
+            acceptanceList = list
             if (sortedList.isNotEmpty() && !Utils.refreshList) {
                 showAcceptanceList(sortedList)
             } else {
                 sortedList = list
-                showAcceptanceList(list)
+                autoSort()
+                binding.rvAcceptanceList.scrollToPosition(0)
             }
-            acceptanceList = list
         }
         viewModel.acceptanceLiveData.observe(viewLifecycleOwner, ::acceptanceByNumber)
     }
@@ -84,8 +87,7 @@ class AcceptanceListFragment :
         binding.etxtDocumentNumber.text?.clear()
         if (acceptance.ref.isNotEmpty()) {
             onItemClicked(ItemClicked.ITEM, acceptance)
-        }
-        else
+        } else
             toast(resources.getString(R.string.text_element_not_found))
     }
 
@@ -161,38 +163,46 @@ class AcceptanceListFragment :
             }
             ivRefresh.setOnClickListener {
                 initRvList()
+                resetFilter()
                 acceptanceList?.let {
                     showAcceptanceList(it)
                     sortedList = it
-                    return@setOnClickListener }
+                    return@setOnClickListener
+                }
                 showPbLoading(true)
                 viewModel.getAcceptanceList()
             }
             txtZone.setOnClickListener {
                 isAscending = !isAscending
-                showAcceptanceList(sortList("zone", isAscending))
+                ascending = Pair(Filter.ZONE, isAscending)
+                showAcceptanceList(sortList(Filter.ZONE, isAscending))
             }
             txtDocumentNumber.setOnClickListener {
                 isAscending = !isAscending
-                showAcceptanceList(sortList("documentNumber", isAscending))
+                ascending = Pair(Filter.DOCUMENT, isAscending)
+                showAcceptanceList(sortList(Filter.DOCUMENT, isAscending))
             }
 
             txtClient.setOnClickListener {
                 isAscending = !isAscending
-                showAcceptanceList(sortList("client", isAscending))
+                ascending = Pair(Filter.CLIENT, isAscending)
+                showAcceptanceList(sortList(Filter.CLIENT, isAscending))
             }
 
             txtPackage.setOnClickListener {
                 isAscending = !isAscending
-                showAcceptanceList(sortList("package", isAscending))
+                ascending = Pair(Filter.PACKAGE, isAscending)
+                showAcceptanceList(sortList(Filter.PACKAGE, isAscending))
             }
             txtEmptyWeight.setOnClickListener {
                 isAscending = !isAscending
-                showAcceptanceList(sortList("weight", isAscending))
+                ascending = Pair(Filter.WEIGHT, isAscending)
+                showAcceptanceList(sortList(Filter.WEIGHT, isAscending))
             }
             txtEmptyCapacity.setOnClickListener {
                 isAscending = !isAscending
-                showAcceptanceList(sortList("capacity", isAscending))
+                ascending = Pair(Filter.SIZE, isAscending)
+                showAcceptanceList(sortList(Filter.SIZE, isAscending))
             }
 
             ivSearch.setOnClickListener {
@@ -205,20 +215,21 @@ class AcceptanceListFragment :
             }
             ivSearchOff.setOnClickListener {
                 initRvList()
+                resetFilter()
                 AcceptanceAdapter.IS_CLICKABLE = false
-                acceptanceList?.let {
-                        it1 ->
+                acceptanceList?.let { it1 ->
                     sortedList = it1
-                    showAcceptanceList(it1) }
+                    showAcceptanceList(it1)
+                }
                 ivSearchOff.isEnabled = false
                 icon?.setTint(Color.parseColor("#5C2920"))
                 ivSearchOff.setImageDrawable(icon)
             }
 
-            if (AcceptanceAdapter.IS_CLICKABLE){
+            if (AcceptanceAdapter.IS_CLICKABLE) {
                 icon?.setTint(Color.parseColor("#007D2D"))
                 ivSearchOff.setImageDrawable(icon)
-            }else{
+            } else {
                 icon?.setTint(Color.parseColor("#5C2920"))
                 ivSearchOff.setImageDrawable(icon)
                 ivSearchOff.isEnabled = false
@@ -276,8 +287,8 @@ class AcceptanceListFragment :
                     putString(AcceptanceFragment.KEY_ACCEPTANCE_NUMBER, acceptance.number)
                     putString(AcceptanceSizeFragment.KEY_ACCEPTANCE_GUID, acceptance.ref)
                 }
-                AcceptanceFragment.IS_TODAY =
-                    LocalDateTime.parse(acceptance.date).toLocalDate() == LocalDate.now()
+                AcceptanceFragment.IS_TODAY = true
+//                    LocalDateTime.parse(acceptance.date).toLocalDate() == LocalDate.now()
                 openAcceptanceDetail(args, acceptance.weight, acceptance.capacity)
             }
             else -> return
@@ -310,15 +321,18 @@ class AcceptanceListFragment :
             pbLoading.isVisible = show
         }
     }
-    private fun sortList(sortBy: String, ascending: Boolean): List<Acceptance> {
+
+    private fun sortList(sortBy: Int, ascending: Boolean): List<Acceptance> {
         sortedList = sortedList.sortedWith(
             when (sortBy) {
-                "client" -> compareBy { it.client.trimStart('0').toInt() }
-                "zone" -> compareBy { it.zone.toIntOrNull() ?: Int.MIN_VALUE }
-                "documentNumber" -> compareBy { it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt() }
-                "package" -> compareBy { it._package.substringAfterLast(' ').toIntOrNull() }
-                "weight" -> compareBy { it.weight }
-                "capacity" -> compareBy<Acceptance> { it.capacity }
+                Filter.CLIENT -> compareBy { it.client.trimStart('0').toInt() }
+                Filter.ZONE -> compareBy { it.zone.toIntOrNull() ?: Int.MIN_VALUE }
+                Filter.DOCUMENT -> compareBy {
+                    it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt()
+                }
+                Filter.PACKAGE -> compareBy { it._package.substringAfterLast(' ').toIntOrNull() }
+                Filter.WEIGHT -> compareBy { it.weight }
+                Filter.SIZE -> compareBy<Acceptance> { it.capacity }
                 else -> throw IllegalArgumentException("Invalid sort parameter: $sortBy")
             }.thenBy { it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt() }
         )
@@ -327,6 +341,51 @@ class AcceptanceListFragment :
             sortedList = sortedList.reversed()
 
         return sortedList
+    }
+
+    private fun autoSort() {
+        if (acceptanceList != null && acceptanceList != emptyList<Acceptance>()) {
+            with(Filter) {
+                if (client.isNotEmpty()) sortedList =
+                    sortedList.filter { it.client.trimStart('0') == client }
+                if (_package.isNotEmpty()) sortedList =
+                    sortedList.filter { it._package.filter { !it.isDigit() } == _package }
+                if (zone.isNotEmpty()) sortedList = sortedList.filter { it.zone == zone }
+                if (weight != null) sortedList =
+                    sortedList.filter { it.weight == weight }
+                if (size != null) sortedList = sortedList.filter { it.capacity == size }
+                if (ascending.first != -1) {
+                    sortedList = sortedList.sortedWith(
+                        when (ascending.first) {
+                            CLIENT -> compareBy { it.client.trimStart('0').toInt() }
+                            ZONE -> compareBy { it.zone.toIntOrNull() ?: Int.MIN_VALUE }
+                            DOCUMENT -> compareBy {
+                                it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt()
+                            }
+                            PACKAGE -> compareBy {
+                                it._package.substringAfterLast(' ').toIntOrNull()
+                            }
+                            WEIGHT -> compareBy { it.weight }
+                            SIZE -> compareBy<Acceptance> { it.capacity }
+                            else -> throw IllegalArgumentException("Invalid sort parameter: ${ascending.first}")
+                        }.thenBy { it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt() }
+                    )
+                }
+            }
+
+            showAcceptanceList(sortedList)
+        }
+    }
+
+    private fun resetFilter() {
+        with(Filter) {
+            client = ""
+            _package = ""
+            zone = ""
+            weight = null
+            size = null
+            ascending = Pair(-1, false)
+        }
     }
 
 }

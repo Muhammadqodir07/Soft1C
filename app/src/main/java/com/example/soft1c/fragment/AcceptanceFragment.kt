@@ -97,6 +97,9 @@ class AcceptanceFragment :
         showAcceptance()
         if (clientFound) {
             binding.etxtCardNumber.requestFocus()
+        }else{
+            binding.etxtCodeClient.requestFocus()
+            binding.etxtCodeClient.error = "can't find"
         }
     }
 
@@ -147,7 +150,6 @@ class AcceptanceFragment :
                 etxtCodeClient.requestFocus()
                 if (etxtCardNumber.isEnabled && etxtCardNumber.isVisible) {
                     etxtCardNumber.requestFocus()
-
                 }
             }
 
@@ -219,6 +221,9 @@ class AcceptanceFragment :
             etxtSave.setOnKeyListener(::autoCompleteOnKeyListener)
             etxtSave.setOnFocusChangeListener(::setAutoCompleteFocusListener)
             etxtSaveCopy.setOnFocusChangeListener(::setAutoCompleteFocusListener)
+            etxtSave.setOnClickListener {
+                createUpdateAcceptance()
+            }
 
             etxtCodeClient.setOnFocusChangeListener(::etxtFocusChangeListener)
             etxtStoreNumber.setOnFocusChangeListener(::etxtFocusChangeListener)
@@ -493,7 +498,7 @@ class AcceptanceFragment :
 
                 var textElement = when {
                     view.text.isNotEmpty() -> view.text.toString()
-                    view.text.isEmpty() -> return
+                    view.text.isEmpty() -> continue
                     else -> ""
                 }
                 textElementFound(anyModelList, model, view, textElement)
@@ -754,7 +759,6 @@ class AcceptanceFragment :
             if(acceptance.isPrinted){
             etxtCodeClient.isEnabled = false
             }
-            etxtCountInPackage.isEnabled = false
             if (fieldsAccess.chBoxEnable) {
                 chbArrow.isEnabled = true
                 chbBrand.isEnabled = true

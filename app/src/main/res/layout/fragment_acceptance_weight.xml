@@ -127,7 +127,8 @@
                         android:layout_height="wrap_content"
                         android:backgroundTint="@color/white"
                         android:hint="@string/text_code_client"
-                        android:inputType="textAutoCorrect" />
+                        android:inputType="textAutoCorrect"
+                        android:textColor = "@color/disableTextColor"/>
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -146,7 +147,8 @@
                         android:layout_height="wrap_content"
                         android:backgroundTint="@color/white"
                         android:hint="@string/text_number_of_seats"
-                        android:inputType="numberDecimal" />
+                        android:inputType="numberDecimal"
+                        android:textColor = "@color/disableTextColor"/>
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -177,7 +179,8 @@
                         android:layout_height="wrap_content"
                         android:backgroundTint="@color/white"
                         android:hint="@string/text_number"
-                        android:inputType="textAutoCorrect" />
+                        android:inputType="textAutoCorrect"
+                        android:textColor = "@color/disableTextColor"/>
 
                 </com.google.android.material.textfield.TextInputLayout>
 

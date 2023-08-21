@@ -194,14 +194,7 @@ class BaseRepository(private val lang: String) {
                 }
                 Utils.ObjectModelType.PRODUCT_TYPE ->{
                     val addLang = if (lang == "chinese") AcceptanceRepository.ON_CHINESE else ""
-                    if (lang == "chinese") {
-                        objectJson.getString(Utils.Contracts.NAME_KEY).replace(
-                            "\\d".toRegex(),
-                            ""
-                        ) + objectJson.getString(Utils.Contracts.NAME_KEY + addLang)
-                    } else {
-                        objectJson.getString(Utils.Contracts.NAME_KEY)
-                    }
+                    objectJson.getString(Utils.Contracts.NAME_KEY + addLang)
                 }
                 else -> objectJson.getString(Utils.Contracts.NAME_KEY)
             }

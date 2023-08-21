@@ -11,6 +11,7 @@ import com.example.soft1c.R
 import com.example.soft1c.databinding.ItemAcceptanceBinding
 import com.example.soft1c.extension.inflateLayout
 import com.example.soft1c.repository.model.Acceptance
+import com.example.soft1c.repository.model.Filter
 import com.example.soft1c.repository.model.ItemClicked
 
 class AcceptanceAdapter(
@@ -36,7 +37,8 @@ class AcceptanceAdapter(
             with(binding) {
                 if (ACCEPTANCE_GUID == acceptance.ref)
                     binding.linearContainer.setBackgroundResource(R.color.selectedItem)
-                txtDocumentNumber.text = acceptance.number.replace("[A-Z]".toRegex(), "").trimStart('0')
+                txtDocumentNumber.text =
+                    acceptance.number.replace("[A-Z]".toRegex(), "").trimStart('0')
                 txtClient.text = acceptance.client.trimStart('0')
                 txtPackage.text = acceptance._package.filter { !it.isDigit() }
                 txtZone.text = acceptance.zone
@@ -75,7 +77,7 @@ class AcceptanceAdapter(
                 holder.itemView.performClick()
             }
         }
-        
+
         binding.txtClient.setOnClickListener(selectCell)
         binding.txtPackage.setOnClickListener(selectCell)
         binding.txtZone.setOnClickListener(selectCell)
@@ -131,7 +133,7 @@ class AcceptanceAdapter(
 
     fun updateFilteredItems(): List<Acceptance> {
         if (selectedTextView != null) {
-            val query = selectedTextView!!.text
+            val query = selectedTextView!!.text.toString()
             val filteredItems = currentList.filter { acceptance ->
                 when (selectedTextView!!.id) {
                     binding.txtClient.id -> acceptance.client.trimStart('0') == query
@@ -144,6 +146,21 @@ class AcceptanceAdapter(
                     else -> false
                 }
             }
+
+            Filter.client = if (selectedTextView!!.id == binding.txtClient.id) query else Filter.client
+            Filter._package = if (selectedTextView!!.id == binding.txtPackage.id) query else Filter._package
+            Filter.zone = if (selectedTextView!!.id == binding.txtZone.id) query else Filter.zone
+            if (selectedTextView!!.id == binding.ivWeight.id && filteredItems.isNotEmpty()) {
+                Filter.weight = true
+            }else if (selectedTextView!!.id == binding.txtEmptyWeight.id && filteredItems.isNotEmpty()){
+                Filter.weight = false
+            }
+            if (selectedTextView!!.id == binding.ivCapacity.id && filteredItems.isNotEmpty()) {
+                Filter.size = true
+            }else if (selectedTextView!!.id == binding.txtEmptyCapacity.id && filteredItems.isNotEmpty()){
+                Filter.size = false
+            }
+
             return filteredItems
         } else {
             return currentList

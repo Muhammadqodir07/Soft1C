@@ -84,6 +84,7 @@ class AcceptanceWeightFragment :
                 calcDialog.settings.isZeroShownWhenNoValue = true
                 calcDialog.settings.initialValue = etxtWeight.text.toString().toDouble().toBigDecimal()
                 calcDialog.settings.isSignBtnShown = false
+                calcDialog.settings.isExpressionShown = true
                 calcDialog.show(childFragmentManager, "calc_dialog") }
             etxtSave.setOnKeyListener(::autoCompleteOnKeyListener)
             etxtSave.setOnFocusChangeListener(::setAutoCompleteFocusListener)

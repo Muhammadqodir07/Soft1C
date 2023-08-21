@@ -29,6 +29,7 @@ class AcceptanceSizeFragment :
     private var indexSeatNumber = 0
     private var focusedEditText: EditText? = null
     private var hasFocusCanSave = false
+    private var saveSize = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +58,7 @@ class AcceptanceSizeFragment :
             if (it) {
                 toast(resources.getString(R.string.text_successfully_saved))
             }
+            Utils.refreshList = true
             closeDialogLoading()
             closeActivity()
         }
@@ -95,11 +97,7 @@ class AcceptanceSizeFragment :
             else {
                 val sizeAcceptance = acceptanceSize.dataArray[0]
                 indexSeatNumber = sizeAcceptance.seatNumber
-                with(binding) {
-                    etxtLength.setText(sizeAcceptance.length.toString())
-                    etxtHeight.setText(sizeAcceptance.height.toString())
-                    etxtWidth.setText(sizeAcceptance.width.toString())
-                }
+                fillFields(sizeAcceptance)
             }
         }
         binding.etxtCurrentIndex.setText(indexSeatNumber.toString())
@@ -111,11 +109,17 @@ class AcceptanceSizeFragment :
                 val sizeAcceptance = acceptanceSize.dataArray[index]
                 indexSeatNumber = sizeAcceptance.seatNumber
                 with(binding) {
-                    etxtLength.setText(sizeAcceptance.length.toString())
-                    etxtHeight.setText(sizeAcceptance.height.toString())
-                    etxtWidth.setText(sizeAcceptance.width.toString())
+                    fillFields(sizeAcceptance)
                 }
             }
+        }
+    }
+
+    private fun fillFields(sizeAcceptance: SizeAcceptance.SizeData){
+        with(binding){
+            sizeAcceptance.length.takeIf { it != 0 }?.toString()?.let { etxtLength.setText(it) } ?: etxtLength.setText("")
+            sizeAcceptance.height.takeIf { it != 0 }?.toString()?.let { etxtHeight.setText(it)} ?: etxtHeight.setText("")
+            sizeAcceptance.width.takeIf { it != 0 }?.toString()?.let { etxtWidth.setText(it)}?: etxtWidth.setText("")
         }
     }
 
@@ -139,7 +143,8 @@ class AcceptanceSizeFragment :
     private fun setEditTextFocusListener(view: View, hasFocus: Boolean){
         view as EditText
         if (hasFocus){
-            view.setSelection(view.text.length)
+            view.selectAll()
+            saveSize = false
             focusedEditText = view
         }else {
             focusedEditText = null
@@ -152,9 +157,7 @@ class AcceptanceSizeFragment :
                 indexSeatNumber = sizeAcceptance.seatNumber
                 with(binding) {
                     etxtCurrentIndex.setText(indexSeatNumber.toString())
-                    etxtLength.setText(sizeAcceptance.length.toString())
-                    etxtHeight.setText(sizeAcceptance.height.toString())
-                    etxtWidth.setText(sizeAcceptance.width.toString())
+                    fillFields(sizeAcceptance)
                     focusedEditText?.let { editText ->
                         editText.setSelection(editText.text.length)
                     }
@@ -178,7 +181,7 @@ class AcceptanceSizeFragment :
             rvMain.layoutManager = LinearLayoutManager(requireContext())
 
             etxtChangeColumnsNumber.setOnKeyListener { _, key, keyEvent ->
-                if (key == 66 && keyEvent.action == KeyEvent.ACTION_DOWN) {
+                if (key == 66 && keyEvent.action == KeyEvent.ACTION_UP) {
                     hasFocusCanSave = true
                     etxtSave.requestFocus()
                     return@setOnKeyListener true
@@ -192,32 +195,32 @@ class AcceptanceSizeFragment :
                 viewModel.updateAcceptanceSize(acceptanceGuid, acceptanceSize)
                 showDialogLoading()
             }
+
             etxtWidth.setOnFocusChangeListener { _, hasFocus ->
                 if (hasFocus) {
-                    etxtWidth.setSelection(etxtWidth.text.length)
+                    etxtWidth.selectAll()
+                    saveSize = false
                     if (acceptanceSize.dataArray.last().seatNumber < indexSeatNumber) {
                         ivSave.requestFocus()
-                    } else if (etxtLength.text.isEmpty()) {
-                        etxtLength.requestFocus()
                     }
                 }
             }
             etxtLength.setOnFocusChangeListener(::setEditTextFocusListener)
             etxtHeight.setOnFocusChangeListener(::setEditTextFocusListener)
             etxtChangeColumnsNumber.setOnFocusChangeListener(::setEditTextFocusListener)
-
         }
     }
 
     private fun autoCompleteOnKeyListener(view: View, key: Int, keyEvent: KeyEvent): Boolean {
-        if (key == 66 && keyEvent.action == KeyEvent.ACTION_DOWN) {
+        if (key == 66 && keyEvent.action == KeyEvent.ACTION_UP) {
             view as AutoCompleteTextView
             with(binding) {
                 when (view) {
                     etxtSave -> {
+                        if (saveSize){
+                            ivSave.performClick()
+                        }
                         fillList()
-                        etxtLength.requestFocus()
-                        etxtLength.setSelection(etxtLength.text.length)
                         return true
                     }
                     else -> false
@@ -260,16 +263,18 @@ class AcceptanceSizeFragment :
                         listElement.width = width
                         listElement.height = height
                         listElement.weight = length * width * height * 0.000001
-                        indexSeatNumber += 1
+                        if(acceptance.countSeat != indexSeatNumber) indexSeatNumber += 1
+                        else saveSize = true
                         lastChangedItemIndex = indexList
                     }
                 }
             }
-            etxtChangeColumnsNumber.text.clear()
-            etxtHeight.text.clear()
-            etxtWidth.text.clear()
+            etxtChangeColumnsNumber.setText("1")
             etxtLength.text.clear()
+            etxtWidth.text.clear()
+            etxtHeight.text.clear()
             binding.etxtCurrentIndex.setText(indexSeatNumber.toString())
+            updateWeight(listData)
         }
         sizeAdapter.submitList(listData)
         sizeAdapter.notifyDataSetChanged()
@@ -282,6 +287,9 @@ class AcceptanceSizeFragment :
             fillIndexSeatNumber(lastChangedItemIndex)
         }
         acceptanceSize.dataArray = listData
+        if (!saveSize) {
+            binding.etxtLength.requestFocus()
+        }
     }
 
     private fun checkedFillFields(): Boolean {
@@ -291,6 +299,14 @@ class AcceptanceSizeFragment :
             if (!checkedEditTextField(etxtHeight)) return false
         }
         return true
+    }
+
+    private fun updateWeight(list: MutableList<SizeAcceptance.SizeData>){
+        var sum = 0.0
+        for (data in list){
+            sum+=data.weight
+        }
+        binding.txtWeight.text = String.format("%.6f", sum)
     }
 
     private fun checkedEditTextField(editText: EditText): Boolean {
@@ -306,7 +322,7 @@ class AcceptanceSizeFragment :
 
     private fun enableFields() {
         with(binding) {
-            if (acceptanceSize.recordAllowed) {etxtLength.requestFocus(); etxtLength.setSelection(etxtLength.text.length)}
+            if (acceptanceSize.recordAllowed) {etxtLength.requestFocus(); etxtLength.selectAll()}
             etxtLength.isEnabled = acceptanceSize.recordAllowed
             etxtWidth.isEnabled = acceptanceSize.recordAllowed
             etxtHeight.isEnabled = acceptanceSize.recordAllowed
