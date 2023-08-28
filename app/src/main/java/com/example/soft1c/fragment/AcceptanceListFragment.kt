@@ -24,6 +24,7 @@ import com.example.soft1c.repository.model.ItemClicked
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.viewmodel.AcceptanceViewModel
 import com.google.android.material.textfield.TextInputEditText
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 class AcceptanceListFragment :
@@ -287,8 +288,8 @@ class AcceptanceListFragment :
                     putString(AcceptanceFragment.KEY_ACCEPTANCE_NUMBER, acceptance.number)
                     putString(AcceptanceSizeFragment.KEY_ACCEPTANCE_GUID, acceptance.ref)
                 }
-                AcceptanceFragment.IS_TODAY = true
-//                    LocalDateTime.parse(acceptance.date).toLocalDate() == LocalDate.now()
+                AcceptanceFragment.IS_TODAY =
+                     LocalDateTime.parse(acceptance.date).toLocalDate() == LocalDate.now()
                 openAcceptanceDetail(args, acceptance.weight, acceptance.capacity)
             }
             else -> return

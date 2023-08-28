@@ -159,6 +159,7 @@ class AcceptanceWeightFragment :
             val weight = etxtWeight.text.toString()
             if (weight.isNotEmpty())
                 acceptance.allWeight = weight.toDouble()
+            acceptance.type = 1
         }
         viewModel.createUpdateAcceptance(acceptance)
     }

@@ -516,24 +516,15 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/elayout_document_number_copy">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/elayout_save_copy"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1">
 
-                    <AutoCompleteTextView
-                        android:id="@+id/etxt_save_copy"
-                        style="@style/AutoCompleteSave"
-                        android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:inputType="none"
-                        android:text="@string/text_save"
-                        android:textAlignment="center"
-                        tools:ignore="LabelFor" />
-
-                </com.google.android.material.textfield.TextInputLayout>
+                    <Button
+                        android:id="@+id/btn_save"
+                        style="?android:attr/buttonBarButtonStyle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/default_margin_chb"
+                        android:layout_weight="1"
+                        android:text="@string/text_save" />
 
             </LinearLayout>
 

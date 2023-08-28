@@ -7,6 +7,7 @@ data class SizeAcceptance(
     val priceM3: Double = 0.0,
     val priceWeight: Double = 0.0,
     var dataArray: List<SizeData>,
+    var creator: String = ""
 ) {
 
     data class SizeData(

@@ -147,10 +147,10 @@ class PrinterActivity : AppCompatActivity(){
                 TscDll.sendcommand("SET TEAR ON\r\n")
                 TscDll.sendcommand("BARCODE 561,170,\"128M\",60,0,180,3,6,\"${barcodeInput}\"\r\n")
                 TscDll.sendcommand("CODEPAGE 1251\r\n")
-                TscDll.sendcommand("TEXT 563,105,\"ROMAN.TTF\",180,1,28,\"${acceptance.number.toString()}\"\r\n")
+                TscDll.sendcommand("TEXT 563,105,\"ROMAN.TTF\",180,1,28,\"${acceptance.number}\"\r\n")
                 TscDll.sendcommand("TEXT 564,368,\"0\",180,74,53,\"${acceptance.client}\"\r\n")
                 TscDll.sendcommand("TEXT 129,160,\"ROMAN.TTF\",180,1,12,\"SEATS:\"\r\n")
-                TscDll.sendcommand("TEXT 130,111,\"0\",180,20,20,\"${acceptance.countSeat.toString()}\"\r\n")
+                TscDll.sendcommand("TEXT 130,111,\"0\",180,20,20,\"${acceptance.countSeat}\"\r\n")
                 TscDll.sendcommand("TEXT 508,232,\"0\",180,12,13,\"DATE:\"\r\n")
                 TscDll.sendcommand("TEXT 405,231,\"0\",180,25,12,\"${date}\"\r\n")
                 TscDll.printlabel(binding.etxtPageCount.text.toString().toInt(), 1)
@@ -158,6 +158,7 @@ class PrinterActivity : AppCompatActivity(){
                 TscDll.closeport()
                 Looper.myLooper()?.quit()
                 acceptance.isPrinted = true
+                acceptance.type = 2
                 createUpdateAcceptance()
             } catch (e: Exception) {
                 binding.testTV.text = e.message

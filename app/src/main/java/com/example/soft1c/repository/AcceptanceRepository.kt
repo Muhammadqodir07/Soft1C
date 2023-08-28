@@ -147,6 +147,7 @@ class AcceptanceRepository {
             jsonObject.put(BRAND_KEY, acceptance.brand)
             jsonObject.put(COUNT_PACKAGE_KEY, acceptance.countPackage)
             jsonObject.put(CREATOR_KEY, acceptance.creator)
+            jsonObject.put(TYPE_KEY, acceptance.type)
             jsonObject.put(PRINTED_KEY, acceptance.isPrinted)
             val requestBody =
                 jsonObject.toString().toRequestBody("application/json".toMediaTypeOrNull())
@@ -387,6 +388,7 @@ class AcceptanceRepository {
         const val PACKAGE_ENABLE = "AmountInPackage"
 
         const val CREATOR_KEY = "Создатель"
+        const val TYPE_KEY = "Тип"
         const val ERROR_ARRAY = "ПричинаОшибки"
         const val FIELDS_PROPERTY_KEY = "ПараметрыВидимости"
         const val FIELD_KEY = "Поле"

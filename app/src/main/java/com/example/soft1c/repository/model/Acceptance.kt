@@ -31,6 +31,7 @@ data class Acceptance(
     var productType: String = "", // ВидТовара
     var batchGuid: String = "", // GUIDПартии
     var creator: String = "", //Юзернейм создателя документа
-    var isPrinted: Boolean = false //Напечатан
+    var isPrinted: Boolean = false, //Напечатан
+    var type: Int = -1
 ) {
 }

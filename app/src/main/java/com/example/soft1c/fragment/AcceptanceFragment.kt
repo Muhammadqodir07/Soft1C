@@ -36,6 +36,7 @@ class AcceptanceFragment :
     private var documentCreate = false
     private lateinit var propertyList: List<AcceptanceEnableVisible>
     private var isCopiedAcceptance = false
+    private var isBottomSaveButton = false
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,11 +82,18 @@ class AcceptanceFragment :
             return
         }
         Utils.refreshList = true
+        closeDialogLoading()
         if (NEXT_IS_NEED) {
             createCopyForm()
         } else {
-            closeActivity()
+            if (!isBottomSaveButton)
+                closeActivity()
+            else{
+                setInitFocuses()
+                toast(getString(R.string.text_successfully_saved))
+            }
         }
+        isBottomSaveButton = false
     }
 
     private fun clientObserve(pair: Pair<Client, Boolean>) {
@@ -174,7 +182,6 @@ class AcceptanceFragment :
                     etxtStoreNumber.requestFocus()
                 }
             }
-            etxtProductType.text.clear()
             etxtProductType.setAdapter(
                 ArrayAdapter(requireContext(),
                     android.R.layout.simple_list_item_1, Utils.productTypes.map {
@@ -220,7 +227,6 @@ class AcceptanceFragment :
             }
             etxtSave.setOnKeyListener(::autoCompleteOnKeyListener)
             etxtSave.setOnFocusChangeListener(::setAutoCompleteFocusListener)
-            etxtSaveCopy.setOnFocusChangeListener(::setAutoCompleteFocusListener)
             etxtSave.setOnClickListener {
                 createUpdateAcceptance()
             }
@@ -245,12 +251,16 @@ class AcceptanceFragment :
             chbArrow.setOnClickListener(::setCheckResult)
             chbBrand.setOnClickListener(::setCheckResult)
 
-//            btnSave.setOnClickListener {
-//                createUpdateAcceptance()
-//            }
-//            btnSaveCopy.setOnClickListener {
-//                createUpdateAcceptance()
-//            }
+            btnSave.setOnClickListener {
+                isBottomSaveButton = true
+                if (acceptanceCopyList.isNotEmpty()) {
+                    acceptanceCopyList.forEach { acceptance ->
+                        viewModel.createUpdateAcceptance(acceptance)
+                    }
+                }
+                createUpdateAcceptance()
+                showDialogLoading()
+            }
             btnPrint.setOnClickListener {
                 if (etxtDocumentNumber.text?.isNotEmpty() == true) {
                     val intent = Intent(requireContext(), PrinterActivity::class.java)
@@ -280,7 +290,7 @@ class AcceptanceFragment :
         view as AutoCompleteTextView
         with(binding) {
             when (view) {
-                etxtSave, etxtSaveCopy -> if (hasFocus) {
+                etxtSave -> if (hasFocus) {
                     if (hasFocusCanSave) {
                         hasFocusCanSave = !hasFocusCanSave
                         return@with
@@ -300,6 +310,8 @@ class AcceptanceFragment :
         if (documentCreate) return
         documentCreate = !documentCreate
         fillAcceptance()
+        acceptance.creator = user.username
+        acceptance.type = 0
         viewModel.createUpdateAcceptance(acceptance)
     }
 
@@ -868,7 +880,6 @@ class AcceptanceFragment :
 
 
     private fun setInitFocuses() {
-        if (clientFound) return
         with(binding) {
             with(etxtZone) {
                 requestFocus()

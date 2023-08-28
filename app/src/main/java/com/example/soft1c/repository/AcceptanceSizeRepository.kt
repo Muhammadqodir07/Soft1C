@@ -1,7 +1,7 @@
 package com.example.soft1c.repository
 
-import com.example.soft1c.repository.model.SizeAcceptance
 import com.example.soft1c.network.Network
+import com.example.soft1c.repository.model.SizeAcceptance
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
@@ -127,5 +127,6 @@ class AcceptanceSizeRepository {
         const val WIDTH_KEY = "Ширина"
         const val HEIGHT_KEY = "Высота"
         const val WEIGHT_KEY = "Объем"
+        const val CREATOR_KEY = "Создатель"
     }
 }

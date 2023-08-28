@@ -263,7 +263,7 @@ class AcceptanceSizeFragment :
                         listElement.width = width
                         listElement.height = height
                         listElement.weight = length * width * height * 0.000001
-                        if(acceptance.countSeat != indexSeatNumber) indexSeatNumber += 1
+                        if(acceptanceSize.dataArray.last().seatNumber != indexSeatNumber) indexSeatNumber += 1
                         else saveSize = true
                         lastChangedItemIndex = indexList
                     }
