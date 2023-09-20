@@ -108,6 +108,12 @@
         android:label="BarcodePrinterActivity"
         tools:layout="@layout/activity_printer" />
 
+    <activity
+        android:id="@+id/uceActivity"
+        android:name="com.example.soft1c.utils.UCE.UCEActivity"
+        android:label="UnhandledExceptionHandler"
+        tools:layout="@layout/activity_uceactivity" />
+
     <fragment
         android:id="@+id/loadingListFragment"
         android:name="com.example.soft1c.fragment.LoadingListFragment"

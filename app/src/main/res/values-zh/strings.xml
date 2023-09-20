@@ -72,4 +72,10 @@
     <string name="text_title_loading_list">装货</string>
     <string name="text_warehouse">仓库</string>
     <string name="text_no_rights">无权限</string>
+    <string name="ask_for_error_log">发生意外的错误。 通过提供错误详细信息来帮助开发人员。 感谢您的支持。"</string>
+    <string name="view_error_log">览故障</string>
+    <string name="share_error_log">分享故障</string>
+    <string name="email_error_log">寄电邮故障</string>
+    <string name="copy_error_log">复制故障</string>
+    <string name="close_app">关闭手机</string>
 </resources>

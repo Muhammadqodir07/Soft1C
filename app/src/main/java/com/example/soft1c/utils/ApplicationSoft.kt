@@ -12,6 +12,9 @@ class ApplicationSoft:Application() {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
+            UnhandledExceptionHandler.Builder(applicationContext)
+            .addCommaSeparatedEmailAddresses("qodirhcr@gmail.com")
+            .build()
     }
 
 }

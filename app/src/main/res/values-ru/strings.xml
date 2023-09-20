@@ -72,4 +72,10 @@
     <string name="text_title_loading_list">Погрузка товара</string>
     <string name="text_warehouse">Склады</string>
     <string name="text_no_rights">Нет прав</string>
+    <string name="ask_for_error_log">Произошла неожиданная ошибка. Помогите разработчикам, предоставив подробную информацию об ошибке. Спасибо за Вашу поддержку.</string>
+    <string name="view_error_log">Посмотреть</string>
+    <string name="share_error_log">Поделиться</string>
+    <string name="email_error_log">Отправить</string>
+    <string name="copy_error_log">Скопировать</string>
+    <string name="close_app">Выйти</string>
 </resources>

@@ -24,7 +24,6 @@ import com.example.soft1c.repository.model.ItemClicked
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.viewmodel.AcceptanceViewModel
 import com.google.android.material.textfield.TextInputEditText
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 class AcceptanceListFragment :
@@ -288,20 +287,18 @@ class AcceptanceListFragment :
                     putString(AcceptanceFragment.KEY_ACCEPTANCE_NUMBER, acceptance.number)
                     putString(AcceptanceSizeFragment.KEY_ACCEPTANCE_GUID, acceptance.ref)
                 }
-                AcceptanceFragment.IS_TODAY =
-                     LocalDateTime.parse(acceptance.date).toLocalDate() == LocalDate.now()
-                openAcceptanceDetail(args, acceptance.weight, acceptance.capacity)
+                openAcceptanceDetail(args)
             }
             else -> return
         }
     }
 
-    private fun openAcceptanceDetail(bundle: Bundle, weight: Boolean, capacity: Boolean) {
+    private fun openAcceptanceDetail(bundle: Bundle) {
         with(binding) {
             val action = when {
                 chbAcceptance.isChecked && (user.acceptanceCargo || user.isAdmin) -> R.id.action_acceptanceFragment_to_acceptanceFragment
-                chbWeight.isChecked && (!weight || AcceptanceFragment.IS_TODAY) && (user.weightAccess || user.isAdmin) -> R.id.action_acceptanceListFragment_to_acceptanceWeightFragment
-                chbSize.isChecked && (!capacity || AcceptanceFragment.IS_TODAY) && (user.measureCargo || user.isAdmin) -> R.id.action_acceptanceListFragment_to_acceptanceSizeFragment
+                chbWeight.isChecked && (user.weightAccess || user.isAdmin) -> R.id.action_acceptanceListFragment_to_acceptanceWeightFragment
+                chbSize.isChecked && (user.measureCargo || user.isAdmin) -> R.id.action_acceptanceListFragment_to_acceptanceSizeFragment
                 else -> {
                     toast(getString(R.string.text_no_rights))
                     return

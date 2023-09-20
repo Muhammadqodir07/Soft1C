@@ -7,7 +7,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.soft1c.repository.AcceptanceRepository
 import com.example.soft1c.repository.AcceptanceSizeRepository
-import com.example.soft1c.repository.model.*
+import com.example.soft1c.repository.model.Acceptance
+import com.example.soft1c.repository.model.AcceptanceEnableVisible
+import com.example.soft1c.repository.model.Client
+import com.example.soft1c.repository.model.FieldsAccess
+import com.example.soft1c.repository.model.SizeAcceptance
 import com.example.soft1c.utils.SingleLiveEvent
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +45,7 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
     private val fieldMutableData = SingleLiveEvent<FieldsAccess>()
     private val createUpdateMutableData = SingleLiveEvent<Pair<Acceptance, String>>()
     private val acceptanceSizeMutableData = SingleLiveEvent<SizeAcceptance>()
-    private val updateAcceptanceSizeMutableData = SingleLiveEvent<Boolean>()
+    private val updateAcceptanceSizeMutableData = SingleLiveEvent<Pair<String, Boolean>>()
 
     val toastLiveData: LiveData<String>
         get() = toastMutableData
@@ -64,7 +68,7 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
     val acceptanceSizeLiveData: LiveData<SizeAcceptance>
         get() = acceptanceSizeMutableData
 
-    val updateAcceptanceSizeLiveData: LiveData<Boolean>
+    val updateAcceptanceSizeLiveData: LiveData<Pair<String, Boolean>>
         get() = updateAcceptanceSizeMutableData
 
     fun getAcceptanceList() {

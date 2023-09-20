@@ -35,21 +35,24 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
         binding.includeToolbar.toolbar.setOnMenuItemClickListener(object :
             Toolbar.OnMenuItemClickListener {
             override fun onMenuItemClick(item: MenuItem?): Boolean {
-                activity?.let { fragActivity ->
+                requireActivity().let { fragActivity ->
                     when (item?.itemId) {
                         R.id.item_chinese -> {
                             fragActivity as MainActivity
                             fragActivity.setLocale("zh")
+                            //refreshLayout()
                             return true
                         }
                         R.id.item_english -> {
                             fragActivity as MainActivity
                             fragActivity.setLocale("eng")
+                            //refreshLayout()
                             return true
                         }
                         R.id.item_russian -> {
                             fragActivity as MainActivity
                             fragActivity.setLocale("ru")
+                            //refreshLayout()
                             return true
                         }
                         R.id.item_macAddress -> {
@@ -100,6 +103,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
         loadFromSharedPref()
         with(binding) {
             cardLogin.setOnClickListener {
+                //throw Exception()
                 setBase()
 //                val demo = Demo()
 //                demo.loadProfile()

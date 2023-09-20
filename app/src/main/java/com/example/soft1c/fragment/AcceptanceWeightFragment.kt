@@ -12,7 +12,6 @@ import com.example.soft1c.databinding.FragmentAcceptanceWeightBinding
 import com.example.soft1c.repository.model.Acceptance
 import com.example.soft1c.repository.model.AcceptanceEnableVisible
 import com.example.soft1c.repository.model.FieldsAccess
-import com.example.soft1c.repository.model.User
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.viewmodel.AcceptanceViewModel
 import com.google.android.material.textfield.TextInputEditText
@@ -25,7 +24,7 @@ class AcceptanceWeightFragment :
     private lateinit var acceptance: Acceptance
     private val viewModel: AcceptanceViewModel by viewModels()
     private var hasFocusCanSave = false
-    private val user = User()
+    private val user = Utils.user
     private var value: BigDecimal? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,7 +38,7 @@ class AcceptanceWeightFragment :
             Acceptance(number = "")
         }
         if (acceptanceGuid.isNotEmpty()) {
-            viewModel.getFieldsAccess(acceptanceGuid, Utils.OperationType.ACCEPTANCE)
+            viewModel.getFieldsAccess(acceptanceGuid, Utils.OperationType.WEIGHT)
         }
     }
 
@@ -58,7 +57,10 @@ class AcceptanceWeightFragment :
     }
 
     private fun createUpdateAcceptance(pair: Pair<Acceptance, String>) {
-        if (pair.second.isNotEmpty()) return
+        if (pair.second.isNotEmpty()) {
+            toast(pair.second)
+            return
+        }
         Utils.refreshList = true
         activity?.onBackPressed()
     }
@@ -222,10 +224,8 @@ class AcceptanceWeightFragment :
     }
 
     private fun checkEditRights(fieldsAccess: FieldsAccess){
-        if((!fieldsAccess.isCreator && !user.isAdmin) || !user.weightAccess || (!user.isAdmin && !fieldsAccess.weightEnable) || !AcceptanceFragment.IS_TODAY){
-            binding.constraintLayout.isEnabled = false
-            binding.btnClose.isEnabled = true
-            binding.btnCloseCopy.isEnabled = true
+        if((!fieldsAccess.isCreator && !user.isAdmin) || !user.weightAccess || (!user.isAdmin && !fieldsAccess.weightEnable) || fieldsAccess.readOnly){
+            binding.etxtWeight.isEnabled=false
         }
     }
 

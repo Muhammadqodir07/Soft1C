@@ -45,7 +45,7 @@ class AcceptanceSizeRepository {
     suspend fun updateSizeDataApi(
         acceptanceGuid: String,
         acceptance: SizeAcceptance,
-    ): Boolean {
+    ): Pair<String, Boolean> {
         return suspendCoroutine { continuation ->
             val jsonArray = JSONArray()
             acceptance.dataArray.forEach { acceptance ->
@@ -66,16 +66,29 @@ class AcceptanceSizeRepository {
                     response: Response<ResponseBody>,
                 ) {
                     if (response.isSuccessful) {
-                        continuation.resume(true)
+                        val responseBody = response.body()?.string() ?: ""
+                        val jsonObject = JSONObject(responseBody)
+                        var error = try {
+                            "${jsonObject.getJSONArray(ERROR_ARRAY_KEY)[0]}"
+                        } catch (e: Exception) {
+                            ""
+                        }
+                        if (error.isEmpty()) {
+                            error += try {
+                                jsonObject.getString(ERROR_REASON_KEY)
+                            } catch (e: Exception) {
+                                ""
+                            }
+                        }
+                        continuation.resume(Pair(error, true))
                     } else {
-                        continuation.resume(false)
+                        continuation.resume(Pair(response.message(), false))
                     }
                 }
 
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     continuation.resumeWithException(t)
                 }
-
             })
         }
     }
@@ -127,6 +140,8 @@ class AcceptanceSizeRepository {
         const val WIDTH_KEY = "Ширина"
         const val HEIGHT_KEY = "Высота"
         const val WEIGHT_KEY = "Объем"
-        const val CREATOR_KEY = "Создатель"
+        const val ERROR_ARRAY_KEY = "МассивОшибок"
+        const val ERROR_REASON_KEY = "ПричинаОшибки"
+        const val RESULT_KEY = "Результат"
     }
 }

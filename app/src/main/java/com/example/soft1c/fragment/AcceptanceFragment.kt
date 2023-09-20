@@ -15,7 +15,11 @@ import androidx.navigation.fragment.findNavController
 import com.example.soft1c.R
 import com.example.soft1c.databinding.FragmentAcceptanceBinding
 import com.example.soft1c.repository.AcceptanceRepository
-import com.example.soft1c.repository.model.*
+import com.example.soft1c.repository.model.Acceptance
+import com.example.soft1c.repository.model.AcceptanceEnableVisible
+import com.example.soft1c.repository.model.AnyModel
+import com.example.soft1c.repository.model.Client
+import com.example.soft1c.repository.model.FieldsAccess
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.utils.Utils.acceptanceCopyList
 import com.example.soft1c.viewmodel.AcceptanceViewModel
@@ -308,8 +312,8 @@ class AcceptanceFragment :
 
     private fun createUpdateAcceptance() {
         if (documentCreate) return
-        documentCreate = !documentCreate
         fillAcceptance()
+        documentCreate = !documentCreate
         acceptance.creator = user.username
         acceptance.type = 0
         viewModel.createUpdateAcceptance(acceptance)
@@ -340,9 +344,8 @@ class AcceptanceFragment :
         }
     }
 
-    private fun fillAcceptance() {
+    private fun fillAcceptance(): Boolean {
         with(binding) {
-            acceptance.client = etxtCodeClient.text.toString()
             acceptance.autoNumber = etxtAutoNumber.text.toString()
             acceptance.idCard = etxtCardNumber.text.toString()
             acceptance.storeName = etxtStoreNumber.text.toString()
@@ -357,6 +360,7 @@ class AcceptanceFragment :
             val countInPackage = etxtCountInPackage.text.toString()
             if (countInPackage.isNotEmpty())
                 acceptance.countInPackage = countInPackage.toInt()
+            return true
         }
     }
 
@@ -765,11 +769,11 @@ class AcceptanceFragment :
     private fun fieldsAccess(fieldAccess: FieldsAccess) {
         with(binding) {
             fieldsAccess = fieldAccess
-            if ((!user.isAdmin || !fieldAccess.isCreator) && !IS_TODAY) {
+            if (!user.isAdmin || !fieldAccess.isCreator) {
                 fieldsEnable(false)
             }
             if(acceptance.isPrinted){
-            etxtCodeClient.isEnabled = false
+                etxtCodeClient.isEnabled = false
             }
             if (fieldsAccess.chBoxEnable) {
                 chbArrow.isEnabled = true
@@ -917,9 +921,7 @@ class AcceptanceFragment :
 
     private fun checkEditRights() {
         if ((!fieldsAccess.isCreator && !user.isAdmin) || !user.acceptanceCargo) {
-            binding.constraintLayout.isEnabled = false
-            binding.btnClose.isEnabled = true
-            binding.btnCloseCopy.isEnabled = true
+            fieldsEnable(false)
         }
     }
 
@@ -927,7 +929,6 @@ class AcceptanceFragment :
         const val KEY_ACCEPTANCE_NUMBER = "acceptance_number"
         var ACCEPTANCE = Acceptance(number = "")
         var NEXT_IS_NEED = false
-        var IS_TODAY = false
         var BATCH_GUID = ""
     }
 }

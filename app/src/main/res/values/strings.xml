@@ -76,5 +76,12 @@
     <string name="text_getter_warehouse">Receiving warehouse</string>
     <string name="text_title_loading_list">Loading of goods</string>
     <string name="text_no_rights">No rights</string>
+    <string name="ask_for_error_log">An unexpected error has occurred. Help developers by providing error details. Thank you for your support.</string>
+    <string name="email_welcome_note" translatable="false">Dear Dev Team,\n\nApplication is just crashed, please check following error log for more details.\n\n\n</string>
+    <string name="view_error_log">View error</string>
+    <string name="share_error_log">Share error</string>
+    <string name="email_error_log">Email error</string>
+    <string name="copy_error_log">Copy error</string>
+    <string name="close_app">Close app</string>
 
 </resources>

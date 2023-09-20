@@ -47,6 +47,11 @@ open class BaseFragment<T : ViewBinding>(
         Toast.makeText(requireContext(), text, Toast.LENGTH_SHORT).show()
         Timber.d(text)
     }
+    fun toastLong(text: String) {
+        closeDialogLoading()
+        Toast.makeText(requireContext(), text, Toast.LENGTH_LONG).show()
+        Timber.d(text)
+    }
 
     fun setSharedPref(key: String, value: String) {
         val sharedPreferences = requireContext().getSharedPreferences("", Context.MODE_PRIVATE)

@@ -164,17 +164,28 @@ class BaseRepository(private val lang: String) {
         val priemkiAccess = jsonObject.optBoolean("PriemkiAccess", false)
         val pogruzkiAccess = jsonObject.optBoolean("PogruzkiAccess", false)
         val isAdmin = jsonObject.optBoolean(IS_ADMIN, false)
-        val acceptanceAdd = jsonObject.optBoolean(ACCEPTANCE_ADD, false)
-        val weightAdd = jsonObject.optBoolean(WEIGHT_ADD, false)
-        val sizeAdd = jsonObject.optBoolean(SIZE_ADD, false)
-        Utils.user = User(
-            username = Utils.username,
-            password = Utils.password,
-            isAdmin = isAdmin,
-            weightAccess = weightAdd,
-            measureCargo = sizeAdd,
-            acceptanceCargo = acceptanceAdd
-        )
+        if (isAdmin){
+            Utils.user = User(
+                username = Utils.username,
+                password = Utils.password,
+                isAdmin = true,
+                weightAccess = true,
+                measureCargo = true,
+                acceptanceCargo = true
+            )
+        } else {
+            val acceptanceAdd = jsonObject.optBoolean(ACCEPTANCE_ADD, false)
+            val weightAdd = jsonObject.optBoolean(WEIGHT_ADD, false)
+            val sizeAdd = jsonObject.optBoolean(SIZE_ADD, false)
+            Utils.user = User(
+                username = Utils.username,
+                password = Utils.password,
+                isAdmin = false,
+                weightAccess = weightAdd,
+                measureCargo = sizeAdd,
+                acceptanceCargo = acceptanceAdd
+            )
+        }
 
         return true
     }

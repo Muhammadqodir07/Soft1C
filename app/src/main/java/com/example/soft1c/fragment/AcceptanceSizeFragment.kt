@@ -6,6 +6,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
+import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,7 +15,6 @@ import com.example.soft1c.adapter.AcceptanceSizeAdapter
 import com.example.soft1c.databinding.FragmentAcceptanceSizeBinding
 import com.example.soft1c.repository.model.*
 import com.example.soft1c.utils.Utils
-import com.example.soft1c.utils.Utils.user
 import com.example.soft1c.viewmodel.AcceptanceViewModel
 import timber.log.Timber
 
@@ -30,6 +30,7 @@ class AcceptanceSizeFragment :
     private var focusedEditText: EditText? = null
     private var hasFocusCanSave = false
     private var saveSize = false
+    private val user = Utils.user
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,7 +40,7 @@ class AcceptanceSizeFragment :
         viewModel.getAcceptanceSizeData(acceptanceGuid)
         viewModel.getAcceptance(acceptanceNumber)
         if (acceptanceGuid.isNotEmpty()) {
-            viewModel.getFieldsAccess(acceptanceGuid, Utils.OperationType.ACCEPTANCE)
+            viewModel.getFieldsAccess(acceptanceGuid, Utils.OperationType.SIZE)
         }
     }
 
@@ -55,8 +56,16 @@ class AcceptanceSizeFragment :
         viewModel.fieldLiveData.observe(viewLifecycleOwner, ::checkEditRights)
         viewModel.acceptanceLiveData.observe(viewLifecycleOwner, ::showAcceptanceDetail)
         viewModel.updateAcceptanceSizeLiveData.observe(viewLifecycleOwner) {
-            if (it) {
-                toast(resources.getString(R.string.text_successfully_saved))
+            if (it.second) {
+                if (it.first.isEmpty())
+                    toast(resources.getString(R.string.text_successfully_saved))
+                else {
+                    toastLong(it.first)
+                    return@observe
+                }
+            } else {
+                toastLong(it.first)
+                return@observe
             }
             Utils.refreshList = true
             closeDialogLoading()
@@ -335,9 +344,8 @@ class AcceptanceSizeFragment :
     }
 
     private fun checkEditRights(fieldsAccess: FieldsAccess) {
-        if ((!fieldsAccess.isCreator && !user.isAdmin) || !user.measureCargo || (!user.isAdmin && !fieldsAccess.sizeEnable) || !AcceptanceFragment.IS_TODAY) {
-            binding.containerMain.isEnabled = false
-            binding.rvMain.isEnabled = true
+        if ((!fieldsAccess.isCreator && !user.isAdmin) || !user.measureCargo || (!user.isAdmin && !fieldsAccess.sizeEnable) || fieldsAccess.readOnly) {
+            binding.linearInputFields.children.forEach { it.isEnabled = false }
             binding.ivSave.isEnabled = true
         }
 

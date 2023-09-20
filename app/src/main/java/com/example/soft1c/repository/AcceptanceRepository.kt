@@ -3,12 +3,17 @@ package com.example.soft1c.repository
 import com.example.soft1c.adapter.AcceptanceAdapter
 import com.example.soft1c.fragment.AcceptanceFragment
 import com.example.soft1c.network.Network
-import com.example.soft1c.repository.model.*
+import com.example.soft1c.repository.model.Acceptance
+import com.example.soft1c.repository.model.AcceptanceEnableVisible
+import com.example.soft1c.repository.model.AnyModel
+import com.example.soft1c.repository.model.Client
+import com.example.soft1c.repository.model.FieldsAccess
 import com.example.soft1c.utils.Utils
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
@@ -37,7 +42,6 @@ class AcceptanceRepository {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     continuation.resumeWithException(t)
                 }
-
             })
         }
     }
@@ -158,15 +162,26 @@ class AcceptanceRepository {
                         response: Response<ResponseBody>,
                     ) {
                         if (response.isSuccessful) {
-                            val jsonString = response.body()?.string() ?: ""
-                            if (jsonString.isEmpty())
+                            val body = response.body()?.string() ?: ""
+                            if (body.isEmpty())
                                 continuation.resume(Pair(acceptance, ""))
-                            val ref = JSONArray(jsonString).getJSONObject(0).getString(REF_KEY)
+                            val jsonObject = JSONArray(body).getJSONObject(0)
+                            try {
+                                if (jsonObject.getString(RESULT_KEY).equals("Ошибка")) {
+                                    continuation.resume(
+                                        Pair(
+                                            acceptance,
+                                            jsonObject.getString(ERROR_REASON_KEY)
+                                        )
+                                    )
+                                }
+                            } catch (_: Exception){}
+                            val ref = jsonObject.getString(REF_KEY)
                             val nextIsNeed =
-                                JSONArray(jsonString).getJSONObject(0).getString(NEXT_IS_NEED_KEY)
+                                jsonObject.getString(NEXT_IS_NEED_KEY)
                                     .toBoolean()
                             val guid =
-                                JSONArray(jsonString).getJSONObject(0).getString(BATCH_GUID_KEY)
+                                jsonObject.getString(BATCH_GUID_KEY)
                             acceptance.ref = ref
                             AcceptanceAdapter.ACCEPTANCE_GUID = ref
                             AcceptanceFragment.NEXT_IS_NEED = nextIsNeed
@@ -176,10 +191,29 @@ class AcceptanceRepository {
 
                             continuation.resume(Pair(acceptance, ""))
                         } else {
-                            val errorBody = response.errorBody()?.string()
-                            val jsonError =
-                                JSONArray(errorBody).getJSONObject(0).getString(ERROR_ARRAY)
-                            continuation.resume(Pair(acceptance, jsonError))
+                            val errorBody = response.errorBody()?.string() ?: ""
+                            if (errorBody.isNotEmpty()) {
+                                try {
+                                    val json = JSONObject(errorBody)
+                                    val jsonError = json.optString("error", "Error in 1C")
+                                    continuation.resume(Pair(acceptance, jsonError))
+                                } catch (e: JSONException) {
+                                    try {
+                                        val jsonArray = JSONArray(errorBody)
+                                        if (jsonArray.length() > 0) {
+                                            val jsonObject = jsonArray.getJSONObject(0)
+                                            val errorReason = jsonObject.optString(ERROR_ARRAY, "Error in 1C")
+                                            continuation.resume(Pair(acceptance, errorReason))
+                                        } else {
+                                            continuation.resume(Pair(acceptance, "Error in 1C"))
+                                        }
+                                    } catch (e: JSONException) {
+                                        continuation.resume(Pair(acceptance, "Error in 1C"))
+                                    }
+                                }
+                            } else {
+                                continuation.resume(Pair(acceptance, "Error in 1C"))
+                            }
                         }
                     }
 
@@ -396,6 +430,8 @@ class AcceptanceRepository {
         const val VISIBLE_KEY = "Видимость"
         const val ON_CHINESE = "НаКитайском"
         const val NEXT_IS_NEED_KEY = "НуженСледующий"
+        const val RESULT_KEY = "Результат"
+        const val ERROR_REASON_KEY = "ПричинаОшибки"
     }
 
 }
