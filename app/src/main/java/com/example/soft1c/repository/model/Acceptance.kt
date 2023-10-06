@@ -30,7 +30,10 @@ data class Acceptance(
     var zoneUid: String = "", // Зона
     var productType: String = "", // ВидТовара
     var batchGuid: String = "", // GUIDПартии
-    var creator: String = "", //Юзернейм создателя документа
+    var creator:String = "",
+    var whoAccept: String = "", //Тот кто принял
+    var whoWeigh: String = "", //Тот кто взвесил
+    var whoMeasure: String = "", //Тот кто измерил
     var isPrinted: Boolean = false, //Напечатан
     var type: Int = -1
 ) {

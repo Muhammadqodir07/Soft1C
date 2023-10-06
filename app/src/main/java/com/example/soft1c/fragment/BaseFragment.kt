@@ -11,6 +11,8 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
 import com.example.soft1c.R
+import com.example.soft1c.utils.Utils
+import com.example.soft1c.viewmodel.AcceptanceViewModel
 import timber.log.Timber
 
 open class BaseFragment<T : ViewBinding>(
@@ -63,6 +65,28 @@ open class BaseFragment<T : ViewBinding>(
     fun getSharedPref(key: String): String {
         val sharedPreferences = requireContext().getSharedPreferences("", Context.MODE_PRIVATE)
         return sharedPreferences.getString(key, "") ?: ""
+    }
+
+    fun logFileDialog(viewModel: AcceptanceViewModel) {
+        val dialogView =
+            LayoutInflater.from(requireContext()).inflate(R.layout.dialog_log_file, null)
+        val logTextView = dialogView.findViewById<TextView>(R.id.logText)
+        logTextView.text = Utils.logFor1C
+
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.doc_log_info))
+            .setView(dialogView)
+//            .setPositiveButton("Send") { dialog, _ ->
+//                viewModel.sendLogs()
+//                dialog.dismiss()
+//            }
+            .setNegativeButton(R.string.text_close) { dialog, _ ->
+                // Close the dialog
+                dialog.dismiss()
+            }
+            .create()
+
+        dialog.show()
     }
 
     fun setTextDialogLoading(text: String = "") {

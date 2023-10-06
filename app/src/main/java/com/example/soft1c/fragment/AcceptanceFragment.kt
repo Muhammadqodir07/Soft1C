@@ -47,7 +47,7 @@ class AcceptanceFragment :
         super.onCreate(savedInstanceState)
         val acceptanceNumber = arguments?.getString(KEY_ACCEPTANCE_NUMBER, "") ?: ""
         acceptance = if (acceptanceNumber.isNotEmpty()) {
-            viewModel.getAcceptance(acceptanceNumber)
+            viewModel.getAcceptance(acceptanceNumber, Utils.OperationType.ACCEPTANCE)
             Acceptance(number = acceptanceNumber)
         } else {
             Acceptance(number = "")
@@ -70,13 +70,19 @@ class AcceptanceFragment :
 
     private fun observeViewModels() {
         viewModel.acceptanceLiveData.observe(viewLifecycleOwner, ::showDetails)
-        viewModel.fieldLiveData.observe(viewLifecycleOwner, ::fieldsAccess)
         viewModel.toastLiveData.observe(viewLifecycleOwner) {
             documentCreate = false
             toast(it)
         }
         viewModel.clientLiveData.observe(viewLifecycleOwner, ::clientObserve)
         viewModel.createUpdateLiveData.observe(viewLifecycleOwner, ::createUpdateAcceptance)
+        viewModel.logSendingResultLiveData.observe(viewLifecycleOwner){
+            if(it){
+                toast("Success")
+            }else{
+                toast("Fail")
+            }
+        }
     }
 
     private fun createUpdateAcceptance(pair: Pair<Acceptance, String>) {
@@ -92,7 +98,7 @@ class AcceptanceFragment :
         } else {
             if (!isBottomSaveButton)
                 closeActivity()
-            else{
+            else {
                 setInitFocuses()
                 toast(getString(R.string.text_successfully_saved))
             }
@@ -109,7 +115,7 @@ class AcceptanceFragment :
         showAcceptance()
         if (clientFound) {
             binding.etxtCardNumber.requestFocus()
-        }else{
+        } else {
             binding.etxtCodeClient.requestFocus()
             binding.etxtCodeClient.error = "can't find"
         }
@@ -257,11 +263,6 @@ class AcceptanceFragment :
 
             btnSave.setOnClickListener {
                 isBottomSaveButton = true
-                if (acceptanceCopyList.isNotEmpty()) {
-                    acceptanceCopyList.forEach { acceptance ->
-                        viewModel.createUpdateAcceptance(acceptance)
-                    }
-                }
                 createUpdateAcceptance()
                 showDialogLoading()
             }
@@ -287,6 +288,10 @@ class AcceptanceFragment :
             btnCop.setOnClickListener {
                 createCopyForm()
             }
+
+            btnDocInfo.setOnClickListener {
+                logFileDialog(viewModel)
+            }
         }
     }
 
@@ -298,11 +303,6 @@ class AcceptanceFragment :
                     if (hasFocusCanSave) {
                         hasFocusCanSave = !hasFocusCanSave
                         return@with
-                    }
-                    if (acceptanceCopyList.isNotEmpty()) {
-                        acceptanceCopyList.forEach { acceptance ->
-                            viewModel.createUpdateAcceptance(acceptance)
-                        }
                     }
                     createUpdateAcceptance()
                 }
@@ -316,6 +316,11 @@ class AcceptanceFragment :
         documentCreate = !documentCreate
         acceptance.creator = user.username
         acceptance.type = 0
+        if (acceptanceCopyList.isNotEmpty()) {
+            acceptanceCopyList.forEach { acceptance ->
+                viewModel.createUpdateAcceptance(acceptance)
+            }
+        }
         viewModel.createUpdateAcceptance(acceptance)
     }
 
@@ -324,7 +329,6 @@ class AcceptanceFragment :
             fillAcceptance()
             acceptanceCopyList.add(acceptance)
             val innerBundle = Bundle()
-            innerBundle.putString("acceptanceIdCard", etxtCardNumber.text.toString())
             innerBundle.putString("acceptanceAutoNum", etxtAutoNumber.text.toString())
             innerBundle.putString("acceptanceAddress", etxtStoreAddress.text.toString())
             innerBundle.putString("acceptanceStore", etxtStoreNumber.text.toString())
@@ -336,6 +340,7 @@ class AcceptanceFragment :
                 innerBundle.putString("acceptancePackageCount", etxtPackageCount.text.toString())
                 innerBundle.putString("acceptanceZone", etxtZone.text.toString())
                 innerBundle.putString("acceptanceClient", etxtCodeClient.text.toString())
+                innerBundle.putString("acceptanceIdCard", etxtCardNumber.text.toString())
             }
             findNavController().navigate(
                 R.id.action_acceptanceFragment_to_acceptanceFragment,
@@ -367,7 +372,6 @@ class AcceptanceFragment :
     private fun loadCopyForm() {
         arguments.let { args ->
             if (args != null) {
-                acceptance.idCard = args.getString("acceptanceIdCard").toString()
                 acceptance.autoNumber = args.getString("acceptanceAutoNum").toString()
                 acceptance.storeAddressName = args.getString("acceptanceAddress").toString()
                 acceptance.storeName = args.getString("acceptanceStore").toString()
@@ -380,6 +384,7 @@ class AcceptanceFragment :
                     acceptance.countPackage = args.getString("acceptancePackageCount")!!.toInt()
                     acceptance.zone = args.getString("acceptanceZone").toString()
                     acceptance.client = args.getString("acceptanceClient").toString()
+                    acceptance.idCard = args.getString("acceptanceIdCard").toString()
                     acceptance.productTypeName = ""
                     acceptance._package = ""
                     acceptance.batchGuid = BATCH_GUID
@@ -628,10 +633,17 @@ class AcceptanceFragment :
 //                }
                 when (etxtView) {
                     etxtCodeClient -> {
-                        showDialogLoading()
-                        viewModel.getClient(etxtView.text.toString())
-                        return true
+                        if (!etxtView.text.isNullOrEmpty()) {
+                            showDialogLoading()
+                            viewModel.getClient(etxtView.text.toString())
+                            return true
+                        } else {
+                            etxtView.requestFocus()
+                            etxtView.error = resources.getString(R.string.text_field_is_empyt)
+                            return true
+                        }
                     }
+
                     etxtCardNumber -> {
                         if (etxtStoreAddress.isEnabled && etxtStoreAddress.isVisible) {
                             etxtStoreAddress.requestFocus()
@@ -748,10 +760,11 @@ class AcceptanceFragment :
         activity?.onBackPressed()
     }
 
-    private fun showDetails(pair: Pair<Acceptance, List<AcceptanceEnableVisible>>) {
-        acceptance = pair.first
+    private fun showDetails(triple: Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess>) {
+        acceptance = triple.first
         ACCEPTANCE = acceptance
-        propertyList = pair.second
+        propertyList = triple.second
+        fieldsAccess = triple.third
         if (this.acceptance.ref.isEmpty()) {
             binding.pbLoading.isVisible = false
             return
@@ -761,18 +774,16 @@ class AcceptanceFragment :
         setInitFocuses()
         showPbLoading(false)
         enableVisibleList()
-        if (acceptance.ref.isNotEmpty()) {
-            viewModel.getFieldsAccess(acceptance.ref, Utils.OperationType.ACCEPTANCE)
-        }
+        fieldsAccess(fieldsAccess)
     }
 
     private fun fieldsAccess(fieldAccess: FieldsAccess) {
         with(binding) {
             fieldsAccess = fieldAccess
-            if (!user.isAdmin || !fieldAccess.isCreator) {
+            if (!user.isAdmin && (user.username != acceptance.whoAccept) && fieldAccess.readOnly) {
                 fieldsEnable(false)
             }
-            if(acceptance.isPrinted){
+            if (acceptance.isPrinted) {
                 etxtCodeClient.isEnabled = false
             }
             if (fieldsAccess.chBoxEnable) {
@@ -802,48 +813,67 @@ class AcceptanceFragment :
                 when (enableVisible.field) {
                     AcceptanceRepository.CLIENT_KEY -> enableVisibleMap[etxtCodeClient] =
                         enableVisible
+
                     AcceptanceRepository.NUMBER_KEY -> {
                         enableVisibleMap[etxtDocumentNumber] = enableVisible
                         enableVisibleMap[etxtDocumentNumberCopy] = enableVisible
                     }
+
                     AcceptanceRepository.AUTO_NUMBER_KEY -> enableVisibleMap[etxtAutoNumber] =
                         enableVisible
+
                     AcceptanceRepository.ID_CARD_KEY -> enableVisibleMap[etxtCardNumber] =
                         enableVisible
+
                     AcceptanceRepository.ZONE_KEY -> enableVisibleMap[elayoutZone] =
                         enableVisible
+
                     AcceptanceRepository.COUNT_SEAT_KEY -> {
                         enableVisibleMap[etxtSeatsNumber] =
                             enableVisible
                         enableVisibleMap[etxtSeatsNumberCopy] =
                             enableVisible
                     }
+
                     AcceptanceRepository.COUNT_IN_PACKAGE_KEY -> enableVisibleMap[etxtCountInPackage] =
                         enableVisible
+
                     AcceptanceRepository.COUNT_PACKAGE_KEY -> enableVisibleMap[etxtPackageCount] =
                         enableVisible
+
                     AcceptanceRepository.PACKAGE_UID_KEY -> enableVisibleMap[elayoutPackage] =
                         enableVisible
+
                     AcceptanceRepository.PRODUCT_TYPE_KEY -> enableVisibleMap[elayoutProductType] =
                         enableVisible
+
                     AcceptanceRepository.STORE_UID_KEY -> enableVisibleMap[elayoutStoreAddress] =
                         enableVisible
+
                     AcceptanceRepository.PHONE_KEY -> enableVisibleMap[etxtStorePhone] =
                         enableVisible
+
                     AcceptanceRepository.STORE_NAME_KEY -> enableVisibleMap[etxtStoreNumber] =
                         enableVisible
+
                     AcceptanceRepository.REPRESENTATIVE_NAME_KEY -> enableVisibleMap[etxtRepresentative] =
                         enableVisible
+
                     AcceptanceRepository.Z_KEY -> enableVisibleMap[chbZ] =
                         enableVisible
+
                     AcceptanceRepository.BRAND_KEY -> enableVisibleMap[chbBrand] =
                         enableVisible
+
                     AcceptanceRepository.GLASS_KEY -> enableVisibleMap[chbExclamation] =
                         enableVisible
+
                     AcceptanceRepository.EXPENSIVE_KEY -> enableVisibleMap[chbCurrency] =
                         enableVisible
+
                     AcceptanceRepository.NOT_TURN_OVER_KEY -> enableVisibleMap[chbArrow] =
                         enableVisible
+
                     else -> {}
                 }
             }

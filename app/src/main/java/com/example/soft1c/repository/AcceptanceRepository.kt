@@ -24,18 +24,18 @@ import kotlin.coroutines.suspendCoroutine
 
 class AcceptanceRepository {
 
-    suspend fun getAcceptanceApi(number: String): Pair<Acceptance, List<AcceptanceEnableVisible>> {
+    suspend fun getAcceptanceApi(number: String, operation: String): Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess> {
         return suspendCoroutine { continuation ->
-            Network.api.acceptance(number).enqueue(object : Callback<ResponseBody> {
+            Network.api.acceptance(number, operation).enqueue(object : Callback<ResponseBody> {
                 override fun onResponse(
                     call: Call<ResponseBody>,
                     response: Response<ResponseBody>,
                 ) {
                     if (response.isSuccessful) {
-                        val responseBody = response.body()?.string() ?: ""
-                        continuation.resume(getAcceptanceJson(responseBody))
+                        Utils.logFor1C = response.body()?.string() ?: ""
+                        continuation.resume(getAcceptanceJson(Utils.logFor1C))
                     } else {
-                        continuation.resume(Pair(Acceptance(""), emptyList()))
+                        continuation.resume(Triple(Acceptance(""), emptyList(), FieldsAccess()))
                     }
                 }
 
@@ -225,20 +225,36 @@ class AcceptanceRepository {
         }
     }
 
-    private fun getAcceptanceJson(responseString: String): Pair<Acceptance, List<AcceptanceEnableVisible>> {
+    suspend fun sendLogs(logs: String): Boolean{
+        return suspendCoroutine { continuation ->
+            Network.api.sendLog(logs)
+                .enqueue(object : Callback<ResponseBody> {
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+                        if (response.isSuccessful){
+                            continuation.resume(true)
+                        }else{
+                            continuation.resume(false)
+                        }
+                    }
+
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        continuation.resumeWithException(t)
+                    }
+                })
+        }
+    }
+
+    private fun getAcceptanceJson(responseString: String): Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess> {
         val jsonArray = JSONArray(responseString)
         val jsonObject = jsonArray.getJSONObject(0)
         val acceptance = getaAcceptanceFromJsonObject(jsonObject, true)
         val enableVisibleList = mutableListOf<AcceptanceEnableVisible>()
-        val propertyArray = jsonObject.getJSONArray(FIELDS_PROPERTY_KEY)
-        for (item in 0 until propertyArray.length()) {
-            val propertyJson = propertyArray.getJSONObject(item)
-            val field = propertyJson.getString(FIELD_KEY)
-            val enable = propertyJson.getBoolean(ENABLE_KEY)
-            val visible = propertyJson.getBoolean(VISIBLE_KEY)
-            enableVisibleList.add(AcceptanceEnableVisible(field, enable, visible))
-        }
-        return Pair(acceptance, enableVisibleList)
+        val property = jsonObject.getString(FIELDS_PROPERTY_KEY)
+        val fieldAccess = getFieldsJson(property)
+        return Triple(acceptance, enableVisibleList, fieldAccess)
     }
 
     private fun getFieldsJson(responseString: String): FieldsAccess {
@@ -309,6 +325,9 @@ class AcceptanceRepository {
             val expensive = acceptJson.getBoolean(EXPENSIVE_KEY)
             val isPrinted = acceptJson.getBoolean(PRINTED_KEY)
             val notTurnOver = acceptJson.getBoolean(NOT_TURN_OVER_KEY)
+            val whoAccept = acceptJson.getString(WHO_ACCEPT_KEY)
+            val whoWeigh = acceptJson.getString(WHO_WEIGH_KEY)
+            val whoMeasure = acceptJson.getString(WHO_MEASURE_KEY)
             return Acceptance(
                 z = z,
                 brand = brand,
@@ -339,7 +358,10 @@ class AcceptanceRepository {
                 representativeName = representativeName,
                 isPrinted = isPrinted,
                 weight = weight,
-                capacity = capacity
+                capacity = capacity,
+                whoAccept = whoAccept,
+                whoMeasure = whoMeasure,
+                whoWeigh = whoWeigh
             )
         }
         return Acceptance(
@@ -418,16 +440,16 @@ class AcceptanceRepository {
         const val IS_CREATOR = "OwnDocument"
         const val PROPS_ENABLE = "PropertiesProducts"
         const val ZONE_ENABLE = "Zona"
-        const val CH_BOX_ENABLE = "Checkbox"
+        const val CH_BOX_ENABLE = "Сheckbox"
         const val PACKAGE_ENABLE = "AmountInPackage"
 
+        const val WHO_ACCEPT_KEY = "ТоварПринял"
+        const val WHO_WEIGH_KEY = "ТоварВзвесил"
+        const val WHO_MEASURE_KEY = "ТоварИзмерил"
         const val CREATOR_KEY = "Создатель"
         const val TYPE_KEY = "Тип"
         const val ERROR_ARRAY = "ПричинаОшибки"
         const val FIELDS_PROPERTY_KEY = "ПараметрыВидимости"
-        const val FIELD_KEY = "Поле"
-        const val ENABLE_KEY = "Доступность"
-        const val VISIBLE_KEY = "Видимость"
         const val ON_CHINESE = "НаКитайском"
         const val NEXT_IS_NEED_KEY = "НуженСледующий"
         const val RESULT_KEY = "Результат"

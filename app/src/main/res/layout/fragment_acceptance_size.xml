@@ -5,9 +5,9 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-<!--    <include-->
-<!--        android:id="@+id/include_toolbar"-->
-<!--        layout="@layout/toolbar_custom" />-->
+    <!--    <include-->
+    <!--        android:id="@+id/include_toolbar"-->
+    <!--        layout="@layout/toolbar_custom" />-->
 
     <ProgressBar
         android:id="@+id/pb_loading"
@@ -38,6 +38,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="10"
                 android:text="@string/text_number" />
+
             <TextView
                 android:id="@+id/txt_code"
                 style="@style/TextNumber"
@@ -51,8 +52,8 @@
             android:id="@+id/linear_seat_count"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:layout_marginTop="@dimen/default_margin"
+            android:orientation="horizontal"
             android:weightSum="20"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -141,85 +142,97 @@
                 android:layout_height="match_parent"
                 android:layout_weight="8" />
 
-            <LinearLayout
-                android:id="@+id/linear_input_fields"
+            <ScrollView
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="@dimen/default_margin"
-                android:layout_weight="2"
-                android:orientation="vertical">
+                android:layout_height="wrap_content"
+                android:layout_weight="2">
 
-                <EditText
-                    android:id="@+id/etxt_current_index"
+                <LinearLayout
+                    android:id="@+id/linear_input_fields"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:autofillHints="name"
-                    android:enabled="false"
-                    android:hint="@string/text_zero"
-                    android:inputType="number"
-                    android:textStyle="bold" />
+                    android:layout_marginStart="@dimen/default_margin"
+                    android:orientation="vertical">
 
-                <EditText
-                    android:id="@+id/etxt_length"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:autofillHints="name"
-                    android:hint="@string/text_zero"
-                    android:inputType="number" />
-
-                <EditText
-                    android:id="@+id/etxt_width"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:autofillHints="name"
-                    android:hint="@string/text_zero"
-                    android:inputType="number" />
-
-                <EditText
-                    android:id="@+id/etxt_height"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:autofillHints="name"
-                    android:hint="@string/text_zero"
-                    android:inputType="number" />
-
-                <EditText
-                    android:id="@+id/etxt_change_columns_number"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:autofillHints="name"
-                    android:hint="@string/text_zero"
-                    android:text ="1"
-                    android:inputType="number"
-                    android:textStyle="bold" />
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/elayout_save"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/default_margin">
-
-                    <AutoCompleteTextView
-                        android:id="@+id/etxt_save"
-                        style="@style/AutoCompleteSave"
+                    <EditText
+                        android:id="@+id/etxt_current_index"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:inputType="none"
-                        android:text="@android:string/ok"
-                        android:textAlignment="center" />
+                        android:layout_height="wrap_content"
+                        android:autofillHints="name"
+                        android:enabled="false"
+                        android:hint="@string/text_zero"
+                        android:inputType="number"
+                        android:textStyle="bold" />
 
-                </com.google.android.material.textfield.TextInputLayout>
+                    <EditText
+                        android:id="@+id/etxt_length"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:autofillHints="name"
+                        android:hint="@string/text_zero"
+                        android:inputType="number" />
 
-                <ImageButton
-                    android:id="@+id/iv_save"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/default_margin"
-                    android:src="@drawable/ic_save"
-                    android:focusable = "true"/>
+                    <EditText
+                        android:id="@+id/etxt_width"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:autofillHints="name"
+                        android:hint="@string/text_zero"
+                        android:inputType="number" />
 
-            </LinearLayout>
+                    <EditText
+                        android:id="@+id/etxt_height"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:autofillHints="name"
+                        android:hint="@string/text_zero"
+                        android:inputType="number" />
+
+                    <EditText
+                        android:id="@+id/etxt_change_columns_number"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:autofillHints="name"
+                        android:hint="@string/text_zero"
+                        android:inputType="number"
+                        android:text="1"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/elayout_save"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/default_margin">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/etxt_save"
+                            style="@style/AutoCompleteSave"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:inputType="none"
+                            android:text="@android:string/ok"
+                            android:textAlignment="center" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <ImageButton
+                        android:id="@+id/iv_save"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/default_margin"
+                        android:focusable="true"
+                        android:src="@drawable/ic_save" />
+
+                    <Button
+                        android:id="@+id/btn_doc_info"
+                        style="?android:attr/buttonBarButtonStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/doc_log_info"/>
+
+                </LinearLayout>
+            </ScrollView>
 
         </LinearLayout>
 

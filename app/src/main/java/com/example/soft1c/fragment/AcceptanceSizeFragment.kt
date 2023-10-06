@@ -38,10 +38,7 @@ class AcceptanceSizeFragment :
         val acceptanceNumber =
             arguments?.getString(AcceptanceFragment.KEY_ACCEPTANCE_NUMBER, "") ?: ""
         viewModel.getAcceptanceSizeData(acceptanceGuid)
-        viewModel.getAcceptance(acceptanceNumber)
-        if (acceptanceGuid.isNotEmpty()) {
-            viewModel.getFieldsAccess(acceptanceGuid, Utils.OperationType.SIZE)
-        }
+        viewModel.getAcceptance(acceptanceNumber, Utils.OperationType.SIZE)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -53,7 +50,6 @@ class AcceptanceSizeFragment :
     private fun observeViewModels() {
         viewModel.toastLiveData.observe(viewLifecycleOwner, ::toast)
         viewModel.acceptanceSizeLiveData.observe(viewLifecycleOwner, ::acceptanceSizeDetail)
-        viewModel.fieldLiveData.observe(viewLifecycleOwner, ::checkEditRights)
         viewModel.acceptanceLiveData.observe(viewLifecycleOwner, ::showAcceptanceDetail)
         viewModel.updateAcceptanceSizeLiveData.observe(viewLifecycleOwner) {
             if (it.second) {
@@ -71,16 +67,24 @@ class AcceptanceSizeFragment :
             closeDialogLoading()
             closeActivity()
         }
+        viewModel.logSendingResultLiveData.observe(viewLifecycleOwner){
+            if(it){
+                toast("Success")
+            }else{
+                toast("Fail")
+            }
+        }
     }
 
-    private fun showAcceptanceDetail(pair: Pair<Acceptance, List<AcceptanceEnableVisible>>) {
-        acceptance = pair.first
+    private fun showAcceptanceDetail(triple :Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess>) {
+        acceptance = triple.first
         with(binding) {
             txtDocNumber.text = acceptance.number
             txtCode.text = acceptance.client
             txtSeatCount.text = acceptance.countSeat.toString()
             txtPackage.text = acceptance._package.filter { !it.isDigit() }
         }
+        checkEditRights(triple.third)
         showPbLoading(false)
     }
 
@@ -217,6 +221,9 @@ class AcceptanceSizeFragment :
             etxtLength.setOnFocusChangeListener(::setEditTextFocusListener)
             etxtHeight.setOnFocusChangeListener(::setEditTextFocusListener)
             etxtChangeColumnsNumber.setOnFocusChangeListener(::setEditTextFocusListener)
+            btnDocInfo.setOnClickListener {
+                logFileDialog(viewModel)
+            }
         }
     }
 
@@ -344,9 +351,35 @@ class AcceptanceSizeFragment :
     }
 
     private fun checkEditRights(fieldsAccess: FieldsAccess) {
-        if ((!fieldsAccess.isCreator && !user.isAdmin) || !user.measureCargo || (!user.isAdmin && !fieldsAccess.sizeEnable) || fieldsAccess.readOnly) {
+        if ((user.username != acceptance.whoMeasure) && acceptance.capacity && !user.isAdmin) {
             binding.linearInputFields.children.forEach { it.isEnabled = false }
             binding.ivSave.isEnabled = true
+            binding.btnDocInfo.isEnabled = true
+            toast(getString(R.string.sizeEnable1))
+        }
+
+        if (!user.measureCargo) {
+            binding.linearInputFields.children.forEach { it.isEnabled = false }
+            binding.ivSave.isEnabled = true
+            binding.btnDocInfo.isEnabled = true
+            toast(getString(R.string.sizeEnable2))
+            return
+        }
+
+        if (!user.isAdmin && !fieldsAccess.sizeEnable) {
+            binding.linearInputFields.children.forEach { it.isEnabled = false }
+            binding.ivSave.isEnabled = true
+            binding.btnDocInfo.isEnabled = true
+            toast(getString(R.string.sizeEnable3))
+            return
+        }
+
+        if (fieldsAccess.readOnly) {
+            binding.linearInputFields.children.forEach { it.isEnabled = false }
+            binding.ivSave.isEnabled = true
+            binding.btnDocInfo.isEnabled = true
+            toast(getString(R.string.sizeEnable4))
+            return
         }
 
     }
@@ -365,5 +398,4 @@ class AcceptanceSizeFragment :
     companion object {
         const val KEY_ACCEPTANCE_GUID = "acceptance_guid"
     }
-
 }

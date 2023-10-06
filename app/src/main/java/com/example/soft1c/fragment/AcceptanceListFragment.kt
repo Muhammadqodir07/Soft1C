@@ -18,6 +18,7 @@ import com.example.soft1c.adapter.AcceptanceAdapter
 import com.example.soft1c.databinding.FragmentAcceptanceListBinding
 import com.example.soft1c.repository.model.Acceptance
 import com.example.soft1c.repository.model.AcceptanceEnableVisible
+import com.example.soft1c.repository.model.FieldsAccess
 import com.example.soft1c.repository.model.Filter
 import com.example.soft1c.repository.model.Filter.ascending
 import com.example.soft1c.repository.model.ItemClicked
@@ -38,6 +39,9 @@ class AcceptanceListFragment :
     private var isAscending = false
     private val user = Utils.user
     private var icon: Drawable? = null
+    private lateinit var operationType: String
+
+    private var rvLastPosition: Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,7 +68,6 @@ class AcceptanceListFragment :
             } else {
                 sortedList = list
                 autoSort()
-                binding.rvAcceptanceList.scrollToPosition(0)
             }
         }
         viewModel.acceptanceLiveData.observe(viewLifecycleOwner, ::acceptanceByNumber)
@@ -75,14 +78,14 @@ class AcceptanceListFragment :
             AcceptanceAdapter.ACCEPTANCE_GUID = list[0].ref
         }
         showPbLoading(false)
-        acceptanceAdapter.submitList(checkMarks(list))
+        acceptanceAdapter.submitList(list)
         showColumnZone()
         showText()
     }
 
     // TODO: Сделать сравнение не с локальной датой, а с серверной
-    private fun acceptanceByNumber(pair: Pair<Acceptance, List<AcceptanceEnableVisible>>) {
-        val acceptance = pair.first
+    private fun acceptanceByNumber(triple: Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess>) {
+        val acceptance = triple.first
         closeDialogLoading()
         binding.etxtDocumentNumber.text?.clear()
         if (acceptance.ref.isNotEmpty()) {
@@ -144,7 +147,8 @@ class AcceptanceListFragment :
                     if (text.length == 9) {
                         // Perform your desired operations here
                         showDialogLoading()
-                        viewModel.getAcceptance(text)
+                        checkOperationType()
+                        viewModel.getAcceptance(text, operationType)
                     }
                 }
 
@@ -246,11 +250,28 @@ class AcceptanceListFragment :
         binding.linearText.isVisible = showText
     }
 
+    fun checkOperationType(){
+        with(binding){
+            if(chbAcceptance.isChecked){
+                operationType = Utils.OperationType.ACCEPTANCE
+            }else if (chbWeight.isChecked){
+                operationType = Utils.OperationType.WEIGHT
+            }else{
+                operationType = Utils.OperationType.SIZE
+            }
+        }
+    }
+
+
     private fun initRvList() {
         acceptanceAdapter = AcceptanceAdapter(::onItemClicked, showColumnZone)
         with(binding.rvAcceptanceList) {
             adapter = acceptanceAdapter
             layoutManager = LinearLayoutManager(requireContext())
+            if (rvLastPosition != null){
+                scrollToPosition(rvLastPosition!!)
+                rvLastPosition = null
+            }
         }
     }
 
@@ -273,7 +294,8 @@ class AcceptanceListFragment :
             }
             thisView.error = null
             showDialogLoading()
-            viewModel.getAcceptance(thisView.text.toString())
+            checkOperationType()
+            viewModel.getAcceptance(thisView.text.toString(), operationType)
             return true
         }
         return false
@@ -304,7 +326,7 @@ class AcceptanceListFragment :
                     return
                 }  // Do nothing and exit the function
             }
-
+            rvLastPosition = rvAcceptanceList.computeVerticalScrollOffset()
             findNavController().navigate(action, bundle)
         }
     }
@@ -323,7 +345,7 @@ class AcceptanceListFragment :
     private fun sortList(sortBy: Int, ascending: Boolean): List<Acceptance> {
         sortedList = sortedList.sortedWith(
             when (sortBy) {
-                Filter.CLIENT -> compareBy { it.client.trimStart('0').toInt() }
+                Filter.CLIENT -> compareBy { it.client.toIntOrNull() ?: Int.MIN_VALUE }
                 Filter.ZONE -> compareBy { it.zone.toIntOrNull() ?: Int.MIN_VALUE }
                 Filter.DOCUMENT -> compareBy {
                     it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt()

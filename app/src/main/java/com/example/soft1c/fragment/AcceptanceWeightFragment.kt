@@ -22,6 +22,7 @@ class AcceptanceWeightFragment :
     BaseFragment<FragmentAcceptanceWeightBinding>(FragmentAcceptanceWeightBinding::inflate), CalcDialog.CalcDialogCallback {
 
     private lateinit var acceptance: Acceptance
+    private lateinit var acceptanceGuid: String
     private val viewModel: AcceptanceViewModel by viewModels()
     private var hasFocusCanSave = false
     private val user = Utils.user
@@ -30,15 +31,12 @@ class AcceptanceWeightFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val acceptanceNumber = arguments?.getString(KEY_WEIGHT_ACCEPTANCE_NUMBER, "") ?: ""
-        val acceptanceGuid = arguments?.getString(AcceptanceSizeFragment.KEY_ACCEPTANCE_GUID, "") ?: ""
+        acceptanceGuid = arguments?.getString(AcceptanceSizeFragment.KEY_ACCEPTANCE_GUID, "") ?: ""
         acceptance = if (acceptanceNumber.isNotEmpty()) {
-            viewModel.getAcceptance(acceptanceNumber)
+            viewModel.getAcceptance(acceptanceNumber, Utils.OperationType.WEIGHT)
             Acceptance(number = acceptanceNumber)
         } else {
             Acceptance(number = "")
-        }
-        if (acceptanceGuid.isNotEmpty()) {
-            viewModel.getFieldsAccess(acceptanceGuid, Utils.OperationType.WEIGHT)
         }
     }
 
@@ -51,9 +49,15 @@ class AcceptanceWeightFragment :
 
     private fun observeViewModels() {
         viewModel.acceptanceLiveData.observe(viewLifecycleOwner, ::showDetails)
-        viewModel.fieldLiveData.observe(viewLifecycleOwner, ::checkEditRights)
         viewModel.toastLiveData.observe(viewLifecycleOwner, ::toast)
         viewModel.createUpdateLiveData.observe(viewLifecycleOwner, ::createUpdateAcceptance)
+        viewModel.logSendingResultLiveData.observe(viewLifecycleOwner){
+            if(it){
+                toast("Success")
+            }else{
+                toast("Fail")
+            }
+        }
     }
 
     private fun createUpdateAcceptance(pair: Pair<Acceptance, String>) {
@@ -99,6 +103,9 @@ class AcceptanceWeightFragment :
 //                createUpdateAcceptance()
 //            }
             etxtWeight.setOnKeyListener(::customSetOnKeyListener)
+            btnDocInfo.setOnClickListener {
+                logFileDialog(viewModel)
+            }
         }
     }
 
@@ -178,14 +185,15 @@ class AcceptanceWeightFragment :
         activity?.onBackPressed()
     }
 
-    private fun showDetails(pair: Pair<Acceptance, List<AcceptanceEnableVisible>>) {
-        acceptance = pair.first
+    private fun showDetails(triple: Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess>) {
+        acceptance = triple.first
         if (this.acceptance.ref.isEmpty()) {
             binding.pbLoading.isVisible = false
             return
         }
         showAcceptance()
         setInitFocuses()
+        checkEditRights(triple.third)
         showPbLoading(false)
     }
 
@@ -212,7 +220,6 @@ class AcceptanceWeightFragment :
                 requestFocus()
                 val length = text?.length ?: 0
                 if (length > 0) setSelection(length)
-                etxtWeight.selectAll()
             }
         }
     }
@@ -224,9 +231,34 @@ class AcceptanceWeightFragment :
     }
 
     private fun checkEditRights(fieldsAccess: FieldsAccess){
-        if((!fieldsAccess.isCreator && !user.isAdmin) || !user.weightAccess || (!user.isAdmin && !fieldsAccess.weightEnable) || fieldsAccess.readOnly){
+        if ((user.username != acceptance.whoWeigh) && acceptance.weight && !user.isAdmin) {
             binding.etxtWeight.isEnabled=false
+            binding.btnCalc.isEnabled = false
+            toast(getString(R.string.weighEnable1))
+            return
         }
+
+        if (!user.weightAccess) {
+            binding.etxtWeight.isEnabled=false
+            binding.btnCalc.isEnabled = false
+            toast(getString(R.string.weighEnable2))
+            return
+        }
+
+        if (!user.isAdmin && !fieldsAccess.weightEnable) {
+            binding.etxtWeight.isEnabled=false
+            binding.btnCalc.isEnabled = false
+            toast(getString(R.string.weighEnable3))
+            return
+        }
+
+        if (fieldsAccess.readOnly) {
+            binding.etxtWeight.isEnabled=false
+            binding.btnCalc.isEnabled = false
+            toast(getString(R.string.weighEnable4))
+            return
+        }
+        binding.etxtWeight.selectAll()
     }
 
     companion object {

@@ -11,11 +11,17 @@ interface BaseApi {
     @GET("authorization")
     fun auth(): Call<ResponseBody>
 
+    @POST("Logging/AddRecord")
+    fun sendLog(@Body log: String): Call<ResponseBody>
+
     @GET("Priemki")
     fun acceptanceList(): Call<ResponseBody>
 
     @GET("DanniePriemki")
-    fun acceptance(@Query("Nomer") number: String): Call<ResponseBody>
+    fun acceptance(
+        @Query("Nomer") number: String,
+        @Query("ВидОперации") operationType: String
+    ): Call<ResponseBody>
 
     @GET("DostupnostPoley")
     fun fieldsAccess(

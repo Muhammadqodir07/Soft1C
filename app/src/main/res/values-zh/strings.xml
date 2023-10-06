@@ -78,4 +78,13 @@
     <string name="email_error_log">寄电邮故障</string>
     <string name="copy_error_log">复制故障</string>
     <string name="close_app">关闭手机</string>
+    <string name="weighEnable1">另一个人称重</string>
+    <string name="weighEnable2">个人无权称重</string>
+    <string name="weighEnable3">接受无法称重</string>
+    <string name="weighEnable4">接受只读</string>
+    <string name="sizeEnable1">另一个人测量</string>
+    <string name="sizeEnable2">个人无权测量</string>
+    <string name="sizeEnable3">接受无法测量</string>
+    <string name="sizeEnable4">接受只读</string>
+    <string name="doc_log_info">信息</string>
 </resources>

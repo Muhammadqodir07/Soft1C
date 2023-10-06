@@ -87,6 +87,15 @@
                     android:layout_marginStart="@dimen/default_margin_chb"
                     android:layout_weight="1"
                     android:text="@string/text_close" />
+
+                <Button
+                    android:id="@+id/btn_doc_info"
+                    style="?android:attr/buttonBarButtonStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/default_margin_chb"
+                    android:layout_weight="0.7"
+                    android:text="@string/doc_log_info" />
             </LinearLayout>
 
             <View

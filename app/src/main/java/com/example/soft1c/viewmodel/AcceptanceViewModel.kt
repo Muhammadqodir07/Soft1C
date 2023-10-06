@@ -13,6 +13,7 @@ import com.example.soft1c.repository.model.Client
 import com.example.soft1c.repository.model.FieldsAccess
 import com.example.soft1c.repository.model.SizeAcceptance
 import com.example.soft1c.utils.SingleLiveEvent
+import com.example.soft1c.utils.Utils
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,12 +41,13 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
     private val toastMutableData = SingleLiveEvent<String>()
     private val acceptanceListMutableData = MutableLiveData<List<Acceptance>>()
     private val acceptanceMutableData =
-        SingleLiveEvent<Pair<Acceptance, List<AcceptanceEnableVisible>>>()
+        SingleLiveEvent<Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess>>()
     private val clientMutableData = SingleLiveEvent<Pair<Client, Boolean>>()
     private val fieldMutableData = SingleLiveEvent<FieldsAccess>()
     private val createUpdateMutableData = SingleLiveEvent<Pair<Acceptance, String>>()
     private val acceptanceSizeMutableData = SingleLiveEvent<SizeAcceptance>()
     private val updateAcceptanceSizeMutableData = SingleLiveEvent<Pair<String, Boolean>>()
+    private val logSendingResultMutableData = SingleLiveEvent<Boolean>()
 
     val toastLiveData: LiveData<String>
         get() = toastMutableData
@@ -53,7 +55,7 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
     val acceptanceListLiveData: LiveData<List<Acceptance>>
         get() = acceptanceListMutableData
 
-    val acceptanceLiveData: LiveData<Pair<Acceptance, List<AcceptanceEnableVisible>>>
+    val acceptanceLiveData: LiveData<Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess>>
         get() = acceptanceMutableData
 
     val clientLiveData: LiveData<Pair<Client, Boolean>>
@@ -70,6 +72,9 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
 
     val updateAcceptanceSizeLiveData: LiveData<Pair<String, Boolean>>
         get() = updateAcceptanceSizeMutableData
+    
+    val logSendingResultLiveData: LiveData<Boolean>
+        get() = logSendingResultMutableData
 
     fun getAcceptanceList() {
         viewModelScope.launch((exceptionScope + Dispatchers.IO)) {
@@ -77,9 +82,9 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
-    fun getAcceptance(number: String) {
+    fun getAcceptance(number: String, operation: String) {
         viewModelScope.launch((exceptionScope + Dispatchers.IO)) {
-            acceptanceMutableData.postValue(repository.getAcceptanceApi(number))
+            acceptanceMutableData.postValue(repository.getAcceptanceApi(number, operation))
         }
     }
 
@@ -118,5 +123,11 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
             )
         }
 
+    }
+
+    fun sendLogs() {
+        viewModelScope.launch ((exceptionScope + Dispatchers.IO)){
+            logSendingResultMutableData.postValue(repository.sendLogs(Utils.logFor1C))
+        }
     }
 }

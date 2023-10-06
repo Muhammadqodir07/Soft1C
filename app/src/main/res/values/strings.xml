@@ -84,4 +84,15 @@
     <string name="copy_error_log">Copy error</string>
     <string name="close_app">Close app</string>
 
+    <string name="weighEnable1">Another person weighed</string>
+    <string name="weighEnable2">Person don\'t have access to weigh</string>
+    <string name="weighEnable3">Document cannot be weighed</string>
+    <string name="weighEnable4">Document is readonly</string>
+
+    <string name="sizeEnable1">Another person measured</string>
+    <string name="sizeEnable2">Person don\'t have access to measure</string>
+    <string name="sizeEnable3">Document cannot be measure</string>
+    <string name="sizeEnable4">Document is readonly</string>
+    <string name="doc_log_info">Info</string>
+
 </resources>

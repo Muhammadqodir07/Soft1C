@@ -78,4 +78,13 @@
     <string name="email_error_log">Отправить</string>
     <string name="copy_error_log">Скопировать</string>
     <string name="close_app">Выйти</string>
+    <string name="weighEnable1">Другой человек взвесил</string>
+    <string name="weighEnable2">Нет доступа к взвешиванию</string>
+    <string name="weighEnable3">Прием нельзя взвесить</string>
+    <string name="weighEnable4">Документ только для чтения</string>
+    <string name="sizeEnable1">Другой человек измерил</string>
+    <string name="sizeEnable2">Нет доступа к измерению</string>
+    <string name="sizeEnable3">Прием нельзя измерить</string>
+    <string name="sizeEnable4">Документ только для чтения</string>
+    <string name="doc_log_info">Инфо</string>
 </resources>
