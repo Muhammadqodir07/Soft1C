@@ -43,23 +43,36 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                             //refreshLayout()
                             return true
                         }
+
                         R.id.item_english -> {
                             fragActivity as MainActivity
                             fragActivity.setLocale("eng")
                             //refreshLayout()
                             return true
                         }
+
                         R.id.item_russian -> {
                             fragActivity as MainActivity
                             fragActivity.setLocale("ru")
                             //refreshLayout()
                             return true
                         }
+
                         R.id.item_macAddress -> {
                             fragActivity as MainActivity
                             macAddressDialog()
                             return true
                         }
+                        R.id.checkable_item -> {
+                            // Toggle the checked state
+                            item.isChecked = !item.isChecked
+                            if (item.isChecked) {
+                                Utils.clientTimeout = 80L
+                            } else {
+                                Utils.clientTimeout = 30L
+                            }
+                        }
+
                         else -> {
                             return false
                         }
@@ -81,7 +94,9 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                 toast(getString(R.string.text_no_rights))
                 return@observe
             }
-            baseViewModel.downloadType(Utils.ObjectModelType.ADDRESS)
+            if (Utils.zones.isEmpty()) {
+                baseViewModel.downloadType(Utils.ObjectModelType.ADDRESS)
+            }
         }
         baseViewModel.loadAuthLiveData.observe(viewLifecycleOwner) {
             showPbLoading(false)
@@ -91,8 +106,8 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
         }
         baseViewModel.toastLiveData.observe(viewLifecycleOwner) {
             showPbLoading(false)
-            toast(it)
-            error += it
+            closeDialogLoading()
+            error = it
             binding.txtError.text = error
         }
         baseViewModel.anyObjectLiveData.observe(viewLifecycleOwner, ::checkAcceptanceAndDownload)
@@ -103,7 +118,6 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
         loadFromSharedPref()
         with(binding) {
             cardLogin.setOnClickListener {
-                //throw Exception()
                 setBase()
 //                val demo = Demo()
 //                demo.loadProfile()
@@ -235,16 +249,19 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                 setTextDialogLoading(resources.getString(R.string.text_package))
                 baseViewModel.downloadType(Utils.ObjectModelType._PACKAGE)
             }
+
             Utils.ObjectModelType._PACKAGE -> {
                 Utils.packages = pairOf.second
                 setTextDialogLoading(resources.getString(R.string.text_product_type))
                 baseViewModel.downloadType(Utils.ObjectModelType.PRODUCT_TYPE)
             }
+
             Utils.ObjectModelType.PRODUCT_TYPE -> {
                 Utils.productTypes = pairOf.second
                 setTextDialogLoading(resources.getString(R.string.text_zone))
                 baseViewModel.downloadType(Utils.ObjectModelType.ZONE)
             }
+
             Utils.ObjectModelType.ZONE -> {
                 Utils.zones = pairOf.second
 //                setTextDialogLoading(resources.getString(R.string.text_number_of_auto))
@@ -262,6 +279,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                 setTextDialogLoading(resources.getString(R.string.text_warehouse))
                 baseViewModel.loadType(Utils.ObjectModelType.WAREHOUSE)
             }
+
             Utils.ObjectModelType.WAREHOUSE -> {
                 Utils.warehouse = pairOf.second
                 closeDialogLoading()

@@ -14,6 +14,7 @@ object Utils {
     var loading_auth = ""
     var auth = ""
     var lang = ""
+    var clientTimeout = 30L
     var logFor1C = ""
     var productTypes: List<AnyModel> = listOf()
     var addressess: List<AnyModel> = listOf()

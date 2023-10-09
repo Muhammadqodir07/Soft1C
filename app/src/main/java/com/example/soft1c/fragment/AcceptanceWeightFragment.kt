@@ -10,7 +10,6 @@ import androidx.fragment.app.viewModels
 import com.example.soft1c.R
 import com.example.soft1c.databinding.FragmentAcceptanceWeightBinding
 import com.example.soft1c.repository.model.Acceptance
-import com.example.soft1c.repository.model.AcceptanceEnableVisible
 import com.example.soft1c.repository.model.FieldsAccess
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.viewmodel.AcceptanceViewModel
@@ -49,7 +48,9 @@ class AcceptanceWeightFragment :
 
     private fun observeViewModels() {
         viewModel.acceptanceLiveData.observe(viewLifecycleOwner, ::showDetails)
-        viewModel.toastLiveData.observe(viewLifecycleOwner, ::toast)
+        viewModel.toastLiveData.observe(viewLifecycleOwner) {
+            errorDialog(it, true)
+        }
         viewModel.createUpdateLiveData.observe(viewLifecycleOwner, ::createUpdateAcceptance)
         viewModel.logSendingResultLiveData.observe(viewLifecycleOwner){
             if(it){
@@ -62,11 +63,11 @@ class AcceptanceWeightFragment :
 
     private fun createUpdateAcceptance(pair: Pair<Acceptance, String>) {
         if (pair.second.isNotEmpty()) {
-            toast(pair.second)
+            errorDialog(pair.second, false)
             return
         }
         Utils.refreshList = true
-        activity?.onBackPressed()
+        closeActivity()
     }
 
     private fun initUI() {
@@ -185,7 +186,10 @@ class AcceptanceWeightFragment :
         activity?.onBackPressed()
     }
 
-    private fun showDetails(triple: Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess>) {
+    private fun showDetails(triple: Triple<Acceptance, FieldsAccess, String>) {
+        if (triple.third.isNotEmpty()){
+            errorDialog(triple.third, false)
+        }
         acceptance = triple.first
         if (this.acceptance.ref.isEmpty()) {
             binding.pbLoading.isVisible = false
@@ -193,7 +197,7 @@ class AcceptanceWeightFragment :
         }
         showAcceptance()
         setInitFocuses()
-        checkEditRights(triple.third)
+        checkEditRights(triple.second)
         showPbLoading(false)
     }
 

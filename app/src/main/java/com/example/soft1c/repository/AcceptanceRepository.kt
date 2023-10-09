@@ -4,7 +4,6 @@ import com.example.soft1c.adapter.AcceptanceAdapter
 import com.example.soft1c.fragment.AcceptanceFragment
 import com.example.soft1c.network.Network
 import com.example.soft1c.repository.model.Acceptance
-import com.example.soft1c.repository.model.AcceptanceEnableVisible
 import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.Client
 import com.example.soft1c.repository.model.FieldsAccess
@@ -24,7 +23,10 @@ import kotlin.coroutines.suspendCoroutine
 
 class AcceptanceRepository {
 
-    suspend fun getAcceptanceApi(number: String, operation: String): Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess> {
+    suspend fun getAcceptanceApi(
+        number: String,
+        operation: String
+    ): Triple<Acceptance, FieldsAccess, String> {
         return suspendCoroutine { continuation ->
             Network.api.acceptance(number, operation).enqueue(object : Callback<ResponseBody> {
                 override fun onResponse(
@@ -35,7 +37,12 @@ class AcceptanceRepository {
                         Utils.logFor1C = response.body()?.string() ?: ""
                         continuation.resume(getAcceptanceJson(Utils.logFor1C))
                     } else {
-                        continuation.resume(Triple(Acceptance(""), emptyList(), FieldsAccess()))
+                        try {
+                            val errorBody = response.errorBody()?.string()
+                            continuation.resume(Triple(Acceptance(""), FieldsAccess(), errorBody.toString()))
+                        }catch (e: Exception){
+                            continuation.resume(Triple(Acceptance(""), FieldsAccess(), e.message.toString()))
+                        }
                     }
                 }
 
@@ -175,7 +182,8 @@ class AcceptanceRepository {
                                         )
                                     )
                                 }
-                            } catch (_: Exception){}
+                            } catch (_: Exception) {
+                            }
                             val ref = jsonObject.getString(REF_KEY)
                             val nextIsNeed =
                                 jsonObject.getString(NEXT_IS_NEED_KEY)
@@ -202,7 +210,8 @@ class AcceptanceRepository {
                                         val jsonArray = JSONArray(errorBody)
                                         if (jsonArray.length() > 0) {
                                             val jsonObject = jsonArray.getJSONObject(0)
-                                            val errorReason = jsonObject.optString(ERROR_ARRAY, "Error in 1C")
+                                            val errorReason =
+                                                jsonObject.optString(ERROR_ARRAY, "Error in 1C")
                                             continuation.resume(Pair(acceptance, errorReason))
                                         } else {
                                             continuation.resume(Pair(acceptance, "Error in 1C"))
@@ -225,7 +234,7 @@ class AcceptanceRepository {
         }
     }
 
-    suspend fun sendLogs(logs: String): Boolean{
+    suspend fun sendLogs(logs: String): Boolean {
         return suspendCoroutine { continuation ->
             Network.api.sendLog(logs)
                 .enqueue(object : Callback<ResponseBody> {
@@ -233,9 +242,9 @@ class AcceptanceRepository {
                         call: Call<ResponseBody>,
                         response: Response<ResponseBody>
                     ) {
-                        if (response.isSuccessful){
+                        if (response.isSuccessful) {
                             continuation.resume(true)
-                        }else{
+                        } else {
                             continuation.resume(false)
                         }
                     }
@@ -247,14 +256,13 @@ class AcceptanceRepository {
         }
     }
 
-    private fun getAcceptanceJson(responseString: String): Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess> {
+    private fun getAcceptanceJson(responseString: String): Triple<Acceptance, FieldsAccess, String> {
         val jsonArray = JSONArray(responseString)
         val jsonObject = jsonArray.getJSONObject(0)
         val acceptance = getaAcceptanceFromJsonObject(jsonObject, true)
-        val enableVisibleList = mutableListOf<AcceptanceEnableVisible>()
         val property = jsonObject.getString(FIELDS_PROPERTY_KEY)
         val fieldAccess = getFieldsJson(property)
-        return Triple(acceptance, enableVisibleList, fieldAccess)
+        return Triple(acceptance, fieldAccess, "")
     }
 
     private fun getFieldsJson(responseString: String): FieldsAccess {

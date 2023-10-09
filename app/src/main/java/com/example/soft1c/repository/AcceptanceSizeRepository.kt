@@ -17,7 +17,7 @@ import kotlin.coroutines.suspendCoroutine
 class AcceptanceSizeRepository {
 
     //Получение данных размера
-    suspend fun getSizeDataApi(acceptanceGuid: String): SizeAcceptance {
+    suspend fun getSizeDataApi(acceptanceGuid: String): Pair<SizeAcceptance, String> {
         return suspendCoroutine { continuation ->
             Network.api.getAcceptanceSizeData(acceptanceGuid).enqueue(object :
                 Callback<ResponseBody> {
@@ -27,9 +27,9 @@ class AcceptanceSizeRepository {
                 ) {
                     if (response.isSuccessful) {
                         val responseBody = response.body()?.string() ?: ""
-                        continuation.resume(getSizeDataFromJson(responseBody))
+                        continuation.resume(Pair(getSizeDataFromJson(responseBody), ""))
                     } else {
-                        continuation.resume(SizeAcceptance(dataArray = emptyList()))
+                        continuation.resume(Pair(SizeAcceptance(dataArray = emptyList()), response.errorBody()?.string() ?: response.message()))
                     }
                 }
 
@@ -82,7 +82,7 @@ class AcceptanceSizeRepository {
                         }
                         continuation.resume(Pair(error, true))
                     } else {
-                        continuation.resume(Pair(response.message(), false))
+                        continuation.resume(Pair(response.errorBody()?.string() ?: response.message(), false))
                     }
                 }
 

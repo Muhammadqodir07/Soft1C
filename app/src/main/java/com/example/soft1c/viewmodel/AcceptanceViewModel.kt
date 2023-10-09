@@ -8,7 +8,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.soft1c.repository.AcceptanceRepository
 import com.example.soft1c.repository.AcceptanceSizeRepository
 import com.example.soft1c.repository.model.Acceptance
-import com.example.soft1c.repository.model.AcceptanceEnableVisible
 import com.example.soft1c.repository.model.Client
 import com.example.soft1c.repository.model.FieldsAccess
 import com.example.soft1c.repository.model.SizeAcceptance
@@ -25,27 +24,26 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
     private val sizeRepository = AcceptanceSizeRepository()
 
     private val exceptionScope = CoroutineExceptionHandler { coroutineContext, throwable ->
-        val stackTrace = throwable.stackTrace.joinToString("\n")
-        val lines = stackTrace.split("\n")
-        var comExampleSoft1cLine: String? = null
-        for (line in lines) {
-            if (line.contains("com.example.soft1c")) {
-                comExampleSoft1cLine = line
-                break
-            }
-        }
-        toastMutableData.postValue(comExampleSoft1cLine ?: "Error: no line containing 'com.example.soft1c' found.")
-        //toastMutableData.postValue("Error on $coroutineContext , error message ${throwable.message}")
+//        val stackTrace = throwable.stackTrace.joinToString("\n")
+//        val lines = stackTrace.split("\n")
+//        var comExampleSoft1cLine: String? = null
+//        for (line in lines) {
+//            if (line.contains("com.example.soft1c")) {
+//                comExampleSoft1cLine = line
+//                break
+//            }
+//        }
+//        toastMutableData.postValue(comExampleSoft1cLine ?: "Error: no line containing 'com.example.soft1c' found.")
+        toastMutableData.postValue("Error on $coroutineContext , error message ${throwable.localizedMessage}")
     }
 
     private val toastMutableData = SingleLiveEvent<String>()
     private val acceptanceListMutableData = MutableLiveData<List<Acceptance>>()
     private val acceptanceMutableData =
-        SingleLiveEvent<Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess>>()
+        SingleLiveEvent<Triple<Acceptance, FieldsAccess, String>>()
     private val clientMutableData = SingleLiveEvent<Pair<Client, Boolean>>()
-    private val fieldMutableData = SingleLiveEvent<FieldsAccess>()
     private val createUpdateMutableData = SingleLiveEvent<Pair<Acceptance, String>>()
-    private val acceptanceSizeMutableData = SingleLiveEvent<SizeAcceptance>()
+    private val acceptanceSizeMutableData = SingleLiveEvent<Pair<SizeAcceptance, String>>()
     private val updateAcceptanceSizeMutableData = SingleLiveEvent<Pair<String, Boolean>>()
     private val logSendingResultMutableData = SingleLiveEvent<Boolean>()
 
@@ -55,19 +53,16 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
     val acceptanceListLiveData: LiveData<List<Acceptance>>
         get() = acceptanceListMutableData
 
-    val acceptanceLiveData: LiveData<Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess>>
+    val acceptanceLiveData: LiveData<Triple<Acceptance, FieldsAccess, String>>
         get() = acceptanceMutableData
 
     val clientLiveData: LiveData<Pair<Client, Boolean>>
         get() = clientMutableData
 
-    val fieldLiveData: LiveData<FieldsAccess>
-        get() = fieldMutableData
-
     val createUpdateLiveData: LiveData<Pair<Acceptance, String>>
         get() = createUpdateMutableData
 
-    val acceptanceSizeLiveData: LiveData<SizeAcceptance>
+    val acceptanceSizeLiveData: LiveData<Pair<SizeAcceptance, String>>
         get() = acceptanceSizeMutableData
 
     val updateAcceptanceSizeLiveData: LiveData<Pair<String, Boolean>>
@@ -85,12 +80,6 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
     fun getAcceptance(number: String, operation: String) {
         viewModelScope.launch((exceptionScope + Dispatchers.IO)) {
             acceptanceMutableData.postValue(repository.getAcceptanceApi(number, operation))
-        }
-    }
-
-    fun getFieldsAccess(guid: String, type: String){
-        viewModelScope.launch((exceptionScope+Dispatchers.IO)){
-            fieldMutableData.postValue(repository.getFieldsApi(guid, type))
         }
     }
 

@@ -49,10 +49,26 @@ open class BaseFragment<T : ViewBinding>(
         Toast.makeText(requireContext(), text, Toast.LENGTH_SHORT).show()
         Timber.d(text)
     }
+
     fun toastLong(text: String) {
         closeDialogLoading()
         Toast.makeText(requireContext(), text, Toast.LENGTH_LONG).show()
         Timber.d(text)
+    }
+
+    fun errorDialog(message: String, isClose: Boolean) {
+        closeDialogLoading()
+        val errorDialogBuilder = AlertDialog.Builder(requireContext())
+        errorDialogBuilder.setCancelable(false)
+        errorDialogBuilder.setMessage(message)
+        errorDialogBuilder.setNegativeButton(R.string.text_close) { dialog, _ ->
+            if (isClose) {
+                requireActivity().onBackPressed()
+            }
+            dialog.dismiss()
+        }
+        val errorDialog = errorDialogBuilder.create()
+        errorDialog.show()
     }
 
     fun setSharedPref(key: String, value: String) {

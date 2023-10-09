@@ -2,9 +2,10 @@ package com.example.soft1c.utils
 
 import android.app.Application
 import com.example.soft1c.BuildConfig
+import com.example.soft1c.utils.UCE.UnhandledExceptionHandler
 import timber.log.Timber
 
-class ApplicationSoft:Application() {
+class ApplicationSoft : Application() {
 
     //Логи для дебага
     override fun onCreate() {
@@ -12,7 +13,7 @@ class ApplicationSoft:Application() {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
-            UnhandledExceptionHandler.Builder(applicationContext)
+        UnhandledExceptionHandler.Builder(applicationContext)
             .addCommaSeparatedEmailAddresses("qodirhcr@gmail.com")
             .build()
     }

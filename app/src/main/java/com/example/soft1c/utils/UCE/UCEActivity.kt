@@ -18,8 +18,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import com.example.soft1c.R
 import com.example.soft1c.databinding.ActivityUceactivityBinding
-import com.example.soft1c.utils.UCEHandler
-import com.example.soft1c.utils.UnhandledExceptionHandler
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
@@ -33,7 +31,6 @@ class UCEActivity : AppCompatActivity() {
     private lateinit var txtFile: File
     private lateinit var binding: ActivityUceactivityBinding
     private var strCurrentErrorLog: String? = null
-    private val uce = UnhandledExceptionHandler.Builder(this).build()
 
     @SuppressLint("PrivateResource")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,7 +40,9 @@ class UCEActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         findViewById<View>(R.id.button_close_app).setOnClickListener {
-            uce.closeApplication(this@UCEActivity)
+            this.finish()
+            android.os.Process.killProcess(android.os.Process.myPid())
+            System.exit(10)
         }
 
         findViewById<View>(R.id.button_copy_error_log).setOnClickListener {

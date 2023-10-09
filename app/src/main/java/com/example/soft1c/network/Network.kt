@@ -13,6 +13,13 @@ import javax.net.ssl.*
 
 object Network {
 
+    lateinit var client: OkHttpClient
+//    lateinit var retrofit: Retrofit
+
+    fun refreshConnection(){
+
+    }
+
     private fun getUnsafeOkHttpClient(): OkHttpClient.Builder {
         val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
             @Throws(CertificateException::class)
@@ -43,9 +50,9 @@ object Network {
     private val Client = OkHttpClient.Builder()
         .addInterceptor(BasicAuthInterceptor(Utils.username, Utils.password))
         .addNetworkInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
-        .connectTimeout(30, TimeUnit.SECONDS) // set the connection timeout to 30 seconds
-        .readTimeout(30, TimeUnit.SECONDS) // set the read timeout to 30 seconds
-        .writeTimeout(30, TimeUnit.SECONDS) // set the write timeout to 30 seconds
+        .connectTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the connection timeout to 30 seconds
+        .readTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the read timeout to 30 seconds
+        .writeTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the write timeout to 30 seconds
         .build()
 
     // Объекта Retrofit, который предоставляет средства для выполнения запросов к API.
@@ -64,9 +71,9 @@ object Network {
     private val LoadingClient = OkHttpClient.Builder()
         .addInterceptor(BasicAuthInterceptor(Utils.username, Utils.password))
         .addNetworkInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
-        .connectTimeout(30, TimeUnit.SECONDS) // set the connection timeout to 30 seconds
-        .readTimeout(30, TimeUnit.SECONDS) // set the read timeout to 30 seconds
-        .writeTimeout(30, TimeUnit.SECONDS) // set the write timeout to 30 seconds
+        .connectTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the connection timeout to 30 seconds
+        .readTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the read timeout to 30 seconds
+        .writeTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the write timeout to 30 seconds
         .build()
 
     // Объекта Retrofit, который предоставляет средства для выполнения запросов к API.
@@ -80,17 +87,9 @@ object Network {
     // Объект CarApi, который будет использоваться для выполнения запросов к API. Оно будет иметь методы для выполнения запросов, определенные в интерфейсе CarApi.
     val loadingApi: LoadingApi = loadingRetrofit.create(LoadingApi::class.java)
 
-    private val client = OkHttpClient.Builder()
-        .addInterceptor(BasicAuthInterceptor(Utils.username, Utils.password))
-        .addNetworkInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
-        .connectTimeout(30, TimeUnit.SECONDS) // set the connection timeout to 30 seconds
-        .readTimeout(30, TimeUnit.SECONDS) // set the read timeout to 30 seconds
-        .writeTimeout(30, TimeUnit.SECONDS) // set the write timeout to 30 seconds
-        .build()
-
     private val retrofit = Retrofit.Builder()
         .addConverterFactory(MoshiConverterFactory.create())
-        .client(client)
+        .client(Client)
         .baseUrl(Utils.base_url+Utils.acceptance_auth)
         .build()
 

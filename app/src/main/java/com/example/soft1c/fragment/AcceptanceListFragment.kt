@@ -17,7 +17,6 @@ import com.example.soft1c.R
 import com.example.soft1c.adapter.AcceptanceAdapter
 import com.example.soft1c.databinding.FragmentAcceptanceListBinding
 import com.example.soft1c.repository.model.Acceptance
-import com.example.soft1c.repository.model.AcceptanceEnableVisible
 import com.example.soft1c.repository.model.FieldsAccess
 import com.example.soft1c.repository.model.Filter
 import com.example.soft1c.repository.model.Filter.ascending
@@ -83,8 +82,7 @@ class AcceptanceListFragment :
         showText()
     }
 
-    // TODO: Сделать сравнение не с локальной датой, а с серверной
-    private fun acceptanceByNumber(triple: Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess>) {
+    private fun acceptanceByNumber(triple: Triple<Acceptance, FieldsAccess, String>) {
         val acceptance = triple.first
         closeDialogLoading()
         binding.etxtDocumentNumber.text?.clear()
@@ -168,11 +166,6 @@ class AcceptanceListFragment :
             ivRefresh.setOnClickListener {
                 initRvList()
                 resetFilter()
-                acceptanceList?.let {
-                    showAcceptanceList(it)
-                    sortedList = it
-                    return@setOnClickListener
-                }
                 showPbLoading(true)
                 viewModel.getAcceptanceList()
             }

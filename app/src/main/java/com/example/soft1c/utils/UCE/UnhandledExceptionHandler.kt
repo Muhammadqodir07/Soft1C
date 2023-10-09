@@ -1,4 +1,4 @@
-package com.example.soft1c.utils
+package com.example.soft1c.utils.UCE
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -6,16 +6,15 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import com.example.soft1c.utils.UCE.UCEActivity
-import com.example.soft1c.utils.UCEHandler.COMMA_SEPARATED_EMAIL_ADDRESSES
-import com.example.soft1c.utils.UCEHandler.DEFAULT_HANDLER_PACKAGE_NAME
-import com.example.soft1c.utils.UCEHandler.EXTRA_ACTIVITY_LOG
-import com.example.soft1c.utils.UCEHandler.EXTRA_STACK_TRACE
-import com.example.soft1c.utils.UCEHandler.MAX_STACK_TRACE_SIZE
-import com.example.soft1c.utils.UCEHandler.SHARED_PREFERENCES_FIELD_TIMESTAMP
-import com.example.soft1c.utils.UCEHandler.SHARED_PREFERENCES_FILE
-import com.example.soft1c.utils.UCEHandler.TAG
-import com.example.soft1c.utils.UCEHandler.UCE_HANDLER_PACKAGE_NAME
+import com.example.soft1c.utils.UCE.UCEHandler.COMMA_SEPARATED_EMAIL_ADDRESSES
+import com.example.soft1c.utils.UCE.UCEHandler.DEFAULT_HANDLER_PACKAGE_NAME
+import com.example.soft1c.utils.UCE.UCEHandler.EXTRA_ACTIVITY_LOG
+import com.example.soft1c.utils.UCE.UCEHandler.EXTRA_STACK_TRACE
+import com.example.soft1c.utils.UCE.UCEHandler.MAX_STACK_TRACE_SIZE
+import com.example.soft1c.utils.UCE.UCEHandler.SHARED_PREFERENCES_FIELD_TIMESTAMP
+import com.example.soft1c.utils.UCE.UCEHandler.SHARED_PREFERENCES_FILE
+import com.example.soft1c.utils.UCE.UCEHandler.TAG
+import com.example.soft1c.utils.UCE.UCEHandler.UCE_HANDLER_PACKAGE_NAME
 import timber.log.Timber
 import java.io.PrintWriter
 import java.io.StringWriter

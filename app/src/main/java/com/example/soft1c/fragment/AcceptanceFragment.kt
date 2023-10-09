@@ -72,7 +72,7 @@ class AcceptanceFragment :
         viewModel.acceptanceLiveData.observe(viewLifecycleOwner, ::showDetails)
         viewModel.toastLiveData.observe(viewLifecycleOwner) {
             documentCreate = false
-            toast(it)
+            errorDialog(it, true)
         }
         viewModel.clientLiveData.observe(viewLifecycleOwner, ::clientObserve)
         viewModel.createUpdateLiveData.observe(viewLifecycleOwner, ::createUpdateAcceptance)
@@ -87,7 +87,7 @@ class AcceptanceFragment :
 
     private fun createUpdateAcceptance(pair: Pair<Acceptance, String>) {
         if (pair.second.isNotEmpty()) {
-            toast(pair.second)
+            errorDialog(pair.second, false)
             documentCreate = false
             return
         }
@@ -760,11 +760,13 @@ class AcceptanceFragment :
         activity?.onBackPressed()
     }
 
-    private fun showDetails(triple: Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess>) {
+    private fun showDetails(triple: Triple<Acceptance, FieldsAccess, String>) {
+        if (triple.third.isNotEmpty()){
+            errorDialog(triple.third, false)
+        }
         acceptance = triple.first
         ACCEPTANCE = acceptance
-        propertyList = triple.second
-        fieldsAccess = triple.third
+        fieldsAccess = triple.second
         if (this.acceptance.ref.isEmpty()) {
             binding.pbLoading.isVisible = false
             return

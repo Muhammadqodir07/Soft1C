@@ -48,7 +48,9 @@ class AcceptanceSizeFragment :
     }
 
     private fun observeViewModels() {
-        viewModel.toastLiveData.observe(viewLifecycleOwner, ::toast)
+        viewModel.toastLiveData.observe(viewLifecycleOwner){
+            errorDialog(it, true)
+        }
         viewModel.acceptanceSizeLiveData.observe(viewLifecycleOwner, ::acceptanceSizeDetail)
         viewModel.acceptanceLiveData.observe(viewLifecycleOwner, ::showAcceptanceDetail)
         viewModel.updateAcceptanceSizeLiveData.observe(viewLifecycleOwner) {
@@ -56,11 +58,11 @@ class AcceptanceSizeFragment :
                 if (it.first.isEmpty())
                     toast(resources.getString(R.string.text_successfully_saved))
                 else {
-                    toastLong(it.first)
+                    errorDialog(it.first, false)
                     return@observe
                 }
             } else {
-                toastLong(it.first)
+                errorDialog(it.first, false)
                 return@observe
             }
             Utils.refreshList = true
@@ -76,7 +78,10 @@ class AcceptanceSizeFragment :
         }
     }
 
-    private fun showAcceptanceDetail(triple :Triple<Acceptance, List<AcceptanceEnableVisible>, FieldsAccess>) {
+    private fun showAcceptanceDetail(triple :Triple<Acceptance, FieldsAccess, String>) {
+        if (triple.third.isNotEmpty()){
+            errorDialog(triple.third, false)
+        }
         acceptance = triple.first
         with(binding) {
             txtDocNumber.text = acceptance.number
@@ -84,19 +89,22 @@ class AcceptanceSizeFragment :
             txtSeatCount.text = acceptance.countSeat.toString()
             txtPackage.text = acceptance._package.filter { !it.isDigit() }
         }
-        checkEditRights(triple.third)
+        checkEditRights(triple.second)
         showPbLoading(false)
     }
 
-    private fun acceptanceSizeDetail(sizeAcceptance: SizeAcceptance) {
-        acceptanceSize = sizeAcceptance
+    private fun acceptanceSizeDetail(pair: Pair<SizeAcceptance, String>) {
+        if (pair.second.isNotEmpty()){
+            errorDialog(pair.second, false)
+        }
+        acceptanceSize = pair.first
         showPbLoading(false)
         with(binding) {
             txtWeight.text = acceptanceSize.allWeight.toString()
             txtSum.text = acceptanceSize.sum.toString()
             txtPriceM3.text = acceptanceSize.priceM3.toString()
             txtPriceWeight.text = acceptanceSize.priceWeight.toString()
-            sizeAdapter.submitList(sizeAcceptance.dataArray)
+            sizeAdapter.submitList(pair.first.dataArray)
         }
         fillIndexSeatNumber()
         enableFields()

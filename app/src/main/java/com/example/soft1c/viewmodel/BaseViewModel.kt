@@ -56,7 +56,7 @@ class BaseViewModel(application: Application) : AndroidViewModel(application) {
     fun acceptanceAuth() {
         viewModelScope.launch(exceptionScope + Dispatchers.IO) {
             authMutableData.postValue(repository.getAccessToken())
-            delay(1000) // Add a delay of 2000 milliseconds (2 seconds)
+            delay(1000)
             if (repository.error.isNotEmpty())
                 toastMutableData.postValue("Error message: " + repository.error)
         }
