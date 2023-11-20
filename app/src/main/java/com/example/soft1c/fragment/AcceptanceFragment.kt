@@ -111,8 +111,7 @@ class AcceptanceFragment :
         enableFieldsAfterFieldClient(clientFound)
         closeDialogLoading()
         acceptance.client = pair.first.code
-        setInitFocuses()
-        showAcceptance()
+        binding.etxtCodeClient.setText(acceptance.client)
         if (clientFound) {
             binding.etxtCardNumber.requestFocus()
         } else {
