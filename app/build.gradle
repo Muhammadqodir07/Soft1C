@@ -85,6 +85,5 @@ dependencies {
     implementation files("libs/tscsdk.jar")
 
     implementation 'com.github.phearme:macaddress-edittext:1.0.1'
-    implementation "com.maltaisn:calcdialog:2.2.1"
 
 }

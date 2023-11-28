@@ -87,4 +87,18 @@
     <string name="sizeEnable3">Прием нельзя измерить</string>
     <string name="sizeEnable4">Документ только для чтения</string>
     <string name="doc_log_info">Инфо</string>
+    <string name="calc_dialog_clear">Oчищать</string>
+    <string name="calc_dialog_cancel">Отмена</string>
+    <string name="calc_dialog_ok">OK</string>
+
+    <string name="calc_answer">Отв</string>
+
+    <string-array name="calc_dialog_errors">
+        <item>Деление на ноль</item>
+        <item>За границами</item>
+        <item>Результат должен быть положительным</item>
+        <item>Результат должен быть отрицательным</item>
+    </string-array>
+
+    <string name="calc_dialog_erase">стирать</string>
 </resources>

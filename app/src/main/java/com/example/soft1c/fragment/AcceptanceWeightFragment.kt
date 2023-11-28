@@ -12,9 +12,9 @@ import com.example.soft1c.databinding.FragmentAcceptanceWeightBinding
 import com.example.soft1c.repository.model.Acceptance
 import com.example.soft1c.repository.model.FieldsAccess
 import com.example.soft1c.utils.Utils
+import com.example.soft1c.utils.calculator.CalcDialog
 import com.example.soft1c.viewmodel.AcceptanceViewModel
 import com.google.android.material.textfield.TextInputEditText
-import com.maltaisn.calcdialog.CalcDialog
 import java.math.BigDecimal
 
 class AcceptanceWeightFragment :
@@ -92,6 +92,7 @@ class AcceptanceWeightFragment :
                 calcDialog.settings.initialValue = etxtWeight.text.toString().toDouble().toBigDecimal()
                 calcDialog.settings.isSignBtnShown = false
                 calcDialog.settings.isExpressionShown = true
+                calcDialog.settings.minValue = BigDecimal.valueOf(0)
                 calcDialog.show(childFragmentManager, "calc_dialog") }
             etxtSave.setOnKeyListener(::autoCompleteOnKeyListener)
             etxtSave.setOnFocusChangeListener(::setAutoCompleteFocusListener)
@@ -116,7 +117,7 @@ class AcceptanceWeightFragment :
             when (view) {
                 etxtSave, etxtSaveCopy -> if (hasFocus) {
                     if (hasFocusCanSave) {
-                        hasFocusCanSave = !hasFocusCanSave
+                        hasFocusCanSave = false
                         return@with
                     }
                     createUpdateAcceptance()

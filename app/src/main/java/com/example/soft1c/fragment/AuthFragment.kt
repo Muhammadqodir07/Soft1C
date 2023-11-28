@@ -17,17 +17,21 @@ import com.example.soft1c.repository.model.LoadingModel
 import com.example.soft1c.utils.MainActivity
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.utils.Utils.password
+import com.example.soft1c.utils.calculator.CalcDialog
 import com.example.soft1c.viewmodel.BaseViewModel
 import com.google.android.material.textfield.TextInputEditText
 import com.phearme.macaddressedittext.MacAddressEditText
 import java.io.File
+import java.math.BigDecimal
 
-class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::inflate) {
+class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::inflate),
+    CalcDialog.CalcDialogCallback {
 
     private val baseViewModel: BaseViewModel by viewModels()
     private var error: String = ""
     private var requiredTypes = 6
     private lateinit var accessPair: Pair<Boolean, Boolean>
+    val calcDialog = CalcDialog()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -63,6 +67,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                             macAddressDialog()
                             return true
                         }
+
                         R.id.checkable_item -> {
                             // Toggle the checked state
                             item.isChecked = !item.isChecked
@@ -118,13 +123,24 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
         loadFromSharedPref()
         with(binding) {
             cardLogin.setOnClickListener {
-                setBase()
-//                val demo = Demo()
-//                demo.loadProfile()
-                baseViewModel.acceptanceAuth()
-                showPbLoading(true)
+//                setBase()
+////                val demo = Demo()
+////                demo.loadProfile()
+//                baseViewModel.acceptanceAuth()
+//                showPbLoading(true)
+                calcDialog.settings.isZeroShownWhenNoValue = true
+                calcDialog.settings.initialValue = BigDecimal.valueOf(0)
+                calcDialog.settings.isSignBtnShown = false
+                calcDialog.settings.isExpressionShown = true
+                calcDialog.settings.minValue = BigDecimal.valueOf(0)
+                calcDialog.show(childFragmentManager, "calc_dialog")
             }
         }
+    }
+
+
+    override fun onValueEntered(requestCode: Int, value: BigDecimal?) {
+        toast("$requestCode  :  $value")
     }
 
     private fun loadFromSharedPref() {
