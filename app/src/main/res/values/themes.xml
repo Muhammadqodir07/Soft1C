@@ -74,7 +74,7 @@
         <item name="calcDialogMaxHeight">500dp</item>
         <item name="calcButtonTextClear">@string/calc_dialog_clear</item>
         <item name="calcButtonTextCancel">@string/calc_dialog_cancel</item>
-        <item name="calcButtonTextOk">@string/calc_dialog_ok</item>
+        <item name="calcButtonTextOk">@string/dialog_ok</item>
         <item name="calcButtonTexts">@array/calc_dialog_btn_texts</item>
         <item name="calcBackgroundColor">?colorBackgroundFloating</item>
         <item name="calcHeaderColor">?calcBackgroundColor</item>

@@ -10,23 +10,30 @@ object Utils {
     var basename = ""
     var username = ""
     var password = ""
+
     var acceptance_auth = ""
     var loading_auth = ""
     var auth = ""
     var lang = ""
+
     var clientTimeout = 30L
     var logFor1C = ""
+
     var productTypes: List<AnyModel> = listOf()
     var addressess: List<AnyModel> = listOf()
     var packages: List<AnyModel> = listOf()
     var zones: List<AnyModel> = listOf()
+
     //Переменная для хранения списка машин
     var cars: List<LoadingModel> = listOf()
     var warehouse: List<LoadingModel> = listOf()
+
     var acceptanceCopyList: MutableList<Acceptance> = mutableListOf()
+
     var user = User()
     var anyModel: AnyModel? = null
     var refreshList: Boolean = false
+
 
     fun setAttributes(
         baseUrl: String,
@@ -71,5 +78,10 @@ object Utils {
         const val ACCEPTANCE = "ПриемГруза"
         const val WEIGHT = "ВзвешиваниеГруза"
         const val SIZE = "ЗамерГруза"
+    }
+
+    object Settings {
+        var passportClientControl: Boolean = true
+        const val SHOW_DISABILITY_DIALOG = "ПоказатьОкноСИнфойНедоступности"
     }
 }

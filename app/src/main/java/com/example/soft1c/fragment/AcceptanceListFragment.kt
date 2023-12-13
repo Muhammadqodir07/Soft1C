@@ -59,6 +59,9 @@ class AcceptanceListFragment :
 
     private fun observeViewModels() {
         viewModel.toastLiveData.observe(viewLifecycleOwner, ::toast)
+        viewModel.toastResIdLiveData.observe(viewLifecycleOwner){
+            toast(getString(it))
+        }
         viewModel.acceptanceListLiveData.observe(viewLifecycleOwner) { it ->
             val list = it.sortedByDescending { LocalDateTime.parse(it.date) }
             acceptanceList = list

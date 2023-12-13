@@ -43,8 +43,6 @@ class BasicAuthClient<T> {
         builder.hostnameVerifier { _, _ -> true }
         builder.addInterceptor(
             com.example.soft1c.network.BasicAuthInterceptor(
-                "Администратор",
-                "1"
             )
         )
         return builder

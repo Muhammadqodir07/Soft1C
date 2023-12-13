@@ -19,7 +19,7 @@
         android:title="Debug mode"
         android:checkable="true" />
     <item
-        android:title="1.4"
+        android:title="1.5"
         android:enabled="false"/>
 
 </menu>

@@ -18,7 +18,7 @@ import kotlin.coroutines.suspendCoroutine
 
 class BaseRepository(private val lang: String) {
 
-    var error = ""
+    var errorCode = 0
 
     suspend fun getAccessToken(): Boolean {
         return suspendCoroutine { continuation ->
@@ -34,8 +34,7 @@ class BaseRepository(private val lang: String) {
                             continuation.resume(getRights(body))
                             return
                         }
-                        error = response.code()
-                            .toString() + ": " + response.message() + "\n" + Utils.base_url + Utils.auth + "AUTO"
+                        errorCode = response.code()
                         continuation.resume(false)
                     }
 
@@ -60,8 +59,7 @@ class BaseRepository(private val lang: String) {
                             continuation.resume(true)
                             return
                         }
-                        error = response.code()
-                            .toString() + ": " + response.message() + "\n" + Utils.base_url + Utils.loading_auth + "autorization"
+                        errorCode = response.code()
                         continuation.resume(false)
                     }
 
@@ -161,9 +159,10 @@ class BaseRepository(private val lang: String) {
 
     private fun getRights(responseBody: String): Boolean {
         val jsonObject = JSONObject(responseBody)
-        val priemkiAccess = jsonObject.optBoolean("PriemkiAccess", false)
-        val pogruzkiAccess = jsonObject.optBoolean("PogruzkiAccess", false)
+        val priemkiAccess = jsonObject.optBoolean(ACCEPTANCE_RIGHT, false)
+        val pogruzkiAccess = jsonObject.optBoolean(LOADING_RIGHT, false)
         val isAdmin = jsonObject.optBoolean(IS_ADMIN, false)
+        Utils.Settings.passportClientControl = jsonObject.optBoolean(CLIENT_CONTROL, false)
         if (isAdmin){
             Utils.user = User(
                 username = Utils.username,
@@ -238,5 +237,6 @@ class BaseRepository(private val lang: String) {
         const val SIZE_ADD = "MeasureCargo"
         const val WEIGHT_ADD = "Weighing"
         const val IS_ADMIN = "ЭтоАдмин"
+        const val CLIENT_CONTROL = "КонтрольКлиентаПоПаспорту"
     }
 }

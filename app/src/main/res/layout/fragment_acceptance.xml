@@ -215,6 +215,27 @@
                 app:layout_constraintTop_toBottomOf="@id/lienar_zone_auto" />
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/elayout_passport"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/text_passport"
+                android:textColorHint="@color/black"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/ch_passport">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etxt_passport"
+                    style="@style/TextInputDefault"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textAutoCorrect"
+                    android:maxLength="18"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/elayout_card_number"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -223,7 +244,7 @@
                 android:textColorHint="@color/black"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/ch_passport">
+                app:layout_constraintTop_toBottomOf="@id/elayout_passport">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etxt_card_number"

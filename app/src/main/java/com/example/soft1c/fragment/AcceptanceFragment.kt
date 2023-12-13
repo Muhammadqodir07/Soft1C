@@ -3,6 +3,7 @@ package com.example.soft1c.fragment
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.SpannableStringBuilder
 import android.view.KeyEvent
 import android.view.View
 import android.widget.ArrayAdapter
@@ -14,31 +15,29 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.soft1c.R
 import com.example.soft1c.databinding.FragmentAcceptanceBinding
-import com.example.soft1c.repository.AcceptanceRepository
 import com.example.soft1c.repository.model.Acceptance
-import com.example.soft1c.repository.model.AcceptanceEnableVisible
 import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.Client
+import com.example.soft1c.repository.model.DocumentType
 import com.example.soft1c.repository.model.FieldsAccess
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.utils.Utils.acceptanceCopyList
 import com.example.soft1c.viewmodel.AcceptanceViewModel
 import com.google.android.material.textfield.TextInputEditText
 import java.io.File
-import kotlin.collections.set
 
 class AcceptanceFragment :
     BaseFragment<FragmentAcceptanceBinding>(FragmentAcceptanceBinding::inflate) {
 
     private var clientFound = false
     private lateinit var acceptance: Acceptance
-    private var fieldsAccess = FieldsAccess()
+    private lateinit var disabilityReason: SpannableStringBuilder
+    private var clientPassport = ""
     private val user = Utils.user
 
     private val viewModel: AcceptanceViewModel by viewModels()
     private var hasFocusCanSave = false
     private var documentCreate = false
-    private lateinit var propertyList: List<AcceptanceEnableVisible>
     private var isCopiedAcceptance = false
     private var isBottomSaveButton = false
 
@@ -65,7 +64,6 @@ class AcceptanceFragment :
             Triple(Utils.zones, Utils.ObjectModelType.ZONE, binding.etxtZone)
         )
         observeViewModels()
-        checkEditRights()
     }
 
     private fun observeViewModels() {
@@ -74,12 +72,16 @@ class AcceptanceFragment :
             documentCreate = false
             errorDialog(it, true)
         }
+        viewModel.toastResIdLiveData.observe(viewLifecycleOwner) {
+            documentCreate = false
+            errorDialog(requireContext().getString(it), true)
+        }
         viewModel.clientLiveData.observe(viewLifecycleOwner, ::clientObserve)
         viewModel.createUpdateLiveData.observe(viewLifecycleOwner, ::createUpdateAcceptance)
-        viewModel.logSendingResultLiveData.observe(viewLifecycleOwner){
-            if(it){
+        viewModel.logSendingResultLiveData.observe(viewLifecycleOwner) {
+            if (it) {
                 toast("Success")
-            }else{
+            } else {
                 toast("Fail")
             }
         }
@@ -111,9 +113,14 @@ class AcceptanceFragment :
         enableFieldsAfterFieldClient(clientFound)
         closeDialogLoading()
         acceptance.client = pair.first.code
+        clientPassport = pair.first.serialDoc+pair.first.numberDoc
         binding.etxtCodeClient.setText(acceptance.client)
         if (clientFound) {
-            binding.etxtCardNumber.requestFocus()
+            if (Utils.Settings.passportClientControl) {
+                binding.etxtPassport.requestFocus()
+            } else {
+                binding.etxtCardNumber.requestFocus()
+            }
         } else {
             binding.etxtCodeClient.requestFocus()
             binding.etxtCodeClient.error = "can't find"
@@ -140,7 +147,21 @@ class AcceptanceFragment :
             btnCloseCopy.setOnClickListener {
                 closeActivity()
             }
+            if (!Utils.Settings.passportClientControl) {
+                elayoutPassport.visibility = View.GONE
+                chPassport.visibility = View.GONE
+            }
+            chPassport.setOnClickListener {
+                it as CheckBox
+                if (it.isChecked) {
+                    etxtPassport.setText(clientPassport)
+                }
+                else{
+                    etxtPassport.error = null
+                }
+            }
             etxtCodeClient.setOnKeyListener(::customSetOnKeyListener)
+            etxtPassport.setOnKeyListener(::customSetOnKeyListener)
             etxtCardNumber.setOnKeyListener(::customSetOnKeyListener)
             etxtStorePhone.setOnKeyListener(::customSetOnKeyListener)
             etxtSeatsNumberCopy.setOnKeyListener(::customSetOnKeyListener)
@@ -242,6 +263,7 @@ class AcceptanceFragment :
 
             etxtCodeClient.setOnFocusChangeListener(::etxtFocusChangeListener)
             etxtStoreNumber.setOnFocusChangeListener(::etxtFocusChangeListener)
+            etxtPassport.setOnFocusChangeListener(::etxtFocusChangeListener)
             etxtCardNumber.setOnFocusChangeListener(::etxtFocusChangeListener)
             etxtAutoNumber.setOnFocusChangeListener(::etxtFocusChangeListener)
             etxtRepresentative.setOnFocusChangeListener(::etxtFocusChangeListener)
@@ -289,7 +311,7 @@ class AcceptanceFragment :
             }
 
             btnDocInfo.setOnClickListener {
-                logFileDialog(viewModel)
+                showEditWarningDialog(disabilityReason, showCheckBox = false, navigateToLog = true)
             }
         }
     }
@@ -340,6 +362,7 @@ class AcceptanceFragment :
                 innerBundle.putString("acceptanceZone", etxtZone.text.toString())
                 innerBundle.putString("acceptanceClient", etxtCodeClient.text.toString())
                 innerBundle.putString("acceptanceIdCard", etxtCardNumber.text.toString())
+                innerBundle.putString("acceptancePassport", etxtPassport.text.toString())
             }
             findNavController().navigate(
                 R.id.action_acceptanceFragment_to_acceptanceFragment,
@@ -352,6 +375,7 @@ class AcceptanceFragment :
         with(binding) {
             acceptance.autoNumber = etxtAutoNumber.text.toString()
             acceptance.idCard = etxtCardNumber.text.toString()
+            acceptance.passport = etxtPassport.text.toString()
             acceptance.storeName = etxtStoreNumber.text.toString()
             acceptance.representativeName = etxtRepresentative.text.toString()
             acceptance.phoneNumber = etxtStorePhone.text.toString()
@@ -384,6 +408,7 @@ class AcceptanceFragment :
                     acceptance.zone = args.getString("acceptanceZone").toString()
                     acceptance.client = args.getString("acceptanceClient").toString()
                     acceptance.idCard = args.getString("acceptanceIdCard").toString()
+                    acceptance.passport = args.getString("acceptancePassport").toString()
                     acceptance.productTypeName = ""
                     acceptance._package = ""
                     acceptance.batchGuid = BATCH_GUID
@@ -401,15 +426,19 @@ class AcceptanceFragment :
                 chbZ -> {
                     acceptance.z = chbZ.isChecked
                 }
+
                 chbExclamation -> {
                     acceptance.glass = chbExclamation.isChecked
                 }
+
                 chbCurrency -> {
                     acceptance.expensive = chbCurrency.isChecked
                 }
+
                 chbArrow -> {
                     acceptance.notTurnOver = chbArrow.isChecked
                 }
+
                 chbBrand -> {
                     acceptance.brand = chbBrand.isChecked
                 }
@@ -434,6 +463,7 @@ class AcceptanceFragment :
                         }
                         return false
                     }
+
                     etxtStoreAddress -> {
                         findAndFillAnyModel(
                             Utils.addressess,
@@ -446,6 +476,7 @@ class AcceptanceFragment :
                         }
                         return false
                     }
+
                     etxtProductType -> {
                         findAndFillAnyModel(
                             Utils.productTypes,
@@ -458,6 +489,7 @@ class AcceptanceFragment :
                         }
                         return false
                     }
+
                     etxtPackage -> {
                         findAndFillAnyModel(
                             Utils.packages,
@@ -470,6 +502,7 @@ class AcceptanceFragment :
                         }
                         return false
                     }
+
                     else -> return false
                 }
             }
@@ -481,6 +514,7 @@ class AcceptanceFragment :
                         createUpdateAcceptance()
                         return true
                     }
+
                     else -> false
                 }
             }
@@ -582,6 +616,7 @@ class AcceptanceFragment :
                     view.text.clear()
                 }
             }
+
             Utils.ObjectModelType.ADDRESS -> {
                 if (element != null) {
                     element as AnyModel.AddressModel
@@ -594,6 +629,7 @@ class AcceptanceFragment :
                     view.text.clear()
                 }
             }
+
             Utils.ObjectModelType.ZONE -> {
                 if (element != null) {
                     element as AnyModel.Zone
@@ -606,6 +642,7 @@ class AcceptanceFragment :
                     view.text.clear()
                 }
             }
+
             Utils.ObjectModelType._PACKAGE -> {
                 if (element != null) {
                     element as AnyModel.PackageModel
@@ -618,6 +655,7 @@ class AcceptanceFragment :
                     view.text.clear()
                 }
             }
+
             else -> {}
         }
     }
@@ -643,6 +681,19 @@ class AcceptanceFragment :
                         }
                     }
 
+                    etxtPassport -> {
+                        if (clientPassport != etxtPassport.text.toString()) {
+                            etxtPassport.error = "wrong passport"
+                            etxtPassport.requestFocus()
+                            return false
+                        }
+                        if (etxtCardNumber.isEnabled && etxtCardNumber.isVisible) {
+                            etxtCardNumber.requestFocus()
+                            return true
+                        }
+                        return false
+                    }
+
                     etxtCardNumber -> {
                         if (etxtStoreAddress.isEnabled && etxtStoreAddress.isVisible) {
                             etxtStoreAddress.requestFocus()
@@ -650,6 +701,7 @@ class AcceptanceFragment :
                         }
                         return false
                     }
+
                     etxtStorePhone -> {
                         if (etxtProductType.isEnabled && etxtProductType.isVisible) {
                             etxtProductType.requestFocus()
@@ -657,6 +709,7 @@ class AcceptanceFragment :
                         }
                         return false
                     }
+
                     etxtSeatsNumberCopy -> {
                         if (etxtPackageCount.isEnabled && etxtPackageCount.isVisible) {
                             etxtPackageCount.requestFocus()
@@ -664,6 +717,7 @@ class AcceptanceFragment :
                         }
                         return false
                     }
+
                     etxtPackageCount -> {
                         if (etxtCountInPackage.isEnabled && etxtCountInPackage.isVisible) {
                             etxtCountInPackage.requestFocus()
@@ -671,11 +725,13 @@ class AcceptanceFragment :
                         }
                         return false
                     }
+
                     etxtCountInPackage -> {
                         hasFocusCanSave = true
                         etxtSave.requestFocus()
                         return true
                     }
+
                     else -> {
                         return false
                     }
@@ -693,6 +749,7 @@ class AcceptanceFragment :
                         etxtSave.requestFocus()
                         return true
                     }
+
                     else -> {
                         return false
                     }
@@ -706,6 +763,7 @@ class AcceptanceFragment :
         with(binding) {
             etxtAutoNumber.isEnabled = enable
             etxtCardNumber.isEnabled = enable
+            etxtPassport.isEnabled = enable
             etxtStoreNumber.isEnabled = enable
             etxtRepresentative.isEnabled = enable
             etxtStorePhone.isEnabled = enable
@@ -730,6 +788,7 @@ class AcceptanceFragment :
             etxtAutoNumber.isEnabled = enable
             chPassport.isEnabled = enable
             etxtCardNumber.isEnabled = enable
+            etxtPassport.isEnabled = enable
             chbArrow.isEnabled = enable
             chbBrand.isEnabled = enable
             chbCurrency.isEnabled = enable
@@ -744,6 +803,14 @@ class AcceptanceFragment :
             etxtSeatsNumberCopy.isEnabled = enable
             etxtPackageCount.isEnabled = enable
             etxtCountInPackage.isEnabled = enable
+
+            if (!enable && getSharedPref(Utils.Settings.SHOW_DISABILITY_DIALOG).isEmpty()) {
+                showEditWarningDialog(
+                    disabilityReason,
+                    showCheckBox = true,
+                    navigateToLog = false
+                )
+            }
         }
     }
 
@@ -760,12 +827,11 @@ class AcceptanceFragment :
     }
 
     private fun showDetails(triple: Triple<Acceptance, FieldsAccess, String>) {
-        if (triple.third.isNotEmpty()){
+        if (triple.third.isNotEmpty()) {
             errorDialog(triple.third, false)
         }
         acceptance = triple.first
         ACCEPTANCE = acceptance
-        fieldsAccess = triple.second
         if (this.acceptance.ref.isEmpty()) {
             binding.pbLoading.isVisible = false
             return
@@ -774,14 +840,19 @@ class AcceptanceFragment :
         showAcceptance()
         setInitFocuses()
         showPbLoading(false)
-        enableVisibleList()
-        fieldsAccess(fieldsAccess)
+        fieldsAccess(triple.second)
     }
 
-    private fun fieldsAccess(fieldAccess: FieldsAccess) {
+    private fun fieldsAccess(fieldsAccess: FieldsAccess) {
         with(binding) {
-            fieldsAccess = fieldAccess
-            if (!user.isAdmin && (user.username != acceptance.whoAccept) && fieldAccess.readOnly) {
+            disabilityReason = fieldsAccess.getInaccessibilityReason(
+                requireContext(),
+                user,
+                acceptance.isPrinted,
+                acceptance.whoAccept,
+                DocumentType.ACCEPTANCE
+            )
+            if (!user.isAdmin && (user.username != acceptance.whoAccept) && fieldsAccess.readOnly) {
                 fieldsEnable(false)
             }
             if (acceptance.isPrinted) {
@@ -807,91 +878,92 @@ class AcceptanceFragment :
         }
     }
 
-    private fun enableVisibleList() {
-        val enableVisibleMap = mutableMapOf<View, AcceptanceEnableVisible>()
-        with(binding) {
-            propertyList.forEach { enableVisible ->
-                when (enableVisible.field) {
-                    AcceptanceRepository.CLIENT_KEY -> enableVisibleMap[etxtCodeClient] =
-                        enableVisible
-
-                    AcceptanceRepository.NUMBER_KEY -> {
-                        enableVisibleMap[etxtDocumentNumber] = enableVisible
-                        enableVisibleMap[etxtDocumentNumberCopy] = enableVisible
-                    }
-
-                    AcceptanceRepository.AUTO_NUMBER_KEY -> enableVisibleMap[etxtAutoNumber] =
-                        enableVisible
-
-                    AcceptanceRepository.ID_CARD_KEY -> enableVisibleMap[etxtCardNumber] =
-                        enableVisible
-
-                    AcceptanceRepository.ZONE_KEY -> enableVisibleMap[elayoutZone] =
-                        enableVisible
-
-                    AcceptanceRepository.COUNT_SEAT_KEY -> {
-                        enableVisibleMap[etxtSeatsNumber] =
-                            enableVisible
-                        enableVisibleMap[etxtSeatsNumberCopy] =
-                            enableVisible
-                    }
-
-                    AcceptanceRepository.COUNT_IN_PACKAGE_KEY -> enableVisibleMap[etxtCountInPackage] =
-                        enableVisible
-
-                    AcceptanceRepository.COUNT_PACKAGE_KEY -> enableVisibleMap[etxtPackageCount] =
-                        enableVisible
-
-                    AcceptanceRepository.PACKAGE_UID_KEY -> enableVisibleMap[elayoutPackage] =
-                        enableVisible
-
-                    AcceptanceRepository.PRODUCT_TYPE_KEY -> enableVisibleMap[elayoutProductType] =
-                        enableVisible
-
-                    AcceptanceRepository.STORE_UID_KEY -> enableVisibleMap[elayoutStoreAddress] =
-                        enableVisible
-
-                    AcceptanceRepository.PHONE_KEY -> enableVisibleMap[etxtStorePhone] =
-                        enableVisible
-
-                    AcceptanceRepository.STORE_NAME_KEY -> enableVisibleMap[etxtStoreNumber] =
-                        enableVisible
-
-                    AcceptanceRepository.REPRESENTATIVE_NAME_KEY -> enableVisibleMap[etxtRepresentative] =
-                        enableVisible
-
-                    AcceptanceRepository.Z_KEY -> enableVisibleMap[chbZ] =
-                        enableVisible
-
-                    AcceptanceRepository.BRAND_KEY -> enableVisibleMap[chbBrand] =
-                        enableVisible
-
-                    AcceptanceRepository.GLASS_KEY -> enableVisibleMap[chbExclamation] =
-                        enableVisible
-
-                    AcceptanceRepository.EXPENSIVE_KEY -> enableVisibleMap[chbCurrency] =
-                        enableVisible
-
-                    AcceptanceRepository.NOT_TURN_OVER_KEY -> enableVisibleMap[chbArrow] =
-                        enableVisible
-
-                    else -> {}
-                }
-            }
-        }
-        enableVisibleMap.forEach {
-            val enableVisible = it.value
-            val view = it.key
-            view.isVisible = enableVisible.visible
-            view.isEnabled = enableVisible.enable
-        }
-    }
+//    private fun enableVisibleList() {
+//        val enableVisibleMap = mutableMapOf<View, AcceptanceEnableVisible>()
+//        with(binding) {
+//            propertyList.forEach { enableVisible ->
+//                when (enableVisible.field) {
+//                    AcceptanceRepository.CLIENT_KEY -> enableVisibleMap[etxtCodeClient] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.NUMBER_KEY -> {
+//                        enableVisibleMap[etxtDocumentNumber] = enableVisible
+//                        enableVisibleMap[etxtDocumentNumberCopy] = enableVisible
+//                    }
+//
+//                    AcceptanceRepository.AUTO_NUMBER_KEY -> enableVisibleMap[etxtAutoNumber] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.ID_CARD_KEY -> enableVisibleMap[etxtCardNumber] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.ZONE_KEY -> enableVisibleMap[elayoutZone] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.COUNT_SEAT_KEY -> {
+//                        enableVisibleMap[etxtSeatsNumber] =
+//                            enableVisible
+//                        enableVisibleMap[etxtSeatsNumberCopy] =
+//                            enableVisible
+//                    }
+//
+//                    AcceptanceRepository.COUNT_IN_PACKAGE_KEY -> enableVisibleMap[etxtCountInPackage] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.COUNT_PACKAGE_KEY -> enableVisibleMap[etxtPackageCount] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.PACKAGE_UID_KEY -> enableVisibleMap[elayoutPackage] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.PRODUCT_TYPE_KEY -> enableVisibleMap[elayoutProductType] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.STORE_UID_KEY -> enableVisibleMap[elayoutStoreAddress] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.PHONE_KEY -> enableVisibleMap[etxtStorePhone] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.STORE_NAME_KEY -> enableVisibleMap[etxtStoreNumber] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.REPRESENTATIVE_NAME_KEY -> enableVisibleMap[etxtRepresentative] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.Z_KEY -> enableVisibleMap[chbZ] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.BRAND_KEY -> enableVisibleMap[chbBrand] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.GLASS_KEY -> enableVisibleMap[chbExclamation] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.EXPENSIVE_KEY -> enableVisibleMap[chbCurrency] =
+//                        enableVisible
+//
+//                    AcceptanceRepository.NOT_TURN_OVER_KEY -> enableVisibleMap[chbArrow] =
+//                        enableVisible
+//
+//                    else -> {}
+//                }
+//            }
+//        }
+//        enableVisibleMap.forEach {
+//            val enableVisible = it.value
+//            val view = it.key
+//            view.isVisible = enableVisible.visible
+//            view.isEnabled = enableVisible.enable
+//        }
+//    }
 
     private fun showAcceptance() {
         with(binding) {
             etxtAutoNumber.setText(acceptance.autoNumber)
             etxtZone.setText(acceptance.zone)
             etxtCardNumber.setText(acceptance.idCard)
+            etxtPassport.setText(acceptance.passport)
             etxtCodeClient.setText(acceptance.client)
             etxtSeatsNumber.setText(acceptance.countSeat.toString())
             etxtDocumentNumber.setText(acceptance.number)
@@ -951,7 +1023,7 @@ class AcceptanceFragment :
     }
 
     private fun checkEditRights() {
-        if ((!fieldsAccess.isCreator && !user.isAdmin) || !user.acceptanceCargo) {
+        if ((user.username != acceptance.whoAccept && !user.isAdmin)) {
             fieldsEnable(false)
         }
     }

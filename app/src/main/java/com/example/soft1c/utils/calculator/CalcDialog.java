@@ -115,7 +115,8 @@ public class CalcDialog extends AppCompatDialogFragment {
                         presenter.onDecimalSepBtnClicked();
                         break;
                     }
-                    case 66: {
+                    case 66:
+                    case 135: {
                         presenter.onOkBtnClicked();
                         break;
                     }
@@ -138,10 +139,6 @@ public class CalcDialog extends AppCompatDialogFragment {
                     }
                     case 134: {
                         presenter.onOperatorBtnClicked(Expression.Operator.ADD);
-                        break;
-                    }
-                    case 135: {
-                        presenter.onAnswerBtnClicked();
                         break;
                     }
                 }

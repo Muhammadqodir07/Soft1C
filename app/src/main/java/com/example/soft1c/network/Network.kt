@@ -17,7 +17,37 @@ object Network {
 //    lateinit var retrofit: Retrofit
 
     fun refreshConnection(){
+        Client = OkHttpClient.Builder()
+            .addInterceptor(BasicAuthInterceptor())
+            .addNetworkInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+            .connectTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the connection timeout to 30 seconds
+            .readTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the read timeout to 30 seconds
+            .writeTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the write timeout to 30 seconds
+            .build()
 
+        acceptanceRetrofit = Retrofit.Builder()
+            .addConverterFactory(MoshiConverterFactory.create())
+            .client(Client)
+            .baseUrl(Utils.base_url+Utils.acceptance_auth)
+            .build()
+
+        autoRetrofit = Retrofit.Builder()
+            //Конвертер, который позволяет сериализовать и десериализовать JSON данные.
+            .addConverterFactory(MoshiConverterFactory.create())
+            .client(Client)
+            .baseUrl(Utils.base_url + Utils.auth)
+            .build()
+
+        loadingRetrofit = Retrofit.Builder()
+            //Конвертер, который позволяет сериализовать и десериализовать JSON данные.
+            .addConverterFactory(MoshiConverterFactory.create())
+            .client(Client)
+            .baseUrl(Utils.base_url + Utils.loading_auth)
+            .build()
+    }
+
+    fun getBaseUrl(): String {
+        return autoRetrofit.baseUrl().toUrl().toString()
     }
 
     private fun getUnsafeOkHttpClient(): OkHttpClient.Builder {
@@ -42,13 +72,13 @@ object Network {
         val builder = OkHttpClient.Builder()
         builder.sslSocketFactory(sslSocket, trustAllCerts[0] as X509TrustManager)
         builder.hostnameVerifier { _, _ -> true }
-        builder.addInterceptor(BasicAuthInterceptor(Utils.username, Utils.password))
+        builder.addInterceptor(BasicAuthInterceptor())
         return builder
     }
 
     // Объекта OkHttpClient, который предоставляет средства для работы с сетевыми запросами и ответами.
-    private val Client = OkHttpClient.Builder()
-        .addInterceptor(BasicAuthInterceptor(Utils.username, Utils.password))
+    private var Client = OkHttpClient.Builder()
+        .addInterceptor(BasicAuthInterceptor())
         .addNetworkInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
         .connectTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the connection timeout to 30 seconds
         .readTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the read timeout to 30 seconds
@@ -56,44 +86,34 @@ object Network {
         .build()
 
     // Объекта Retrofit, который предоставляет средства для выполнения запросов к API.
-    private val autoRetrofit = Retrofit.Builder()
+    private var autoRetrofit = Retrofit.Builder()
         //Конвертер, который позволяет сериализовать и десериализовать JSON данные.
         .addConverterFactory(MoshiConverterFactory.create())
         .client(Client)
         .baseUrl(Utils.base_url + Utils.auth)
         .build()
 
-    // Объект CarApi, который будет использоваться для выполнения запросов к API. Оно будет иметь методы для выполнения запросов, определенные в интерфейсе CarApi.
     val Api: AutoApi = autoRetrofit.create(AutoApi::class.java)
 
 
-    // Объекта OkHttpClient, который предоставляет средства для работы с сетевыми запросами и ответами.
-    private val LoadingClient = OkHttpClient.Builder()
-        .addInterceptor(BasicAuthInterceptor(Utils.username, Utils.password))
-        .addNetworkInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
-        .connectTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the connection timeout to 30 seconds
-        .readTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the read timeout to 30 seconds
-        .writeTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the write timeout to 30 seconds
-        .build()
-
     // Объекта Retrofit, который предоставляет средства для выполнения запросов к API.
-    private val loadingRetrofit = Retrofit.Builder()
+    private var loadingRetrofit = Retrofit.Builder()
         //Конвертер, который позволяет сериализовать и десериализовать JSON данные.
         .addConverterFactory(MoshiConverterFactory.create())
-        .client(LoadingClient)
+        .client(Client)
         .baseUrl(Utils.base_url + Utils.loading_auth)
         .build()
 
     // Объект CarApi, который будет использоваться для выполнения запросов к API. Оно будет иметь методы для выполнения запросов, определенные в интерфейсе CarApi.
     val loadingApi: LoadingApi = loadingRetrofit.create(LoadingApi::class.java)
 
-    private val retrofit = Retrofit.Builder()
+    private var acceptanceRetrofit = Retrofit.Builder()
         .addConverterFactory(MoshiConverterFactory.create())
         .client(Client)
         .baseUrl(Utils.base_url+Utils.acceptance_auth)
         .build()
 
-    val api: BaseApi = retrofit.create(BaseApi::class.java)
+    val api: BaseApi = acceptanceRetrofit.create(BaseApi::class.java)
 
 
 
