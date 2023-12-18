@@ -261,6 +261,18 @@
         />
 
     <TextView
+        android:id="@+id/calc_btn_div_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="F1"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="@id/calc_btn_div"
+        app:layout_constraintTop_toTopOf="@id/calc_btn_div"
+        android:layout_marginEnd="6dp"
+        android:layout_marginTop="6dp"
+    />
+
+    <TextView
         android:id="@+id/calc_btn_mul"
         style="?calcOperationBtnStyle"
         android:layout_width="0dp"
@@ -270,6 +282,19 @@
         app:layout_constraintStart_toStartOf="@id/calc_guideline_end"
         app:layout_constraintTop_toBottomOf="@id/calc_btn_div"
         tools:text="×"
+        />
+
+
+    <TextView
+        android:id="@+id/calc_btn_mul_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="F2"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="@id/calc_btn_mul"
+        app:layout_constraintTop_toTopOf="@id/calc_btn_mul"
+        android:layout_marginEnd="6dp"
+        android:layout_marginTop="6dp"
         />
 
     <TextView
@@ -284,6 +309,19 @@
         tools:text="−"
         />
 
+
+    <TextView
+        android:id="@+id/calc_btn_sub_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="F3"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="@id/calc_btn_sub"
+        app:layout_constraintTop_toTopOf="@id/calc_btn_sub"
+        android:layout_marginEnd="6dp"
+        android:layout_marginTop="6dp"
+        />
+
     <TextView
         android:id="@+id/calc_btn_add"
         style="?calcOperationBtnStyle"
@@ -296,6 +334,19 @@
         tools:text="+"
         />
 
+
+    <TextView
+        android:id="@+id/calc_btn_add_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="F4"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="@id/calc_btn_add"
+        app:layout_constraintTop_toTopOf="@id/calc_btn_add"
+        android:layout_marginEnd="6dp"
+        android:layout_marginTop="6dp"
+        />
+
     <TextView
         android:id="@+id/calc_btn_equal"
         style="?calcOperationBtnStyle"
@@ -306,6 +357,19 @@
         app:layout_constraintStart_toStartOf="@id/calc_guideline_end"
         app:layout_constraintTop_toBottomOf="@id/calc_btn_add"
         tools:text="="
+        />
+
+
+    <TextView
+        android:id="@+id/calc_btn_equal_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="F5"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="@id/calc_btn_equal"
+        app:layout_constraintTop_toTopOf="@id/calc_btn_equal"
+        android:layout_marginEnd="6dp"
+        android:layout_marginTop="6dp"
         />
 
     <TextView

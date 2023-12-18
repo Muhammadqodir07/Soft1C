@@ -1,6 +1,7 @@
 package com.example.soft1c.fragment
 
 import android.os.Bundle
+import android.text.SpannableStringBuilder
 import android.view.KeyEvent
 import android.view.View
 import android.widget.AutoCompleteTextView
@@ -10,6 +11,7 @@ import androidx.fragment.app.viewModels
 import com.example.soft1c.R
 import com.example.soft1c.databinding.FragmentAcceptanceWeightBinding
 import com.example.soft1c.repository.model.Acceptance
+import com.example.soft1c.repository.model.DocumentType
 import com.example.soft1c.repository.model.FieldsAccess
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.utils.calculator.CalcDialog
@@ -18,11 +20,13 @@ import com.google.android.material.textfield.TextInputEditText
 import java.math.BigDecimal
 
 class AcceptanceWeightFragment :
-    BaseFragment<FragmentAcceptanceWeightBinding>(FragmentAcceptanceWeightBinding::inflate), CalcDialog.CalcDialogCallback {
+    BaseFragment<FragmentAcceptanceWeightBinding>(FragmentAcceptanceWeightBinding::inflate),
+    CalcDialog.CalcDialogCallback {
 
     private lateinit var acceptance: Acceptance
     private lateinit var acceptanceGuid: String
     private val viewModel: AcceptanceViewModel by viewModels()
+    private lateinit var disabilityReason: SpannableStringBuilder
     private var hasFocusCanSave = false
     private val user = Utils.user
     private var value: BigDecimal? = null
@@ -51,11 +55,14 @@ class AcceptanceWeightFragment :
         viewModel.toastLiveData.observe(viewLifecycleOwner) {
             errorDialog(it, true)
         }
+        viewModel.toastResIdLiveData.observe(viewLifecycleOwner) {
+            errorDialog(getString(it), true)
+        }
         viewModel.createUpdateLiveData.observe(viewLifecycleOwner, ::createUpdateAcceptance)
-        viewModel.logSendingResultLiveData.observe(viewLifecycleOwner){
-            if(it){
+        viewModel.logSendingResultLiveData.observe(viewLifecycleOwner) {
+            if (it) {
                 toast("Success")
-            }else{
+            } else {
                 toast("Fail")
             }
         }
@@ -89,11 +96,13 @@ class AcceptanceWeightFragment :
             }
             btnCalc.setOnClickListener {
                 calcDialog.settings.isZeroShownWhenNoValue = true
-                calcDialog.settings.initialValue = etxtWeight.text.toString().toDouble().toBigDecimal()
+                calcDialog.settings.initialValue =
+                    etxtWeight.text.toString().toDouble().toBigDecimal()
                 calcDialog.settings.isSignBtnShown = false
                 calcDialog.settings.isExpressionShown = true
                 calcDialog.settings.minValue = BigDecimal.valueOf(0)
-                calcDialog.show(childFragmentManager, "calc_dialog") }
+                calcDialog.show(childFragmentManager, "calc_dialog")
+            }
             etxtSave.setOnKeyListener(::autoCompleteOnKeyListener)
             etxtSave.setOnFocusChangeListener(::setAutoCompleteFocusListener)
             etxtSaveCopy.setOnFocusChangeListener(::setAutoCompleteFocusListener)
@@ -106,7 +115,15 @@ class AcceptanceWeightFragment :
 //            }
             etxtWeight.setOnKeyListener(::customSetOnKeyListener)
             btnDocInfo.setOnClickListener {
-                logFileDialog(viewModel)
+                if (disabilityReason.isNotEmpty()) {
+                    showEditWarningDialog(
+                        disabilityReason,
+                        showCheckBox = false,
+                        navigateToLog = true
+                    )
+                } else {
+                    logFileDialog()
+                }
             }
         }
     }
@@ -135,6 +152,7 @@ class AcceptanceWeightFragment :
                         createUpdateAcceptance()
                         return true
                     }
+
                     else -> false
                 }
             }
@@ -156,6 +174,7 @@ class AcceptanceWeightFragment :
                         etxtSave.requestFocus()
                         return true
                     }
+
                     else -> {
                         return false
                     }
@@ -188,7 +207,7 @@ class AcceptanceWeightFragment :
     }
 
     private fun showDetails(triple: Triple<Acceptance, FieldsAccess, String>) {
-        if (triple.third.isNotEmpty()){
+        if (triple.third.isNotEmpty()) {
             errorDialog(triple.third, false)
         }
         acceptance = triple.first
@@ -235,32 +254,24 @@ class AcceptanceWeightFragment :
         }
     }
 
-    private fun checkEditRights(fieldsAccess: FieldsAccess){
+    private fun checkEditRights(fieldsAccess: FieldsAccess) {
+        disabilityReason = fieldsAccess.getInaccessibilityReason(
+            requireContext(),
+            user,
+            acceptance.isPrinted,
+            acceptance.whoMeasure,
+            DocumentType.ACCEPTANCE_WEIGHT
+        )
         if ((user.username != acceptance.whoWeigh) && acceptance.weight && !user.isAdmin) {
-            binding.etxtWeight.isEnabled=false
+            binding.etxtWeight.isEnabled = false
             binding.btnCalc.isEnabled = false
-            toast(getString(R.string.weighEnable1))
-            return
-        }
-
-        if (!user.weightAccess) {
-            binding.etxtWeight.isEnabled=false
-            binding.btnCalc.isEnabled = false
-            toast(getString(R.string.weighEnable2))
-            return
-        }
-
-        if (!user.isAdmin && !fieldsAccess.weightEnable) {
-            binding.etxtWeight.isEnabled=false
-            binding.btnCalc.isEnabled = false
-            toast(getString(R.string.weighEnable3))
-            return
-        }
-
-        if (fieldsAccess.readOnly) {
-            binding.etxtWeight.isEnabled=false
-            binding.btnCalc.isEnabled = false
-            toast(getString(R.string.weighEnable4))
+            if (getSharedPref(Utils.Settings.SHOW_DISABILITY_DIALOG).isEmpty()) {
+                showEditWarningDialog(
+                    disabilityReason,
+                    showCheckBox = true,
+                    navigateToLog = false
+                )
+            }
             return
         }
         binding.etxtWeight.selectAll()

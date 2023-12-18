@@ -78,18 +78,15 @@
     <string name="email_error_log">寄电邮故障</string>
     <string name="copy_error_log">复制故障</string>
     <string name="close_app">关闭手机</string>
-    <string name="weighEnable1">另一个人称重</string>
-    <string name="weighEnable2">个人无权称重</string>
-    <string name="weighEnable3">接受无法称重</string>
-    <string name="weighEnable4">接受只读</string>
-    <string name="sizeEnable1">另一个人测量</string>
-    <string name="sizeEnable2">个人无权测量</string>
-    <string name="sizeEnable3">接受无法测量</string>
-    <string name="sizeEnable4">接受只读</string>
+    <string name="disabled">残疾人\n</string>
+    <string name="disable_reason">启用\n</string>
+    <string name="all_fields">所有字段</string>
+    <string name="not_creator">另一个人</string>
+    <string name="is_read_only">接受只读</string>
     <string name="doc_log_info">信息</string>
     <string name="calc_dialog_clear">抹去</string>
     <string name="calc_dialog_cancel">取消</string>
-    <string name="calc_dialog_ok">好</string>
+    <string name="dialog_ok">好</string>
 
     <string name="calc_answer">答案</string>
 
@@ -101,4 +98,14 @@
     </string-array>
 
     <string name="calc_dialog_erase">抹去</string>
+    <string name="is_printed">条码已经印</string>
+    <string name="another_accept">另一个人接受</string>
+    <string name="another_measure">另一个人测量</string>
+    <string name="another_weigh">另一个人称重</string>
+    <string name="dont_show_again">不再显示</string>
+    <string name="socket_timeout_exception">超时。未建立连接</string>
+    <string name="unauthorized">用户名或密码错误</string>
+    <string name="not_found">未找到服务器</string>
+    <string name="no_connection_exception">没有互联网连接</string>
+    <string name="text_more">更多信息</string>
 </resources>

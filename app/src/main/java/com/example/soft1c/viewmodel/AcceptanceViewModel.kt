@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.soft1c.R
+import com.example.soft1c.network.Network
 import com.example.soft1c.repository.AcceptanceRepository
 import com.example.soft1c.repository.AcceptanceSizeRepository
 import com.example.soft1c.repository.model.Acceptance
@@ -34,10 +36,18 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
 //            }
 //        }
 //        toastMutableData.postValue(comExampleSoft1cLine ?: "Error: no line containing 'com.example.soft1c' found.")
-        toastMutableData.postValue("Error on $coroutineContext , error message ${throwable.localizedMessage}")
+        if (throwable.stackTraceToString().startsWith("java.net.SocketTimeoutException")) {
+            toastResIdMutableData.postValue(R.string.socket_timeout_exception)
+        } else if (throwable.stackTraceToString().startsWith("java.net.ConnectException")) {
+            toastResIdMutableData.postValue(R.string.no_connection_exception)
+        } else {
+            toastMutableData.postValue("Error on $coroutineContext , error message ${throwable.localizedMessage}")
+        }
+        Network.refreshConnection()
     }
 
     private val toastMutableData = SingleLiveEvent<String>()
+    private val toastResIdMutableData = SingleLiveEvent<Int>()
     private val acceptanceListMutableData = MutableLiveData<List<Acceptance>>()
     private val acceptanceMutableData =
         SingleLiveEvent<Triple<Acceptance, FieldsAccess, String>>()
@@ -49,6 +59,8 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
 
     val toastLiveData: LiveData<String>
         get() = toastMutableData
+    val toastResIdLiveData: LiveData<Int>
+        get() = toastResIdMutableData
 
     val acceptanceListLiveData: LiveData<List<Acceptance>>
         get() = acceptanceListMutableData
@@ -67,7 +79,7 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
 
     val updateAcceptanceSizeLiveData: LiveData<Pair<String, Boolean>>
         get() = updateAcceptanceSizeMutableData
-    
+
     val logSendingResultLiveData: LiveData<Boolean>
         get() = logSendingResultMutableData
 
@@ -115,7 +127,7 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
     }
 
     fun sendLogs() {
-        viewModelScope.launch ((exceptionScope + Dispatchers.IO)){
+        viewModelScope.launch((exceptionScope + Dispatchers.IO)) {
             logSendingResultMutableData.postValue(repository.sendLogs(Utils.logFor1C))
         }
     }

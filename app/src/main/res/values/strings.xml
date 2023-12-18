@@ -83,20 +83,18 @@
     <string name="email_error_log">Email error</string>
     <string name="copy_error_log">Copy error</string>
     <string name="close_app">Close app</string>
+    <string name="disabled">Disabled</string>
+    <string name="disable_reason">Reason</string>
+    <string name="all_fields">All fields</string>
 
-    <string name="weighEnable1">Another person weighed</string>
-    <string name="weighEnable2">Person don\'t have access to weigh</string>
-    <string name="weighEnable3">Document cannot be weighed</string>
-    <string name="weighEnable4">Document is readonly</string>
+    <string name="not_creator">Is not creator</string>
+    <string name="is_read_only">Document is readonly</string>
+    <string name="is_printed">Document is printed</string>
 
-    <string name="sizeEnable1">Another person measured</string>
-    <string name="sizeEnable2">Person don\'t have access to measure</string>
-    <string name="sizeEnable3">Document cannot be measure</string>
-    <string name="sizeEnable4">Document is readonly</string>
     <string name="doc_log_info">Info</string>
     <string name="calc_dialog_clear">Clear</string>
     <string name="calc_dialog_cancel">Cancel</string>
-    <string name="calc_dialog_ok">OK</string>
+    <string name="dialog_ok">OK</string>
 
     <string name="calc_answer">Ans</string>
 
@@ -108,5 +106,15 @@
     </string-array>
 
     <string name="calc_dialog_erase">Erase</string>
+    <string name="another_accept">Another person accepted</string>
+    <string name="another_measure">Another person measured</string>
+    <string name="another_weigh">Another person weighed</string>
+    <string name="dont_show_again">Don\'t show this again</string>
+
+    <string name="socket_timeout_exception">Timeout exceeded. No connection established</string>
+    <string name="unauthorized">Wrong login or password</string>
+    <string name="not_found">Base not found</string>
+    <string name="no_connection_exception">"No internet connection "</string>
+    <string name="text_more">More</string>
 
 </resources>

@@ -14,6 +14,7 @@ data class Acceptance(
     var notTurnOver: Boolean = false, //Некантовать
     var zone: String = "",
     var autoNumber: String = "", //НомерАвто
+    var passport: String = "", //Паспорт
     var idCard: String = "", //IDПродавца
     var productTypeName: String = "",
     var storeName: String = "", // НаименованиеМагазина

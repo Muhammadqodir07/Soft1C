@@ -146,6 +146,7 @@ class AcceptanceRepository {
             jsonObject.put(PHONE_KEY, acceptance.phoneNumber)
             jsonObject.put(STORE_NAME_KEY, acceptance.storeName)
             jsonObject.put(PRODUCT_TYPE_KEY, acceptance.productType)
+            jsonObject.put(PASSPORT_KEY, acceptance.passport)
             jsonObject.put(REPRESENTATIVE_NAME_KEY, acceptance.representativeName)
             jsonObject.put(AUTO_NUMBER_KEY, acceptance.autoNumber)
             jsonObject.put(COUNT_SEAT_KEY, acceptance.countSeat)
@@ -221,7 +222,7 @@ class AcceptanceRepository {
                                     }
                                 }
                             } else {
-                                continuation.resume(Pair(acceptance, "Error in 1C"))
+                                continuation.resume(Pair(acceptance, response.message()))
                             }
                         }
                     }
@@ -315,6 +316,7 @@ class AcceptanceRepository {
         if (hasAdditionalFields) {
             val autoNumber = acceptJson.getString(AUTO_NUMBER_KEY)
             val idCard = acceptJson.getString(ID_CARD_KEY)
+            val passport = acceptJson.optString(PASSPORT_KEY, "")
             val countSeat = acceptJson.getInt(COUNT_SEAT_KEY)
             val countInPackage = acceptJson.getInt(COUNT_IN_PACKAGE_KEY)
             val countPackage = acceptJson.getInt(COUNT_PACKAGE_KEY)
@@ -358,6 +360,7 @@ class AcceptanceRepository {
                 countSeat = countSeat,
                 storeUid = storeUid,
                 idCard = idCard,
+                passport = passport,
                 zone = zoneName,
                 _package = packageName,
                 allWeight = allWeight,
@@ -441,6 +444,7 @@ class AcceptanceRepository {
         const val EXPENSIVE_KEY = "Дорогой"
         const val NOT_TURN_OVER_KEY = "НеКантовать"
         const val PRINTED_KEY = "Напечатан"
+        const val PASSPORT_KEY = "Паспорт"
 
         const val READ_ONLY = "ViewOnly"
         const val WEIGHT_ENABLE = "InputWeight"

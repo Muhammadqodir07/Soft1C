@@ -1,7 +1,6 @@
 package com.example.soft1c.fragment
 
 import android.os.Bundle
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
@@ -19,21 +18,17 @@ import com.example.soft1c.utils.Demo
 import com.example.soft1c.utils.MainActivity
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.utils.Utils.password
-import com.example.soft1c.utils.calculator.CalcDialog
 import com.example.soft1c.viewmodel.BaseViewModel
 import com.google.android.material.textfield.TextInputEditText
 import com.phearme.macaddressedittext.MacAddressEditText
 import java.io.File
-import java.math.BigDecimal
 
-class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::inflate),
-    CalcDialog.CalcDialogCallback {
+class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::inflate) {
 
     private val baseViewModel: BaseViewModel by viewModels()
     private var error: String = ""
     private var requiredTypes = 6
     private lateinit var accessPair: Pair<Boolean, Boolean>
-    val calcDialog = CalcDialog()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -126,8 +121,11 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
         with(binding) {
             cardLogin.setOnClickListener {
                 setBase()
-                val demo = Demo()
-               demo.loadProfile()
+//                val demo = Demo()
+//                demo.loadProfile()
+                baseViewModel.acceptanceAuth()
+                showPbLoading(true)
+                setBase()
                baseViewModel.acceptanceAuth()
                 showPbLoading(true)
 

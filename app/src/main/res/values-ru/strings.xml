@@ -78,18 +78,11 @@
     <string name="email_error_log">Отправить</string>
     <string name="copy_error_log">Скопировать</string>
     <string name="close_app">Выйти</string>
-    <string name="weighEnable1">Другой человек взвесил</string>
-    <string name="weighEnable2">Нет доступа к взвешиванию</string>
-    <string name="weighEnable3">Прием нельзя взвесить</string>
-    <string name="weighEnable4">Документ только для чтения</string>
-    <string name="sizeEnable1">Другой человек измерил</string>
-    <string name="sizeEnable2">Нет доступа к измерению</string>
-    <string name="sizeEnable3">Прием нельзя измерить</string>
-    <string name="sizeEnable4">Документ только для чтения</string>
+    <string name="is_read_only">Документ только для чтения</string>
     <string name="doc_log_info">Инфо</string>
     <string name="calc_dialog_clear">Oчищать</string>
     <string name="calc_dialog_cancel">Отмена</string>
-    <string name="calc_dialog_ok">OK</string>
+    <string name="dialog_ok">OK</string>
 
     <string name="calc_answer">Отв</string>
 
@@ -101,4 +94,18 @@
     </string-array>
 
     <string name="calc_dialog_erase">стирать</string>
+    <string name="disabled">Недоступен</string>
+    <string name="disable_reason">Причина</string>
+    <string name="all_fields">Все поля</string>
+    <string name="not_creator">Не создатель</string>
+    <string name="is_printed">Штрих-код распечатан</string>
+    <string name="another_measure">Другой человек измерил</string>
+    <string name="another_weigh">Другой человек взвесил</string>
+    <string name="another_accept">Другой человек принял</string>
+    <string name="dont_show_again">Больше не показывать это</string>
+    <string name="socket_timeout_exception">Превышено время ожидания. Соединение не установлено</string>
+    <string name="unauthorized">Неверный логин или пароль</string>
+    <string name="not_found">База не найдена</string>
+    <string name="no_connection_exception">Отсутствует подключение к интернету</string>
+    <string name="text_more">Больше</string>
 </resources>
