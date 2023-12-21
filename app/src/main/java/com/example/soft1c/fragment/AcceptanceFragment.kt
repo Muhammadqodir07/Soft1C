@@ -661,7 +661,7 @@ class AcceptanceFragment :
     }
 
     private fun customSetOnKeyListener(view: View, key: Int, keyEvent: KeyEvent): Boolean {
-        if (key == 66 && keyEvent.action == KeyEvent.ACTION_UP) {
+        if (key == 66 && keyEvent.action == KeyEvent.ACTION_DOWN) {
             with(binding) {
                 val etxtView = view as TextInputEditText
 //                if (etxtView.text!!.isEmpty()) {

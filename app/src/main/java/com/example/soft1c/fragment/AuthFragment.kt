@@ -14,6 +14,7 @@ import com.example.soft1c.databinding.FragmentAuthBinding
 import com.example.soft1c.network.Network
 import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.LoadingModel
+import com.example.soft1c.utils.Demo
 import com.example.soft1c.utils.MainActivity
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.utils.Utils.password
@@ -146,6 +147,68 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
 //                demo.loadProfile()
                 baseViewModel.acceptanceAuth()
                 showPbLoading(true)
+            }
+            etxtUrlAdress.setOnKeyListener(::customSetOnKeyListener)
+            etxtBasename.setOnKeyListener(::customSetOnKeyListener)
+            etxtUsername.setOnKeyListener(::customSetOnKeyListener)
+            etxtPassword.setOnKeyListener(::customSetOnKeyListener)
+            etxtUrlPort.setOnKeyListener(::customSetOnKeyListener)
+
+            etxtUrlAdress.setOnFocusChangeListener(::etxtFocusChangeListener)
+            etxtBasename.setOnFocusChangeListener(::etxtFocusChangeListener)
+            etxtUsername.setOnFocusChangeListener(::etxtFocusChangeListener)
+            etxtPassword.setOnFocusChangeListener(::etxtFocusChangeListener)
+            etxtUrlPort.setOnFocusChangeListener(::etxtFocusChangeListener)
+
+
+        }
+    }
+
+    private fun customSetOnKeyListener(view: View, key: Int, keyEvent: KeyEvent): Boolean {
+        if (key == 66 && keyEvent.action == KeyEvent.ACTION_DOWN) {
+            with(binding) {
+
+                val etxtView = view as TextInputEditText
+
+                when (etxtView) {
+
+                    etxtUrlAdress -> {
+                        if (etxtBasename.isEnabled && etxtBasename.isVisible) {
+                            etxtBasename.requestFocus()
+                            return true
+                        }
+                        return false
+                    }
+                    etxtBasename -> {
+                        if (etxtUsername.isEnabled && etxtUsername.isVisible) {
+                            etxtUsername.requestFocus()
+                            return true
+                        }
+                        return false
+                    }
+                    etxtUsername -> {
+                        if (etxtPassword.isEnabled && etxtPassword.isVisible) {
+                            etxtPassword.requestFocus()
+                            return true
+                        }
+                        return false
+                    }
+
+                    else -> {
+                        return false
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+
+    private fun etxtFocusChangeListener(view: View, hasFocus: Boolean) {
+        if (hasFocus) {
+            view as TextInputEditText
+            view.text?.let {
+                view.selectAll()
             }
         }
     }
@@ -317,4 +380,5 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
             }
         }
     }
+
 }
