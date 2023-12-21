@@ -290,9 +290,9 @@ class AcceptanceFragment :
             btnPrint.setOnClickListener {
                 if (etxtDocumentNumber.text?.isNotEmpty() == true) {
                     val intent = Intent(requireContext(), PrinterActivity::class.java)
-                    intent.putExtra("docNumber", etxtDocumentNumber.text.toString())
-                    intent.putExtra("clientNumber", etxtCodeClient.text.toString())
-                    intent.putExtra("seatsNumber", etxtSeatsNumber.text.toString())
+                    intent.putExtra("docNumber", acceptance.number)
+                    intent.putExtra("clientNumber", acceptance.client)
+                    intent.putExtra("seatsNumber", acceptance.countSeat.toString())
                     intent.putExtra("date", acceptance.date)
                     val macAddress = getMacAddressFromCache(requireActivity())
                     if (macAddress != null) {

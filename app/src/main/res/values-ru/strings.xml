@@ -15,6 +15,7 @@
     <string name="text_submit">Подтвердить</string>
     <string name="text_submitted">Подтверждено</string>
     <string name="text_acceptance">Прием</string>
+    <string name="text_volume">Объём</string>
     <string name="text_weight">Вес</string>
     <string name="text_size">Размер</string>
     <string name="text_document_number">Номер \nдокумента</string>
@@ -70,7 +71,7 @@
     <string name="text_sender_warehouse">Склад отправитель</string>
     <string name="text_getter_warehouse">Склад получатель</string>
     <string name="text_title_loading_list">Погрузка товара</string>
-    <string name="text_warehouse">Склады</string>
+    <string name="text_warehouse">Склад</string>
     <string name="text_no_rights">Нет прав</string>
     <string name="ask_for_error_log">Произошла неожиданная ошибка. Помогите разработчикам, предоставив подробную информацию об ошибке. Спасибо за Вашу поддержку.</string>
     <string name="view_error_log">Посмотреть</string>
@@ -108,4 +109,8 @@
     <string name="not_found">База не найдена</string>
     <string name="no_connection_exception">Отсутствует подключение к интернету</string>
     <string name="text_more">Больше</string>
+    <string name="text_recipient">Получатель</string>
+    <string name="route">Маршрут</string>
+    <string name="text_front">Перед</string>
+    <string name="text_back">Зад</string>
 </resources>

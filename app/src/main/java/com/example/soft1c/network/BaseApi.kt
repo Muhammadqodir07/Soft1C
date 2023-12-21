@@ -78,7 +78,10 @@ interface LoadingApi{
     fun loading(@Query("Номер") number: String): Call<ResponseBody>
 
     @GET("Barcodes")
-    fun barcodeList(@Query("Код") barcode: String): Call<ResponseBody>
+    fun barcodeList(
+        @Query("ШтрихКод") barcode: String,
+        @Query("Склад") warehouse: String
+    ): Call<ResponseBody>
 }
 
 interface AutoApi{

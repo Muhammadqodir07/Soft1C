@@ -17,6 +17,7 @@ import com.example.soft1c.repository.model.LoadingModel
 import com.example.soft1c.utils.MainActivity
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.utils.Utils.password
+import com.example.soft1c.utils.Utils.user
 import com.example.soft1c.viewmodel.BaseViewModel
 import com.google.android.material.textfield.TextInputEditText
 import com.phearme.macaddressedittext.MacAddressEditText
@@ -27,7 +28,6 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
     private val baseViewModel: BaseViewModel by viewModels()
     private var error: String = ""
     private var requiredTypes = 6
-    private lateinit var accessPair: Pair<Boolean, Boolean>
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -68,8 +68,10 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                             // Toggle the checked state
                             item.isChecked = !item.isChecked
                             if (item.isChecked) {
+                                Utils.debugMode = true
                                 Utils.clientTimeout = 80L
                             } else {
+                                Utils.debugMode = true
                                 Utils.clientTimeout = 30L
                             }
                         }
@@ -94,11 +96,23 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                 toast(getString(R.string.text_no_rights))
                 return@observe
             }
-            if (Utils.zones.isEmpty()) {
-                showDialogLoading()
-                baseViewModel.downloadType(Utils.ObjectModelType.ADDRESS)
-            }else{
-                findNavController().navigate(R.id.action_authFragment_to_acceptanceFragment)
+            if (user.acceptanceAccess) {
+                if (Utils.zones.isEmpty()) {
+                    showDialogLoading()
+                    baseViewModel.downloadType(Utils.ObjectModelType.ADDRESS)
+                } else {
+                    if (user.loadingAccess) {
+                        findNavController().navigate(R.id.action_authFragment_to_mainFragment)
+                    } else
+                        findNavController().navigate(R.id.action_authFragment_to_acceptanceFragment)
+                }
+            }else if(user.loadingAccess){
+                if (Utils.cars.isEmpty()){
+                    showDialogLoading()
+                    baseViewModel.loadType(Utils.ObjectModelType.CAR)
+                }else{
+                    findNavController().navigate(R.id.action_authFragment_to_loadingFragment)
+                }
             }
         }
         baseViewModel.loadAuthLiveData.observe(viewLifecycleOwner) {
@@ -132,12 +146,6 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
 //                demo.loadProfile()
                 baseViewModel.acceptanceAuth()
                 showPbLoading(true)
-//                calcDialog.settings.isZeroShownWhenNoValue = true
-//                calcDialog.settings.initialValue = BigDecimal.valueOf(0)
-//                calcDialog.settings.isSignBtnShown = false
-//                calcDialog.settings.isExpressionShown = true
-//                calcDialog.settings.minValue = BigDecimal.valueOf(0)
-//                calcDialog.show(childFragmentManager, "calc_dialog")
             }
         }
     }
@@ -279,9 +287,13 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
 
             Utils.ObjectModelType.ZONE -> {
                 Utils.zones = pairOf.second
-//                setTextDialogLoading(resources.getString(R.string.text_number_of_auto))
-                closeDialogLoading()
-                findNavController().navigate(R.id.action_authFragment_to_acceptanceFragment)
+                if (user.loadingAccess) {
+                    setTextDialogLoading(resources.getString(R.string.text_number_of_auto))
+                    baseViewModel.loadType(Utils.ObjectModelType.CAR)
+                } else {
+                    closeDialogLoading()
+                    findNavController().navigate(R.id.action_authFragment_to_acceptanceFragment)
+                }
             }
         }
     }
@@ -298,15 +310,11 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
             Utils.ObjectModelType.WAREHOUSE -> {
                 Utils.warehouse = pairOf.second
                 closeDialogLoading()
-                if (accessPair.first && !accessPair.second) {
-                    findNavController().navigate(R.id.action_authFragment_to_acceptanceFragment)
-                } else if (!accessPair.first && accessPair.second) {
-                    findNavController().navigate(R.id.action_authFragment_to_loadingFragment)
-                } else if (accessPair.first && accessPair.second) {
+                if (user.acceptanceAccess)
                     findNavController().navigate(R.id.action_authFragment_to_mainFragment)
-                }
+                else
+                    findNavController().navigate(R.id.action_authFragment_to_loadingFragment)
             }
         }
     }
-
 }

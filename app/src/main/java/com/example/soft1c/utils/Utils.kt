@@ -34,6 +34,8 @@ object Utils {
     var anyModel: AnyModel? = null
     var refreshList: Boolean = false
 
+    var debugMode = false
+
 
     fun setAttributes(
         baseUrl: String,
@@ -62,6 +64,14 @@ object Utils {
     object Cars {
         const val REF_KEY = "GUID"
         const val NUMBER_KEY = "Номер"
+        const val MAX_WEIHT_KEY = "Вес"
+        const val MAX_CAPACITY_KEY = "Размер"
+    }
+
+    object Warehouses {
+        const val REF_KEY = "GUID"
+        const val NAME_KEY = "Наименование"
+        const val PREFIX_KEY = "Префикс"
     }
 
     object ObjectModelType {

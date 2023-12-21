@@ -2,55 +2,19 @@
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="300dp"
-    android:layout_height="wrap_content">
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="20dp">
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="30dp">
+        app:cardCornerRadius="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/elayout_txt_number"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_marginHorizontal="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_weight="8"
-                android:textColorHint="@color/black">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/txt_number"
-                    style="@style/TextInputDefault"
-                    android:layout_width="300dp"
-                    android:layout_height="wrap_content"
-                    android:enabled="false"
-
-                    android:hint="@string/text_number" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/elayout_txt_date"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_marginHorizontal="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_weight="8"
-                android:textColorHint="@color/black">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/txt_date"
-                    style="@style/TextInputDefault"
-                    android:layout_width="300dp"
-                    android:layout_height="wrap_content"
-                    android:enabled="false"
-                    android:hint="@string/text_date" />
-            </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/elayout_wareH_sender"
@@ -65,7 +29,7 @@
                 <AutoCompleteTextView
                     android:id="@+id/etxt_wareH_sender"
                     style="@style/TextInputDefault"
-                    android:layout_width="300dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Склад отправитель"
                     android:inputType="textAutoCorrect" />
@@ -85,12 +49,35 @@
                 <AutoCompleteTextView
                     android:id="@+id/etxt_wareH_getter"
                     style="@style/TextInputDefault"
-                    android:layout_width="300dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Склад получатель"
                     android:inputType="textAutoCorrect" />
 
             </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <Button
+                    android:id="@+id/btn_close"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    style="@style/CalcDialogButtonStyle"
+                    android:text="@string/text_close"/>
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"/>
+                <Button
+                    android:id="@+id/btn_ok"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    style="@style/CalcDialogButtonStyle"
+                    android:text="@string/dialog_ok"/>
+            </LinearLayout>
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

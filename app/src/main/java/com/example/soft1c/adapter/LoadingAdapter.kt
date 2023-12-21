@@ -11,7 +11,7 @@ import com.example.soft1c.extension.inflateLayout
 import com.example.soft1c.repository.model.ItemClicked
 import com.example.soft1c.repository.model.Loading
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Locale
 
 class LoadingAdapter(
     private val onItemClicked: (itemClicked: ItemClicked, loading: Loading) -> Unit,
@@ -36,7 +36,8 @@ class LoadingAdapter(
                 txtDocumentNumber.text=loading.number.replace("[A-Z]".toRegex(), "").trimStart('0')
                 txtDate.text= inputDateFormat.parse(loading.date)
                     ?.let { outputDateFormat.format(it) }
-                txtNumberAuto.text = loading.car
+                txtNumberAuto.text = loading.car.number
+                txtRecipient.text = loading.recipient.prefix
             }
         }
     }

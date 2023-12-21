@@ -12,30 +12,82 @@
         android:layout_height="wrap_content"
         android:visibility="gone" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.constraintlayout.motion.widget.MotionLayout
+        android:id="@+id/constraintLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginStart="8dp">
+        android:layout_marginHorizontal="8dp"
+        app:layoutDescription="@xml/fragment_loading_xml_constraintlayout_scene">
 
 
         <LinearLayout
-            android:id="@+id/linear_tv_auto"
+            android:id="@+id/linear_information"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:orientation="horizontal"
+            android:animateLayoutChanges="true"
+            android:orientation="vertical"
+            android:paddingHorizontal="8dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/elayout_txt_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColorHint="@color/black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/txt_number"
+                    style="@style/TextInputDefault"
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:enabled="false"
+
+                    android:hint="@string/text_number" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/elayout_txt_date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColorHint="@color/black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/txt_date"
+                    style="@style/TextInputDefault"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:enabled="false"
+                    android:hint="@string/text_date" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/elayout_route"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColorHint="@color/black">
+
+                <EditText
+                    android:id="@+id/etxt_route"
+                    style="@style/TextInputDefault"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:focusable="false"
+                    android:hint="@string/route"
+                    android:inputType="none" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/elayout_tv_auto"
                 style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd = "8dp"
-                android:textColorHint="@color/black"
-                android:layout_weight="1">
+                android:layout_weight="1"
+                android:textColorHint="@color/black">
 
                 <AutoCompleteTextView
                     android:id="@+id/tv_auto"
@@ -43,30 +95,91 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/text_number_of_auto"
-                    android:inputType = "textAutoCorrect"/>
+                    android:inputType="textAutoCorrect" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="0.15">
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/elayout_recipient"
+                style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColorHint="@color/black">
 
-                <ImageButton
-                    android:id="@+id/btn_info"
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:background="@color/white"
-                    android:src="@drawable/information"
-                    android:scaleType="centerCrop"
-                    app:layout_constraintDimensionRatio="1:1"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"/>
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                <AutoCompleteTextView
+                    android:id="@+id/tv_recipient"
+                    style="@style/TextInputDefault"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/text_recipient"
+                    android:inputType="textAutoCorrect" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <RadioGroup
+                android:id="@+id/r_group_front"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkedButton="@id/radio_front"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/radio_front"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/text_front" />
+
+                <RadioButton
+                    android:id="@+id/radio_back"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/text_back" />
+            </RadioGroup>
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/linear_topbar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:animateLayoutChanges="true"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/linear_information">
+
+            <RadioGroup
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkedButton="@id/radio_acceptance"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/radio_acceptance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/text_acceptance" />
+
+                <RadioButton
+                    android:id="@+id/radio_package"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/text_package" />
+            </RadioGroup>
+
+
+        </LinearLayout>
+
+
+        <ImageButton
+            android:id="@+id/btn_show_hide"
+            android:layout_width="24dp"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/transparent"
+            android:src="@drawable/ic_drop_up"
+            android:layout_marginEnd="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/linear_topbar" />
 
         <LinearLayout
             android:id="@+id/linear_scan"
@@ -76,7 +189,7 @@
             android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/linear_tv_auto">
+            app:layout_constraintTop_toBottomOf="@id/linear_topbar">
 
             <Button
                 android:id="@+id/btn_scan"
@@ -84,7 +197,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/text_scan"
-                android:visibility = "gone"/>
+                android:visibility="gone" />
         </LinearLayout>
 
         <View
@@ -122,16 +235,80 @@
                 android:text="@string/text_barcode" />
         </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_barcode"
-            android:layout_width="0dp"
+        <androidx.constraintlayout.motion.widget.MotionLayout
+            android:id="@+id/constraint_rv"
+            android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="60dp"
+            app:layoutDescription="@xml/fragment_loading_xml_constraint_rv_scene"
+            app:layout_constraintBottom_toTopOf="@id/linear_limits"
+            app:layout_constraintTop_toBottomOf="@id/linear_heading">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_barcode_front"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="20dp"
+                android:background="@color/teal_200"
+                app:layout_constraintBottom_toTopOf="parent"
+                app:layout_constraintEnd_toStartOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="parent" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_barcode_back"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="20dp"
+                android:background="@color/purple_200"
+                app:layout_constraintBottom_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@id/rv_barcode_front"
+                app:layout_constraintTop_toBottomOf="parent" />
+        </androidx.constraintlayout.motion.widget.MotionLayout>
+
+
+        <LinearLayout
+            android:id="@+id/linear_limits"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal"
+            android:weightSum="16"
+            app:layout_constraintBottom_toTopOf="@id/linear_btn_group"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/linear_heading"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintStart_toStartOf="parent">
+
+            <TextView
+                android:id="@+id/txt_volume_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="3"
+                android:text="@string/text_volume" />
+
+            <TextView
+                android:id="@+id/txt_volume_value"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="4"
+                android:text="@string/app_name" />
+
+            <TextView
+                android:id="@+id/txt_weight_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="@string/text_weight" />
+
+            <TextView
+                android:id="@+id/txt_weight_value"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="4"
+                android:text="@string/app_name" />
+
+
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/linear_btn_group"
@@ -139,7 +316,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/rv_barcode">
+            app:layout_constraintBottom_toBottomOf="parent">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/elayout_save"
@@ -169,6 +346,6 @@
                 android:text="@string/text_close" />
 
         </LinearLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.motion.widget.MotionLayout>
 
 </FrameLayout>

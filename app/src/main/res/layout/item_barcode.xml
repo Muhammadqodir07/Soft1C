@@ -9,14 +9,14 @@
     android:orientation="horizontal">
 
     <TextView
-        android:id="@+id/txt_barcode_count"
+        android:id="@+id/txt_barcode_number"
         style="@style/TextNumber"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="0.2"
         android:gravity="center|start"
         tools:text="@tools:sample/last_names"
-        android:textSize="20sp"/>
+        android:textSize="16sp"/>
 
     <TextView
         android:id="@+id/txt_barcode"
@@ -27,6 +27,16 @@
         android:layout_weight="1"
         android:gravity="center|start"
         tools:text="@tools:sample/last_names"
-        android:textSize="20sp"/>
+        android:textSize="16sp"/>
+
+    <ImageButton
+        android:id="@+id/action_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:backgroundTint="@color/transparent"
+        android:src="@drawable/ic_delete"
+        android:layout_gravity="center_vertical"
+        />
 
 </LinearLayout>

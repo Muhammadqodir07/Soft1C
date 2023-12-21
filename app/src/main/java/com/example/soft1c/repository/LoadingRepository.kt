@@ -2,6 +2,29 @@ package com.example.soft1c.repository
 
 import com.example.soft1c.network.Network
 import com.example.soft1c.repository.model.Loading
+import com.example.soft1c.repository.model.Loading.Companion.CAR_KEY
+import com.example.soft1c.repository.model.Loading.Companion.CAR_NUMBER_KEY
+import com.example.soft1c.repository.model.Loading.Companion.DATE_KEY
+import com.example.soft1c.repository.model.Loading.Companion.DOCUMENT_DATE_KEY
+import com.example.soft1c.repository.model.Loading.Companion.GETTER_WAREHOUSE_KEY
+import com.example.soft1c.repository.model.Loading.Companion.GETTER_WAREHOUSE_UID_KEY
+import com.example.soft1c.repository.model.Loading.Companion.GUID_KEY
+import com.example.soft1c.repository.model.Loading.Companion.ITEMS_BACK_KEY
+import com.example.soft1c.repository.model.Loading.Companion.ITEMS_FRONT_KEY
+import com.example.soft1c.repository.model.Loading.Companion.NUMBER_KEY
+import com.example.soft1c.repository.model.Loading.Companion.RECIPIENT_KEY
+import com.example.soft1c.repository.model.Loading.Companion.REF_KEY
+import com.example.soft1c.repository.model.Loading.Companion.SENDER_WAREHOUSE_KEY
+import com.example.soft1c.repository.model.Loading.Companion.SENDER_WAREHOUSE_UID_KEY
+import com.example.soft1c.repository.model.Loading.Companion.WAREHOUSE_BEGIN_KEY
+import com.example.soft1c.repository.model.Loading.Companion.WAREHOUSE_END_KEY
+import com.example.soft1c.repository.model.LoadingBarcode
+import com.example.soft1c.repository.model.LoadingBarcode.Companion.ACCEPTANCE_GUID_KEY
+import com.example.soft1c.repository.model.LoadingBarcode.Companion.ACCEPTANCE_NUMBER_KEY
+import com.example.soft1c.repository.model.LoadingBarcode.Companion.BARCODE_KEY
+import com.example.soft1c.repository.model.LoadingBarcode.Companion.SEAT_NUMBER_KEY
+import com.example.soft1c.repository.model.LoadingBarcode.Companion.VOLUME_KEY
+import com.example.soft1c.repository.model.LoadingBarcode.Companion.WEIGHT_KEY
 import com.example.soft1c.repository.model.LoadingEnableVisible
 import com.example.soft1c.repository.model.LoadingModel
 import com.example.soft1c.utils.Utils
@@ -15,7 +38,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -25,12 +48,12 @@ class LoadingRepository {
 
     suspend fun getLoadingApi(number: String): Pair<Loading, List<LoadingEnableVisible>>? {
         return suspendCoroutine { continuation ->
-            Network.loadingApi.loading(number).enqueue(object: Callback<ResponseBody>{
+            Network.loadingApi.loading(number).enqueue(object : Callback<ResponseBody> {
                 override fun onResponse(
                     call: Call<ResponseBody>,
                     response: Response<ResponseBody>
                 ) {
-                    if(response.isSuccessful){
+                    if (response.isSuccessful) {
                         val responseBody = response.body()?.string() ?: ""
                         continuation.resume(getLoadingJson(responseBody))
                     } else {
@@ -46,40 +69,58 @@ class LoadingRepository {
         }
     }
 
-    suspend fun getBarcodeListApi(barcode: String): List<String>? {
+    suspend fun getBarcodeListApi(barcode: String, warehouse: String): List<LoadingBarcode>? {
         return suspendCoroutine { continuation ->
-            Network.loadingApi.barcodeList(barcode).enqueue(object : Callback<ResponseBody>{
-                override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>
-                ) {
-                    if(response.isSuccessful){
-                        val responseBody = response.body()?.string() ?: ""
-                        continuation.resume(getBarcodeListJson(responseBody))
-                    } else {
-                        continuation.resume(emptyList())
-                    }
-                }
+            if (Utils.debugMode) {
+                continuation.resume(getBarcodeListJson(LoadingBarcode.DEFAULT_DATA))
+            } else {
+                Network.loadingApi.barcodeList(barcode, warehouse)
+                    .enqueue(object : Callback<ResponseBody> {
+                        override fun onResponse(
+                            call: Call<ResponseBody>,
+                            response: Response<ResponseBody>
+                        ) {
+                            if (response.isSuccessful) {
+                                val responseBody = response.body()?.string() ?: ""
+                                continuation.resume(getBarcodeListJson(responseBody))
+                            } else {
+                                continuation.resume(emptyList())
+                            }
+                        }
 
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    continuation.resumeWithException(t)
-                }
-            })
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            continuation.resumeWithException(t)
+                        }
+                    })
+            }
         }
     }
 
-    private fun getBarcodeListJson(responseBody: String): List<String>? {
-        val barcodeList = mutableListOf<String>()
-        val arrayJson = JSONArray(responseBody)
-        for (item in 0 until arrayJson.length()){
-            val objectJson = arrayJson.getJSONObject(item)
-            val barcode = objectJson.getString(BARCODE_KEY)
-            barcodeList.add(barcode)
+    fun getBarcodeListJson(responseBody: String): List<LoadingBarcode>? {
+        val barcodeList = mutableListOf<LoadingBarcode>()
+        try {
+
+            val arrayJson = JSONArray(responseBody)
+            for (item in 0 until arrayJson.length()) {
+                val objectJson = arrayJson.getJSONObject(item)
+                barcodeList.add(
+                    LoadingBarcode(
+                        barcode = objectJson.optString(BARCODE_KEY, ""),
+                        weight = objectJson.optDouble(WEIGHT_KEY, 0.0),
+                        volume = objectJson.optDouble(VOLUME_KEY, 0.0),
+                        acceptanceNumber = objectJson.optString(ACCEPTANCE_NUMBER_KEY, ""),
+                        acceptanceUid = objectJson.optString(ACCEPTANCE_GUID_KEY, ""),
+                        seatNumber = objectJson.optInt(SEAT_NUMBER_KEY, -1),
+                    )
+                )
+            }
+            return barcodeList
+        } catch (e: Exception) {
+            return null
         }
-        return barcodeList
     }
 
-    suspend fun createUpdateLoadingApi(loading: Loading): Pair<Loading, String>{
+    suspend fun createUpdateLoadingApi(loading: Loading): Pair<Loading, String> {
         return suspendCoroutine { continuation ->
             val jsonObject = JSONObject()
             if (loading.ref.isNotEmpty())
@@ -91,22 +132,30 @@ class LoadingRepository {
             else
                 jsonObject.put(GUID_KEY, null)
             if (loading.date.isNotEmpty()) {
-                jsonObject.put(DATE_KEY, loading.date )
-            }else{
+                jsonObject.put(DATE_KEY, loading.date)
+            } else {
                 jsonObject.put(DATE_KEY, LocalDateTime.now().format(formatter))
             }
-            jsonObject.put(CAR_KEY, loading.carUid)
-            jsonObject.put(GETTER_WAREHOUSE_UID_KEY, loading.getterWarehUid)
-            jsonObject.put(SENDER_WAREHOUSE_UID_KEY, loading.senderWarehUid)
+            jsonObject.put(CAR_KEY, loading.car.ref)
+            jsonObject.put(WAREHOUSE_BEGIN_KEY, loading.senderWarehouseUid)
+            jsonObject.put(WAREHOUSE_END_KEY, loading.getterWarehouseUid)
+            jsonObject.put(RECIPIENT_KEY, loading.recipient)
             // Создаем массив товаров и заполняем его штрих-кодами
-            val jsonArray = JSONArray()
-            for (barcode in loading.barcodes) {
+            val frontBarcodeArray = JSONArray()
+            for (barcode in loading.barcodesFront) {
                 val barcodeObject = JSONObject()
                 barcodeObject.put(BARCODE_KEY, barcode)
-                jsonArray.put(barcodeObject)
+                frontBarcodeArray.put(barcodeObject)
+            }
+            jsonObject.put(ITEMS_FRONT_KEY, frontBarcodeArray)
+            val backBarcodeArray = JSONArray()
+            for (barcode in loading.barcodesBack) {
+                val barcodeObject = JSONObject()
+                barcodeObject.put(BARCODE_KEY, barcode)
+                backBarcodeArray.put(barcodeObject)
             }
             // Добавляем массив товаров в объект JSON
-            jsonObject.put(ITEMS_KEY, jsonArray)
+            jsonObject.put(ITEMS_BACK_KEY, backBarcodeArray)
             val requestBody =
                 jsonObject.toString().toRequestBody("application/json".toMediaTypeOrNull())
             Network.loadingApi.createUpdateLoading(requestBody)
@@ -143,15 +192,15 @@ class LoadingRepository {
 
     suspend fun getLoadingListApi(): List<Loading> {
         return suspendCoroutine { continuation ->
-            Network.loadingApi.loadingList().enqueue(object : Callback<ResponseBody>{
+            Network.loadingApi.loadingList().enqueue(object : Callback<ResponseBody> {
                 override fun onResponse(
                     call: Call<ResponseBody>,
                     response: Response<ResponseBody>
                 ) {
-                    if(response.isSuccessful){
+                    if (response.isSuccessful) {
                         val responseBody = response.body()?.string() ?: ""
                         continuation.resume(getLoadingList(responseBody))
-                    }else {
+                    } else {
                         continuation.resume(emptyList())
                     }
                 }
@@ -164,10 +213,10 @@ class LoadingRepository {
         }
     }
 
-    private fun getLoadingList(responseString:String): List<Loading> {
+    private fun getLoadingList(responseString: String): List<Loading> {
         val loadingList = mutableListOf<Loading>()
         val loadingArray = JSONArray(responseString)
-        for(index in 0 until loadingArray.length()){
+        for (index in 0 until loadingArray.length()) {
             val loadingJson = loadingArray.getJSONObject(index)
             val loading = getLoadingFromJsonObject(loadingJson, false)
             loadingList.add(loading)
@@ -196,62 +245,52 @@ class LoadingRepository {
         val getterWarehouseUid = loadingJson.getString(GETTER_WAREHOUSE_UID_KEY)
         val getterWarehouse = loadingJson.getString(GETTER_WAREHOUSE_KEY)
         if (hasBarcodes) {
-            val barcodesJsonArray = loadingJson.getJSONArray(ITEMS_KEY)
-            val barcodes = mutableListOf<String>()
+            val barcodesJsonArray = loadingJson.getJSONArray(ITEMS_FRONT_KEY)
+            val barcodes = mutableListOf<LoadingBarcode>()
             for (i in 0 until barcodesJsonArray.length()) {
-                barcodes.add(barcodesJsonArray.getString(i))
+                val jsonObject = barcodesJsonArray.getJSONObject(i)
+                barcodes.add(
+                    LoadingBarcode(
+                        barcode = jsonObject.getString(BARCODE_KEY)
+                    )
+                )
             }
             return Loading(
                 number = number,
                 ref = ref,
                 guid = guid,
                 date = date,
-                carUid = carUid,
                 car = car,
-                senderWarehUid = senderWarehouseUid,
-                senderWareh = senderWarehouse,
-                getterWarehUid = getterWarehouseUid,
-                getterWareh = getterWarehouse,
-                barcodes = barcodes
+                senderWarehouseUid = senderWarehouseUid,
+                senderWarehouse = senderWarehouse,
+                getterWarehouseUid = getterWarehouseUid,
+                getterWarehouse = getterWarehouse,
+                barcodesFront = barcodes
             )
-        }else{
+        } else {
             return Loading(
                 number = number,
                 ref = ref,
                 guid = guid,
                 date = date,
-                carUid = carUid,
-                senderWarehUid = senderWarehouseUid,
-                senderWareh = senderWarehouse,
-                getterWarehUid = getterWarehouseUid,
-                getterWareh = getterWarehouse,
+                senderWarehouseUid = senderWarehouseUid,
+                senderWarehouse = senderWarehouse,
+                getterWarehouseUid = getterWarehouseUid,
+                getterWarehouse = getterWarehouse,
                 car = car
             )
         }
     }
 
-    private fun getCarNumberFromUid(carUid: String): String {
+    private fun getCarNumberFromUid(carUid: String): LoadingModel.Car {
         val elem = Utils.cars.find {
             (it as LoadingModel.Car).ref == carUid
-        } ?: return ""
-        return (elem as LoadingModel.Car).number
+        } ?: return LoadingModel.Car()
+        return (elem as LoadingModel.Car)
     }
 
 
     companion object {
-        const val REF_KEY = "GUID"
-        const val GUID_KEY = "GUIDНаСервере"
-        const val CAR_KEY = "Машина"
-        const val SENDER_WAREHOUSE_UID_KEY = "Отправитель"
-        const val SENDER_WAREHOUSE_KEY = "ОтправительНаименование"
-        const val GETTER_WAREHOUSE_UID_KEY = "Получатель"
-        const val GETTER_WAREHOUSE_KEY = "ПолучательНаименование"
-        const val DATE_KEY = "Дата"
-        const val DOCUMENT_DATE_KEY = "ДатаДокумента"
-        const val NUMBER_KEY= "Номер"
-        const val CAR_NUMBER_KEY = "НомерМашины"
-        const val ITEMS_KEY = "Товары"
-        const val BARCODE_KEY = "ШтрихКод"
         const val ERROR_ARRAY = "ПричинаОшибки"
     }
 }

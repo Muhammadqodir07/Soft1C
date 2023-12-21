@@ -4,6 +4,13 @@ import com.example.soft1c.network.Network
 import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.LoadingModel
 import com.example.soft1c.repository.model.User
+import com.example.soft1c.repository.model.User.Companion.ACCEPTANCE_ADD
+import com.example.soft1c.repository.model.User.Companion.ACCEPTANCE_RIGHT
+import com.example.soft1c.repository.model.User.Companion.IS_ADMIN
+import com.example.soft1c.repository.model.User.Companion.LOADING_RIGHT
+import com.example.soft1c.repository.model.User.Companion.SIZE_ADD
+import com.example.soft1c.repository.model.User.Companion.WAREHOUSE
+import com.example.soft1c.repository.model.User.Companion.WEIGHT_ADD
 import com.example.soft1c.utils.Utils
 import okhttp3.ResponseBody
 import org.json.JSONArray
@@ -22,27 +29,31 @@ class BaseRepository(private val lang: String) {
 
     suspend fun getAccessToken(): Boolean {
         return suspendCoroutine { continuation ->
-            Network.Api.auto()
-                .enqueue(object : Callback<ResponseBody> {
-                    override fun onResponse(
-                        call: Call<ResponseBody>,
-                        response: Response<ResponseBody>,
-                    ) {
-                        //Если ответ есть то авторизовать
-                        if (response.isSuccessful) {
-                            val body = response.body()?.string() ?: ""
-                            continuation.resume(getRights(body))
-                            return
+            if (Utils.debugMode) {
+                continuation.resume(getRights(User.DEFAULT_DATA))
+            } else {
+                Network.Api.auto()
+                    .enqueue(object : Callback<ResponseBody> {
+                        override fun onResponse(
+                            call: Call<ResponseBody>,
+                            response: Response<ResponseBody>,
+                        ) {
+                            //Если ответ есть то авторизовать
+                            if (response.isSuccessful) {
+                                val body = response.body()?.string() ?: ""
+                                continuation.resume(getRights(body))
+                                return
+                            }
+                            errorCode = response.code()
+                            continuation.resume(false)
                         }
-                        errorCode = response.code()
-                        continuation.resume(false)
-                    }
 
-                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                        Timber.d("error ${t.message}")
-                        continuation.resumeWithException(t)
-                    }
-                })
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            Timber.d("error ${t.message}")
+                            continuation.resumeWithException(t)
+                        }
+                    })
+            }
         }
     }
 
@@ -105,80 +116,135 @@ class BaseRepository(private val lang: String) {
     //Приостанавливаемая функция suspend. Блокирует вызывающий поток до тех пор, пока результат не будет получен.
     suspend fun getLoading(type: Int): Pair<Int, List<LoadingModel>> {
         return suspendCoroutine { continuation ->
-            //вызов API сети для асинхронного получения списка машин.
+//            вызов API сети для асинхронного получения списка машин.
+            val cars = """[
+{
+"GUID": "6d71ed0b-7e10-11ee-910a-000c29ed8257",
+"Номер": ".新AF4923"
+},
+{
+"GUID": "c786c86b-c6e9-11ed-90f3-000c29ed824d",
+"Номер": "00007OC"
+},
+{
+"GUID": "c0cc9ef8-cf98-11ed-90f4-000c29ed824d",
+"Номер": "0007OC"
+}]"""
+            val warehouse = """[
+{
+"GUID": "a86db662-a170-11ea-bcca-b82a72dc4ef3",
+"Наименование": "Alashankou"
+},
+{
+"GUID": "2b1bfb4c-7ddf-11ec-80d5-000c29508723",
+"Наименование": "Andijan Dustlik"
+},
+{
+"GUID": "a3c0a10d-cb65-11eb-80dd-b88303f1228d",
+"Наименование": "Bahtu"
+}]"""
             when (type) {
-                Utils.ObjectModelType.CAR -> Network.loadingApi.carsList()
-                Utils.ObjectModelType.WAREHOUSE -> Network.loadingApi.warehouseList()
-                else -> Network.loadingApi.carsList()
-            }.enqueue(object : Callback<ResponseBody> {
-                //При получении ответа от сервера.
-                override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>
-                ) {
-                    //Если ответ успешен, получает тело ответа и передает его в функцию getCarsListJson()
-                    if (response.isSuccessful) {
-                        val responseBody = response.body()?.string() ?: ""
-                        continuation.resume(Pair(type, getLoadModelListJson(responseBody, type)))
-                    }
-                    //Иначе вызывает continuation.resumeWithException(), передавая исключение Throwable("Failed to fetch cars list").
-                    else {
-                        continuation.resume(Pair(Utils.ObjectModelType.EMPTY, emptyList()))
-                    }
-                }
+                Utils.ObjectModelType.CAR -> continuation.resume(
+                    Pair(
+                        type,
+                        getLoadModelListJson(cars, type)
+                    )
+                )
 
-                //ПриОшибке во время запроса. Вызывает continuation.resumeWithException(), передавая исключение Throwable.
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    continuation.resumeWithException(t)
-                }
-            })
+                Utils.ObjectModelType.WAREHOUSE -> continuation.resume(
+                    Pair(
+                        type,
+                        getLoadModelListJson(warehouse, type)
+                    )
+                )
+
+                else -> continuation.resume(Pair(type, getLoadModelListJson(cars, type)))
+            }
+//            when (type) {
+//                Utils.ObjectModelType.CAR -> Network.loadingApi.carsList()
+//                Utils.ObjectModelType.WAREHOUSE -> Network.loadingApi.warehouseList()
+//                else -> Network.loadingApi.carsList()
+//            }.enqueue(object : Callback<ResponseBody> {
+//                //При получении ответа от сервера.
+//                override fun onResponse(
+//                    call: Call<ResponseBody>,
+//                    response: Response<ResponseBody>
+//                ) {
+//                    //Если ответ успешен, получает тело ответа и передает его в функцию getCarsListJson()
+//                    if (response.isSuccessful) {
+//                        val responseBody = response.body()?.string() ?: ""
+//                        continuation.resume(Pair(type, getLoadModelListJson(responseBody, type)))
+//                    }
+//                    //Иначе вызывает continuation.resumeWithException(), передавая исключение Throwable("Failed to fetch cars list").
+//                    else {
+//                        continuation.resume(Pair(Utils.ObjectModelType.EMPTY, emptyList()))
+//                    }
+//                }
+//
+//                //ПриОшибке во время запроса. Вызывает continuation.resumeWithException(), передавая исключение Throwable.
+//                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+//                    continuation.resumeWithException(t)
+//                }
+//            })
 
         }
     }
 
-    private fun getLoadModelListJson(responseBody: String, type: Int): List<LoadingModel>{
-        val carList = mutableListOf<LoadingModel>()
+    private fun getLoadModelListJson(responseBody: String, type: Int): List<LoadingModel> {
+        val modelList = mutableListOf<LoadingModel>()
         val arrayJson = JSONArray(responseBody)
-        for (item in 0 until arrayJson.length()){
+        for (item in 0 until arrayJson.length()) {
             val objectJson = arrayJson.getJSONObject(item)
-            val ref = objectJson.getString(Utils.Cars.REF_KEY)
-            val name = when (type){
-                Utils.ObjectModelType.CAR -> objectJson.getString(Utils.Cars.NUMBER_KEY)
-                else -> objectJson.getString(Utils.Contracts.NAME_KEY)
+            val loadingObject = when (type) {
+                Utils.ObjectModelType.CAR -> {
+                    val ref = objectJson.getString(Utils.Cars.REF_KEY)
+                    val name = objectJson.getString(Utils.Cars.NUMBER_KEY)
+                    LoadingModel.Car(ref, name)
+                }
 
+                Utils.ObjectModelType.WAREHOUSE -> {
+                    val ref = objectJson.getString(Utils.Warehouses.REF_KEY)
+                    val name = objectJson.getString(Utils.Warehouses.NAME_KEY)
+                    val prefix = objectJson.optString(Utils.Warehouses.PREFIX_KEY)
+                    LoadingModel.Warehouse(ref, name, prefix)
+                }
+
+                else -> null
             }
-            val loadingObject = when (type){
-                Utils.ObjectModelType.CAR -> LoadingModel.Car(ref, name)
-                Utils.ObjectModelType.WAREHOUSE -> LoadingModel.Warehouse(ref, name)
-                else -> LoadingModel.Car(ref, name)
-            }
-            carList.add(loadingObject)
+            loadingObject?.let { modelList.add(it) }
         }
-        return carList
+        return modelList
     }
 
     private fun getRights(responseBody: String): Boolean {
         val jsonObject = JSONObject(responseBody)
-        val priemkiAccess = jsonObject.optBoolean(ACCEPTANCE_RIGHT, false)
-        val pogruzkiAccess = jsonObject.optBoolean(LOADING_RIGHT, false)
         val isAdmin = jsonObject.optBoolean(IS_ADMIN, false)
+        val warehouse = jsonObject.optString(WAREHOUSE, "")
         Utils.Settings.passportClientControl = jsonObject.optBoolean(CLIENT_CONTROL, false)
-        if (isAdmin){
+        if (isAdmin) {
             Utils.user = User(
                 username = Utils.username,
                 password = Utils.password,
+                warehouse = warehouse,
+                acceptanceAccess = false,
+                loadingAccess = true,
                 isAdmin = true,
                 weightAccess = true,
                 measureCargo = true,
                 acceptanceCargo = true
             )
         } else {
+            val acceptanceAccess = jsonObject.optBoolean(ACCEPTANCE_RIGHT, false)
+            val loadingAccess = jsonObject.optBoolean(LOADING_RIGHT, true)
             val acceptanceAdd = jsonObject.optBoolean(ACCEPTANCE_ADD, false)
             val weightAdd = jsonObject.optBoolean(WEIGHT_ADD, false)
             val sizeAdd = jsonObject.optBoolean(SIZE_ADD, false)
             Utils.user = User(
                 username = Utils.username,
                 password = Utils.password,
+                warehouse = warehouse,
+                acceptanceAccess = acceptanceAccess,
+                loadingAccess = loadingAccess,
                 isAdmin = false,
                 weightAccess = weightAdd,
                 measureCargo = sizeAdd,
@@ -188,7 +254,6 @@ class BaseRepository(private val lang: String) {
 
         return true
     }
-
 
 
     private fun getAddressListJson(responseBody: String, type: Int): List<AnyModel> {
@@ -202,10 +267,12 @@ class BaseRepository(private val lang: String) {
                     val addLang = if (lang == "chinese") AcceptanceRepository.ON_CHINESE else ""
                     objectJson.getString(Utils.Contracts.NAME_KEY + addLang)
                 }
-                Utils.ObjectModelType.PRODUCT_TYPE ->{
+
+                Utils.ObjectModelType.PRODUCT_TYPE -> {
                     val addLang = if (lang == "chinese") AcceptanceRepository.ON_CHINESE else ""
                     objectJson.getString(Utils.Contracts.NAME_KEY + addLang)
                 }
+
                 else -> objectJson.getString(Utils.Contracts.NAME_KEY)
             }
             val code = objectJson.getString(Utils.Contracts.CODE_KEY)
@@ -230,13 +297,7 @@ class BaseRepository(private val lang: String) {
     }
 
 
-    companion object{
-        const val ACCEPTANCE_RIGHT = "PriemkiAccess"
-        const val LOADING_RIGHT = "PogruzkiAccess"
-        const val ACCEPTANCE_ADD= "PriemkiCargo"
-        const val SIZE_ADD = "MeasureCargo"
-        const val WEIGHT_ADD = "Weighing"
-        const val IS_ADMIN = "ЭтоАдмин"
+    companion object {
         const val CLIENT_CONTROL = "КонтрольКлиентаПоПаспорту"
     }
 }

@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.soft1c.repository.LoadingRepository
 import com.example.soft1c.repository.model.Loading
+import com.example.soft1c.repository.model.LoadingBarcode
 import com.example.soft1c.repository.model.LoadingEnableVisible
 import com.example.soft1c.utils.SingleLiveEvent
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -23,7 +24,7 @@ class LoadingViewModel(application: Application): AndroidViewModel(application) 
     private val toastMutableData = SingleLiveEvent<String>()
     private val createUpdateMutableData = SingleLiveEvent<Pair<Loading, String>>()
     private val loadingListMutableData = MutableLiveData<List<Loading>>()
-    private val barcodeListMutableData = MutableLiveData<List<String>>()
+    private val barcodeListMutableData = MutableLiveData<List<LoadingBarcode>>()
     private val loadingMutableData = SingleLiveEvent<Pair<Loading, List<LoadingEnableVisible>>>()
 
     val toastLiveDat: LiveData<String>
@@ -32,7 +33,7 @@ class LoadingViewModel(application: Application): AndroidViewModel(application) 
         get() = createUpdateMutableData
     val loadingListLiveData: LiveData<List<Loading>>
         get() = loadingListMutableData
-    val barcodeListLiveData: LiveData<List<String>>
+    val barcodeListLiveData: LiveData<List<LoadingBarcode>>
         get() = barcodeListMutableData
     val loadingLiveData: LiveData<Pair<Loading, List<LoadingEnableVisible>>>
         get() = loadingMutableData
@@ -55,9 +56,9 @@ class LoadingViewModel(application: Application): AndroidViewModel(application) 
         }
     }
 
-    fun getBarcodeList(barcode: String){
+    fun getBarcodeList(code: String, warehouse: String){
         viewModelScope.launch((exceptionScope+Dispatchers.IO)){
-            barcodeListMutableData.postValue(repository.getBarcodeListApi(barcode))
+            barcodeListMutableData.postValue(repository.getBarcodeListApi(code, warehouse))
         }
     }
 }
