@@ -72,10 +72,11 @@ interface LoadingApi{
     fun createUpdateLoading(@Body requestBody: RequestBody): Call<ResponseBody>
 
     @GET("pogruzka")
-    fun loadingList(): Call<ResponseBody>
+    fun loadingList(
+    ): Call<ResponseBody>
 
     @GET("pogruzka")
-    fun loading(@Query("Номер") number: String): Call<ResponseBody>
+    fun loading(@Query("GUIDНаСервере") number: String): Call<ResponseBody>
 
     @GET("Barcodes")
     fun barcodeList(

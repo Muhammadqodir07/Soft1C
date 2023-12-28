@@ -5,7 +5,6 @@ import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.LoadingModel
 import com.example.soft1c.repository.model.User
 import com.example.soft1c.repository.model.User.Companion.ACCEPTANCE_ADD
-import com.example.soft1c.repository.model.User.Companion.ACCEPTANCE_RIGHT
 import com.example.soft1c.repository.model.User.Companion.IS_ADMIN
 import com.example.soft1c.repository.model.User.Companion.LOADING_RIGHT
 import com.example.soft1c.repository.model.User.Companion.SIZE_ADD
@@ -84,31 +83,47 @@ class BaseRepository(private val lang: String) {
 
     suspend fun getAnyApi(type: Int): Pair<Int, List<AnyModel>> {
         return suspendCoroutine { continuation ->
-            when (type) {
-                Utils.ObjectModelType.ADDRESS -> Network.api.addressList()
-                Utils.ObjectModelType._PACKAGE -> Network.api.packageList()
-                Utils.ObjectModelType.PRODUCT_TYPE -> Network.api.productTypeList()
-                Utils.ObjectModelType.ZONE -> Network.api.zoneList()
-                else -> Network.api.addressList()
-            }
-                .enqueue(object : Callback<ResponseBody> {
-                    override fun onResponse(
-                        call: Call<ResponseBody>,
-                        response: Response<ResponseBody>,
-                    ) {
-                        if (response.isSuccessful) {
-                            val responseBody = response.body()?.string() ?: ""
-                            continuation.resume(Pair(type, getAddressListJson(responseBody, type)))
-                        } else {
-                            continuation.resume(Pair(Utils.ObjectModelType.EMPTY, emptyList()))
+            if (Utils.debugMode) {
+                val data = when (type) {
+                    Utils.ObjectModelType.ADDRESS -> AnyModel.AddressModel.DEFAULT_DATA
+                    Utils.ObjectModelType._PACKAGE -> AnyModel.PackageModel.DEFAULT_DATA
+                    Utils.ObjectModelType.PRODUCT_TYPE -> AnyModel.ProductType.DEFAULT_DATA
+                    Utils.ObjectModelType.ZONE -> AnyModel.Zone.DEFAULT_DATA
+                    else -> AnyModel.AddressModel.DEFAULT_DATA
+                }
+                continuation.resume(Pair(type, getAddressListJson(data, type)))
+            } else {
+                when (type) {
+                    Utils.ObjectModelType.ADDRESS -> Network.api.addressList()
+                    Utils.ObjectModelType._PACKAGE -> Network.api.packageList()
+                    Utils.ObjectModelType.PRODUCT_TYPE -> Network.api.productTypeList()
+                    Utils.ObjectModelType.ZONE -> Network.api.zoneList()
+                    else -> Network.api.addressList()
+                }
+                    .enqueue(object : Callback<ResponseBody> {
+                        override fun onResponse(
+                            call: Call<ResponseBody>,
+                            response: Response<ResponseBody>,
+                        ) {
+                            if (response.isSuccessful) {
+                                val responseBody = response.body()?.string() ?: ""
+                                continuation.resume(
+                                    Pair(
+                                        type,
+                                        getAddressListJson(responseBody, type)
+                                    )
+                                )
+                            } else {
+                                continuation.resume(Pair(Utils.ObjectModelType.EMPTY, emptyList()))
+                            }
+
                         }
 
-                    }
-
-                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                        continuation.resumeWithException(t)
-                    }
-                })
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            continuation.resumeWithException(t)
+                        }
+                    })
+            }
         }
     }
 
@@ -117,75 +132,62 @@ class BaseRepository(private val lang: String) {
     suspend fun getLoading(type: Int): Pair<Int, List<LoadingModel>> {
         return suspendCoroutine { continuation ->
 //            вызов API сети для асинхронного получения списка машин.
-            val cars = """[
-{
-"GUID": "6d71ed0b-7e10-11ee-910a-000c29ed8257",
-"Номер": ".新AF4923"
-},
-{
-"GUID": "c786c86b-c6e9-11ed-90f3-000c29ed824d",
-"Номер": "00007OC"
-},
-{
-"GUID": "c0cc9ef8-cf98-11ed-90f4-000c29ed824d",
-"Номер": "0007OC"
-}]"""
-            val warehouse = """[
-{
-"GUID": "a86db662-a170-11ea-bcca-b82a72dc4ef3",
-"Наименование": "Alashankou"
-},
-{
-"GUID": "2b1bfb4c-7ddf-11ec-80d5-000c29508723",
-"Наименование": "Andijan Dustlik"
-},
-{
-"GUID": "a3c0a10d-cb65-11eb-80dd-b88303f1228d",
-"Наименование": "Bahtu"
-}]"""
-            when (type) {
-                Utils.ObjectModelType.CAR -> continuation.resume(
-                    Pair(
-                        type,
-                        getLoadModelListJson(cars, type)
+            if (Utils.debugMode) {
+                when (type) {
+                    Utils.ObjectModelType.CAR -> continuation.resume(
+                        Pair(
+                            type,
+                            getLoadModelListJson(LoadingModel.Car.DEFAULT_DATA, type)
+                        )
                     )
-                )
 
-                Utils.ObjectModelType.WAREHOUSE -> continuation.resume(
-                    Pair(
-                        type,
-                        getLoadModelListJson(warehouse, type)
+                    Utils.ObjectModelType.WAREHOUSE -> continuation.resume(
+                        Pair(
+                            type,
+                            getLoadModelListJson(LoadingModel.Warehouse.DEFAULT_DATA, type)
+                        )
                     )
-                )
 
-                else -> continuation.resume(Pair(type, getLoadModelListJson(cars, type)))
+                    else -> continuation.resume(
+                        Pair(
+                            type,
+                            getLoadModelListJson(LoadingModel.Car.DEFAULT_DATA, type)
+                        )
+                    )
+                }
+            } else {
+                when (type) {
+                    Utils.ObjectModelType.CAR -> Network.loadingApi.carsList()
+                    Utils.ObjectModelType.WAREHOUSE -> Network.loadingApi.warehouseList()
+                    else -> Network.loadingApi.carsList()
+                }.enqueue(object : Callback<ResponseBody> {
+                    //При получении ответа от сервера.
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+                        //Если ответ успешен, получает тело ответа и передает его в функцию getCarsListJson()
+                        if (response.isSuccessful) {
+                            val responseBody = response.body()?.string() ?: ""
+                            continuation.resume(
+                                Pair(
+                                    type,
+                                    getLoadModelListJson(responseBody, type)
+                                )
+                            )
+                        }
+                        //Иначе вызывает continuation.resumeWithException(), передавая исключение Throwable("Failed to fetch cars list").
+                        else {
+                            continuation.resume(Pair(Utils.ObjectModelType.EMPTY, emptyList()))
+                        }
+                    }
+
+                    //ПриОшибке во время запроса. Вызывает continuation.resumeWithException(), передавая исключение Throwable.
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        continuation.resumeWithException(t)
+                    }
+                })
             }
-//            when (type) {
-//                Utils.ObjectModelType.CAR -> Network.loadingApi.carsList()
-//                Utils.ObjectModelType.WAREHOUSE -> Network.loadingApi.warehouseList()
-//                else -> Network.loadingApi.carsList()
-//            }.enqueue(object : Callback<ResponseBody> {
-//                //При получении ответа от сервера.
-//                override fun onResponse(
-//                    call: Call<ResponseBody>,
-//                    response: Response<ResponseBody>
-//                ) {
-//                    //Если ответ успешен, получает тело ответа и передает его в функцию getCarsListJson()
-//                    if (response.isSuccessful) {
-//                        val responseBody = response.body()?.string() ?: ""
-//                        continuation.resume(Pair(type, getLoadModelListJson(responseBody, type)))
-//                    }
-//                    //Иначе вызывает continuation.resumeWithException(), передавая исключение Throwable("Failed to fetch cars list").
-//                    else {
-//                        continuation.resume(Pair(Utils.ObjectModelType.EMPTY, emptyList()))
-//                    }
-//                }
-//
-//                //ПриОшибке во время запроса. Вызывает continuation.resumeWithException(), передавая исключение Throwable.
-//                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-//                    continuation.resumeWithException(t)
-//                }
-//            })
 
         }
     }
@@ -197,15 +199,15 @@ class BaseRepository(private val lang: String) {
             val objectJson = arrayJson.getJSONObject(item)
             val loadingObject = when (type) {
                 Utils.ObjectModelType.CAR -> {
-                    val ref = objectJson.getString(Utils.Cars.REF_KEY)
-                    val name = objectJson.getString(Utils.Cars.NUMBER_KEY)
+                    val ref = objectJson.getString(LoadingModel.Car.REF_KEY)
+                    val name = objectJson.getString(LoadingModel.Car.NUMBER_KEY)
                     LoadingModel.Car(ref, name)
                 }
 
                 Utils.ObjectModelType.WAREHOUSE -> {
-                    val ref = objectJson.getString(Utils.Warehouses.REF_KEY)
-                    val name = objectJson.getString(Utils.Warehouses.NAME_KEY)
-                    val prefix = objectJson.optString(Utils.Warehouses.PREFIX_KEY)
+                    val ref = objectJson.getString(LoadingModel.Warehouse.REF_KEY)
+                    val name = objectJson.getString(LoadingModel.Warehouse.NAME_KEY)
+                    val prefix = objectJson.optString(LoadingModel.Warehouse.PREFIX_KEY)
                     LoadingModel.Warehouse(ref, name, prefix)
                 }
 
@@ -226,7 +228,7 @@ class BaseRepository(private val lang: String) {
                 username = Utils.username,
                 password = Utils.password,
                 warehouse = warehouse,
-                acceptanceAccess = false,
+                acceptanceAccess = true,
                 loadingAccess = true,
                 isAdmin = true,
                 weightAccess = true,
@@ -234,11 +236,11 @@ class BaseRepository(private val lang: String) {
                 acceptanceCargo = true
             )
         } else {
-            val acceptanceAccess = jsonObject.optBoolean(ACCEPTANCE_RIGHT, false)
             val loadingAccess = jsonObject.optBoolean(LOADING_RIGHT, true)
             val acceptanceAdd = jsonObject.optBoolean(ACCEPTANCE_ADD, false)
             val weightAdd = jsonObject.optBoolean(WEIGHT_ADD, false)
             val sizeAdd = jsonObject.optBoolean(SIZE_ADD, false)
+            val acceptanceAccess = acceptanceAdd || weightAdd || sizeAdd
             Utils.user = User(
                 username = Utils.username,
                 password = Utils.password,

@@ -113,4 +113,5 @@
     <string name="route">Маршрут</string>
     <string name="text_front">Перед</string>
     <string name="text_back">Зад</string>
+    <string name="err_dublicate_barcode">Штрих-код уже добавлен</string>
 </resources>

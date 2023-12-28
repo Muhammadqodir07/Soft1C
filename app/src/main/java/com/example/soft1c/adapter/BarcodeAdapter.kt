@@ -8,21 +8,27 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.soft1c.R
 import com.example.soft1c.extension.inflateLayout
 import com.example.soft1c.repository.model.LoadingBarcode
+import com.example.soft1c.utils.Utils.inputDateFormat
+import com.example.soft1c.utils.Utils.outputDateFormat
 
 //Класс определяет, как должен отображаться каждый элемент списка сканированных штрих-кодов.
-class BarcodeAdapter(val onRemoveBarcode: (LoadingBarcode) -> Unit) : RecyclerView.Adapter<BarcodeAdapter.BarcodeViewHolder>() {
+class BarcodeAdapter(val onRemoveBarcode: (LoadingBarcode) -> Unit) :
+    RecyclerView.Adapter<BarcodeAdapter.BarcodeViewHolder>() {
 
     private val scannedBarcodes = mutableListOf<LoadingBarcode>()
 
     //Внутренний класс предоставляющий ссылки на элементы пользовательского интерфейса, которые будут отображаться для каждого элемента списка.
     inner class BarcodeViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        private val barcodeCount: TextView = view.findViewById(R.id.txt_barcode_number)
-        private val barcodeData: TextView = view.findViewById(R.id.txt_barcode)
+        private val barcodeClient: TextView = view.findViewById(R.id.txt_code_client)
+        private val barcodeDate: TextView = view.findViewById(R.id.txt_date)
+        private val barcodePackage: TextView = view.findViewById(R.id.txt_package)
         private val actionButton: ImageButton = view.findViewById(R.id.action_button)
 
         fun bind(barcode: LoadingBarcode, position: Int) {
-            barcodeCount.text = (position + 1).toString()
-            barcodeData.text = barcode.barcode
+            barcodeClient.text = barcode.clientCode
+            barcodeDate.text = inputDateFormat.parse(barcode.date)
+                ?.let { outputDateFormat.format(it) }
+            barcodePackage.text = barcode.packageType.filter { !it.isDigit() }
             actionButton.setOnClickListener {
                 removeBarcode(position)
                 onRemoveBarcode(barcode)
@@ -56,6 +62,29 @@ class BarcodeAdapter(val onRemoveBarcode: (LoadingBarcode) -> Unit) : RecyclerVi
         scannedBarcodes.removeAt(position)
         notifyItemRemoved(position)
         notifyDataSetChanged()
+    }
+
+    fun removeBarcodeByBarcode(barcode: String) {
+        val barcodeForDelete = scannedBarcodes.find { it.barcode == barcode }
+        if (barcodeForDelete != null) {
+            scannedBarcodes.remove(barcodeForDelete)
+            onRemoveBarcode(barcodeForDelete)
+            notifyDataSetChanged()
+        }
+    }
+
+    fun removeBarcodeByUid(acceptanceUid: String) {
+        val barcodesToRemove = scannedBarcodes.filter { it.acceptanceUid == acceptanceUid }
+
+        barcodesToRemove.forEach { barcode ->
+            scannedBarcodes.remove(barcode)
+            onRemoveBarcode(barcode)
+        }
+
+        notifyDataSetChanged()
+    }
+    fun getList(): List<LoadingBarcode>{
+        return scannedBarcodes
     }
 
     //Очищает список сканированных штрих-кодов и обновляет представление RecyclerView.

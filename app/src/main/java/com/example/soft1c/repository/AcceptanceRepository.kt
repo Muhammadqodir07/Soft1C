@@ -403,7 +403,7 @@ class AcceptanceRepository {
         return (elem as AnyModel.ProductType).name
     }
 
-    private fun getPackageNameFromUid(zoneUid: String): String {
+    fun getPackageNameFromUid(zoneUid: String): String {
         val elem = Utils.packages.find {
             (it as AnyModel.PackageModel).ref == zoneUid
         } ?: return ""
