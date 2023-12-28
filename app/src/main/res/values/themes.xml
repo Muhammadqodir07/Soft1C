@@ -33,6 +33,13 @@
         <item name="android:textColor">@color/black</item>
     </style>
 
+    <style name="TextInputLoading" parent="">
+        <item name="android:textSize">@dimen/text_input_size_16</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:backgroundTint">@color/white</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
     <style name="ElayoutHintColor" parent="">
         <item name="android:textColorHint">@color/disableHintColor</item>
     </style>

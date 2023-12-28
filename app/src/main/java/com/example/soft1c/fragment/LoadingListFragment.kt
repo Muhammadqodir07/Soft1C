@@ -1,6 +1,8 @@
 package com.example.soft1c.fragment
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.KeyEvent
 import android.view.View
 import androidx.core.view.isVisible
@@ -58,6 +60,27 @@ class LoadingListFragment : BaseFragment<FragmentLoadingListBinding>(FragmentLoa
                 findNavController().navigate(R.id.action_loadingListFragment_to_loadingFragment)
             }
             etxtDocumentNumber.setOnKeyListener(::findOpenDocumentByNumber)
+            etxtDocumentNumber.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) {
+                }
+
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                }
+
+                override fun afterTextChanged(s: Editable?) {
+                    val text = s.toString().trim()
+                    if (text.length == 9) {
+                        // Perform your desired operations here
+                        showDialogLoading()
+                        viewModel.getLoading(text)
+                    }
+                }
+            })
             ivRefresh.setOnClickListener {
                 showPbLoading(true)
                 viewModel.getLoadingList()
@@ -100,7 +123,7 @@ class LoadingListFragment : BaseFragment<FragmentLoadingListBinding>(FragmentLoa
         when(itemClicked) {
             ItemClicked.ITEM -> {
                 val args = Bundle().apply {
-                    putString(LoadingFragment.KEY_LOADING_NUMBER, loading.number)
+                    putString(LoadingFragment.KEY_LOADING_NUMBER, loading.guid)
                 }
                 openLoadingDetail(args)
             }

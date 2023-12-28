@@ -10,8 +10,8 @@ import com.example.soft1c.databinding.ItemLoadingBinding
 import com.example.soft1c.extension.inflateLayout
 import com.example.soft1c.repository.model.ItemClicked
 import com.example.soft1c.repository.model.Loading
-import java.text.SimpleDateFormat
-import java.util.Locale
+import com.example.soft1c.utils.Utils.inputDateFormat
+import com.example.soft1c.utils.Utils.outputDateFormat
 
 class LoadingAdapter(
     private val onItemClicked: (itemClicked: ItemClicked, loading: Loading) -> Unit,
@@ -23,8 +23,6 @@ class LoadingAdapter(
     ) : RecyclerView.ViewHolder(view) {
 
         private val binding = ItemLoadingBinding.bind(view)
-        val inputDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-        val outputDateFormat = SimpleDateFormat("dd/MM/yy\nHH:mm", Locale.getDefault())
 
         fun onBind(loading: Loading){
             itemView.setOnClickListener {
@@ -37,7 +35,7 @@ class LoadingAdapter(
                 txtDate.text= inputDateFormat.parse(loading.date)
                     ?.let { outputDateFormat.format(it) }
                 txtNumberAuto.text = loading.car.number
-                txtRecipient.text = loading.recipient.prefix
+                txtRecipient.text = loading.getterWarehouse.prefix
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.example.soft1c.fragment
 
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
@@ -14,7 +15,6 @@ import com.example.soft1c.databinding.FragmentAuthBinding
 import com.example.soft1c.network.Network
 import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.LoadingModel
-import com.example.soft1c.utils.Demo
 import com.example.soft1c.utils.MainActivity
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.utils.Utils.password
@@ -28,7 +28,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
 
     private val baseViewModel: BaseViewModel by viewModels()
     private var error: String = ""
-    private var requiredTypes = 6
+    private var requiredTypes = -1
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -72,7 +72,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                                 Utils.debugMode = true
                                 Utils.clientTimeout = 80L
                             } else {
-                                Utils.debugMode = true
+                                Utils.debugMode = false
                                 Utils.clientTimeout = 30L
                             }
                         }
@@ -97,23 +97,29 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                 toast(getString(R.string.text_no_rights))
                 return@observe
             }
-            if (user.acceptanceAccess) {
-                if (Utils.zones.isEmpty()) {
-                    showDialogLoading()
-                    baseViewModel.downloadType(Utils.ObjectModelType.ADDRESS)
-                } else {
-                    if (user.loadingAccess) {
-                        findNavController().navigate(R.id.action_authFragment_to_mainFragment)
-                    } else
-                        findNavController().navigate(R.id.action_authFragment_to_acceptanceFragment)
+            try {
+                if (user.acceptanceAccess) {
+                    if (Utils.packages.isEmpty()) {
+                        requiredTypes = 6
+                        showDialogLoading()
+                        baseViewModel.downloadType(Utils.ObjectModelType.ADDRESS)
+                    } else {
+                        if (user.loadingAccess) {
+                            findNavController().navigate(R.id.action_authFragment_to_mainFragment)
+                        } else
+                            findNavController().navigate(R.id.action_authFragment_to_acceptanceFragment)
+                    }
+                } else if (user.loadingAccess) {
+                    if (Utils.cars.isEmpty()) {
+                        requiredTypes = 3
+                        showDialogLoading()
+                        baseViewModel.loadType(Utils.ObjectModelType.CAR)
+                    } else {
+                        findNavController().navigate(R.id.action_authFragment_to_loadingFragment)
+                    }
                 }
-            }else if(user.loadingAccess){
-                if (Utils.cars.isEmpty()){
-                    showDialogLoading()
-                    baseViewModel.loadType(Utils.ObjectModelType.CAR)
-                }else{
-                    findNavController().navigate(R.id.action_authFragment_to_loadingFragment)
-                }
+            } catch (_: IllegalArgumentException) {
+
             }
         }
         baseViewModel.loadAuthLiveData.observe(viewLifecycleOwner) {
@@ -165,20 +171,27 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
     }
 
     private fun customSetOnKeyListener(view: View, key: Int, keyEvent: KeyEvent): Boolean {
-        if (key == 66 && keyEvent.action == KeyEvent.ACTION_DOWN) {
+        if (key == 66 && keyEvent.action == KeyEvent.ACTION_UP) {
             with(binding) {
-
-                val etxtView = view as TextInputEditText
-
-                when (etxtView) {
+                view as TextInputEditText
+                when (view) {
 
                     etxtUrlAdress -> {
+                        if (etxtUrlPort.isEnabled && etxtUrlPort.isVisible) {
+                            etxtUrlPort.requestFocus()
+                            return true
+                        }
+                        return false
+                    }
+
+                    etxtUrlPort -> {
                         if (etxtBasename.isEnabled && etxtBasename.isVisible) {
                             etxtBasename.requestFocus()
                             return true
                         }
                         return false
                     }
+
                     etxtBasename -> {
                         if (etxtUsername.isEnabled && etxtUsername.isVisible) {
                             etxtUsername.requestFocus()
@@ -186,6 +199,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                         }
                         return false
                     }
+
                     etxtUsername -> {
                         if (etxtPassword.isEnabled && etxtPassword.isVisible) {
                             etxtPassword.requestFocus()
@@ -195,6 +209,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                     }
 
                     else -> {
+                        requireContext().hideKeyboard(etxtPassword)
                         return false
                     }
                 }
@@ -327,17 +342,14 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
 
     private fun checkAcceptanceAndDownload(pairOf: Pair<Int, List<AnyModel>>) {
         requiredTypes -= 1
+        if (requiredTypes < 0) {
+            return
+        }
         when (pairOf.first) {
             Utils.ObjectModelType.ADDRESS -> {
                 Utils.addressess = pairOf.second.sortedBy {
                     (it as AnyModel.AddressModel).name
                 }
-                setTextDialogLoading(resources.getString(R.string.text_package))
-                baseViewModel.downloadType(Utils.ObjectModelType._PACKAGE)
-            }
-
-            Utils.ObjectModelType._PACKAGE -> {
-                Utils.packages = pairOf.second
                 setTextDialogLoading(resources.getString(R.string.text_product_type))
                 baseViewModel.downloadType(Utils.ObjectModelType.PRODUCT_TYPE)
             }
@@ -350,12 +362,26 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
 
             Utils.ObjectModelType.ZONE -> {
                 Utils.zones = pairOf.second
+                setTextDialogLoading(resources.getString(R.string.text_package))
+                baseViewModel.downloadType(Utils.ObjectModelType._PACKAGE)
+            }
+
+
+            Utils.ObjectModelType._PACKAGE -> {
+                Utils.packages = pairOf.second
                 if (user.loadingAccess) {
-                    setTextDialogLoading(resources.getString(R.string.text_number_of_auto))
-                    baseViewModel.loadType(Utils.ObjectModelType.CAR)
+                    if (Utils.warehouse.isEmpty()) {
+                        setTextDialogLoading(resources.getString(R.string.text_number_of_auto))
+                        baseViewModel.loadType(Utils.ObjectModelType.CAR)
+                    } else {
+                        closeDialogLoading()
+                        if (findNavController().currentDestination?.id == R.id.authFragment)
+                            findNavController().navigate(R.id.action_authFragment_to_loadingFragment)
+                    }
                 } else {
                     closeDialogLoading()
-                    findNavController().navigate(R.id.action_authFragment_to_acceptanceFragment)
+                    if (findNavController().currentDestination?.id == R.id.authFragment)
+                        findNavController().navigate(R.id.action_authFragment_to_acceptanceFragment)
                 }
             }
         }
@@ -363,6 +389,9 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
 
     private fun checkLoadingAndDownload(pairOf: Pair<Int, List<LoadingModel>>) {
         requiredTypes -= 1
+        if (requiredTypes < 0) {
+            return
+        }
         when (pairOf.first) {
             Utils.ObjectModelType.CAR -> {
                 Utils.cars = pairOf.second
@@ -372,11 +401,17 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
 
             Utils.ObjectModelType.WAREHOUSE -> {
                 Utils.warehouse = pairOf.second
+                if (Utils.packages.isEmpty()) {
+                    setTextDialogLoading(resources.getString(R.string.text_product_type))
+                    baseViewModel.downloadType(Utils.ObjectModelType._PACKAGE)
+                }
                 closeDialogLoading()
                 if (user.acceptanceAccess)
-                    findNavController().navigate(R.id.action_authFragment_to_mainFragment)
+                    if (findNavController().currentDestination?.id == R.id.authFragment)
+                        findNavController().navigate(R.id.action_authFragment_to_mainFragment)
                 else
-                    findNavController().navigate(R.id.action_authFragment_to_loadingFragment)
+                    if (findNavController().currentDestination?.id == R.id.authFragment)
+                        findNavController().navigate(R.id.action_authFragment_to_loadingFragment)
             }
         }
     }

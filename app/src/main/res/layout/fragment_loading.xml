@@ -26,6 +26,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:animateLayoutChanges="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
             android:orientation="vertical"
             android:paddingHorizontal="8dp"
             app:layout_constraintEnd_toEndOf="parent"
@@ -35,32 +37,32 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/elayout_txt_number"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColorHint="@color/black">
+                android:layout_height="wrap_content">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/txt_number"
-                    style="@style/TextInputDefault"
-                    android:layout_width="300dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:backgroundTint="@color/white"
                     android:enabled="false"
+                    android:hint="@string/text_number"
 
-                    android:hint="@string/text_number" />
+                    android:textSize="@dimen/text_input_size_16" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/elayout_txt_date"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColorHint="@color/black">
+                android:layout_height="wrap_content">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/txt_date"
-                    style="@style/TextInputDefault"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:backgroundTint="@color/white"
                     android:enabled="false"
-                    android:hint="@string/text_date" />
+                    android:hint="@string/text_date"
+                    android:textSize="@dimen/text_input_size_16" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -72,9 +74,8 @@
 
                 <EditText
                     android:id="@+id/etxt_route"
-                    style="@style/TextInputDefault"
+                    style="@style/TextInputLoading"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
                     android:focusable="false"
                     android:hint="@string/route"
                     android:inputType="none" />
@@ -91,28 +92,28 @@
 
                 <AutoCompleteTextView
                     android:id="@+id/tv_auto"
-                    style="@style/TextInputDefault"
+                    style="@style/TextInputLoading"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
                     android:hint="@string/text_number_of_auto"
                     android:inputType="textAutoCorrect" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/elayout_recipient"
-                style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textColorHint="@color/black">
+                android:enabled="false">
 
-                <AutoCompleteTextView
+                <EditText
                     android:id="@+id/tv_recipient"
-                    style="@style/TextInputDefault"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:backgroundTint="@color/white"
+                    android:focusable="false"
                     android:hint="@string/text_recipient"
-                    android:inputType="textAutoCorrect" />
+                    android:inputType="none"
+                    android:textSize="@dimen/text_input_size_16" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -141,7 +142,6 @@
             android:id="@+id/linear_topbar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:animateLayoutChanges="true"
             android:orientation="horizontal"
             android:paddingHorizontal="8dp"
@@ -149,6 +149,7 @@
             app:layout_constraintTop_toBottomOf="@id/linear_information">
 
             <RadioGroup
+                android:id="@+id/r_group_package"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:checkedButton="@id/radio_acceptance"
@@ -167,6 +168,19 @@
                     android:text="@string/text_package" />
             </RadioGroup>
 
+            <CheckBox
+                android:id="@+id/chb_delete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="-8dp" />
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="34dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="-12dp"
+                android:src="@drawable/delete_24" />
+
 
         </LinearLayout>
 
@@ -177,7 +191,6 @@
             android:layout_height="wrap_content"
             android:backgroundTint="@color/transparent"
             android:src="@drawable/ic_drop_up"
-            android:layout_marginEnd="16dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/linear_topbar" />
 
@@ -210,29 +223,51 @@
         <LinearLayout
             android:id="@+id/linear_heading"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="40dp"
             android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/linear_scan">
 
             <TextView
-                android:id="@+id/txt_count"
+                android:id="@+id/txt_client_code"
                 style="@style/TextNumber"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="0.2"
+                android:layout_weight="0.7"
                 android:gravity="center|start"
-                android:text="@string/txt_number" />
+                android:paddingStart="5dp"
+                android:text="@string/text_code_client_in_list" />
 
             <TextView
-                android:id="@+id/txt_barcode"
+                android:id="@+id/txt_date_list"
+                style="@style/TextNumber"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.8"
+                android:gravity="center|start"
+                android:paddingStart="5dp"
+                android:text="@string/text_date" />
+
+            <TextView
+                android:id="@+id/txt_package"
                 style="@style/TextNumber"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center|start"
-                android:text="@string/text_barcode" />
+                android:paddingStart="5dp"
+                android:text="@string/text_package" />
+
+            <TextView
+                android:id="@+id/txt_empty"
+                style="@style/TextNumber"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.5"
+                android:gravity="center|start"
+                android:paddingStart="5dp"
+                android:text="" />
         </LinearLayout>
 
         <androidx.constraintlayout.motion.widget.MotionLayout
@@ -240,7 +275,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             app:layoutDescription="@xml/fragment_loading_xml_constraint_rv_scene"
-            app:layout_constraintBottom_toTopOf="@id/linear_limits"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@id/linear_heading">
 
             <androidx.recyclerview.widget.RecyclerView
@@ -249,7 +284,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="20dp"
-                android:background="@color/teal_200"
+                android:background="#F7F5F2"
                 app:layout_constraintBottom_toTopOf="parent"
                 app:layout_constraintEnd_toStartOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -261,7 +296,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="20dp"
-                android:background="@color/purple_200"
+                android:background="#EBEBEB"
                 app:layout_constraintBottom_toTopOf="parent"
                 app:layout_constraintStart_toEndOf="@id/rv_barcode_front"
                 app:layout_constraintTop_toBottomOf="parent" />
@@ -272,9 +307,10 @@
             android:id="@+id/linear_limits"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
+            android:paddingVertical="4dp"
             android:orientation="horizontal"
             android:weightSum="16"
+            android:background="@color/white"
             app:layout_constraintBottom_toTopOf="@id/linear_btn_group"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
@@ -297,7 +333,7 @@
                 android:id="@+id/txt_weight_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
+                android:layout_weight="3"
                 android:text="@string/text_weight" />
 
             <TextView
@@ -315,8 +351,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            android:layout_marginBottom="4dp"
+            android:background="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/elayout_save"

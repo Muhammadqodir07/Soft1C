@@ -70,7 +70,8 @@
                                 style="@style/TextInputDefault"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:hint="@string/text_adress" />
+                                android:hint="@string/text_adress"
+                                android:inputType="textAutoCorrect"/>
 
                         </com.google.android.material.textfield.TextInputLayout>
 
@@ -101,7 +102,8 @@
                                 style="@style/TextInputDefault"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:hint="@string/text_port" />
+                                android:hint="@string/text_port"
+                                android:inputType="textAutoCorrect"/>
 
                         </com.google.android.material.textfield.TextInputLayout>
 
@@ -118,7 +120,8 @@
                                 style="@style/TextInputDefault"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:hint="@string/text_basename" />
+                                android:hint="@string/text_basename"
+                                android:inputType="textAutoCorrect"/>
 
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
@@ -156,7 +159,8 @@
                             style="@style/TextInputDefault"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="@string/text_username" />
+                            android:hint="@string/text_username"
+                            android:inputType="textAutoCorrect"/>
 
                     </com.google.android.material.textfield.TextInputLayout>
 

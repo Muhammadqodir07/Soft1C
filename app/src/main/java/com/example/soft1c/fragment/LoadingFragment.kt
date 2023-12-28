@@ -30,6 +30,7 @@ import com.example.soft1c.utils.Utils.cars
 import com.example.soft1c.utils.Utils.user
 import com.example.soft1c.utils.Utils.warehouse
 import com.example.soft1c.viewmodel.LoadingViewModel
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.math.absoluteValue
@@ -38,14 +39,16 @@ import kotlin.math.absoluteValue
 class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBinding::inflate) {
 
     // Объект класса позволяющего связывать штрих-коды с элементами интерфейса
-    private var barcodeFrontAdapter: BarcodeAdapter = BarcodeAdapter{
-        onRemoveBarcodeClick(it)
+    private var barcodeFrontAdapter: BarcodeAdapter = BarcodeAdapter { barcode ->
+        onRemoveBarcodeClick(barcode)
     }
-    private var barcodeBackAdapter: BarcodeAdapter = BarcodeAdapter{
-        onRemoveBarcodeClick(it)
+    private var barcodeBackAdapter: BarcodeAdapter = BarcodeAdapter { barcode ->
+        onRemoveBarcodeClick(barcode)
     }
+
     private var barcodeFrontList: ArrayList<LoadingBarcode> = arrayListOf()
     private var barcodeBackList: ArrayList<LoadingBarcode> = arrayListOf()
+    private lateinit var scannedData: String
     private var weight = 0.0
     private var volume = 0.0
 
@@ -64,6 +67,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         super.onCreate(savedInstanceState)
         val loadingNumber = arguments?.getString(KEY_LOADING_NUMBER, "") ?: ""
         loading = if (loadingNumber.isNotEmpty()) {
+            showDialogLoading()
             viewModel.getLoading(loadingNumber)
             Loading(number = loadingNumber)
         } else {
@@ -75,6 +79,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
 
         //Регистрация приёмника broadcastReceiver с использованием фильтра filter
         val filter = IntentFilter()
@@ -129,39 +134,22 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                 view.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
                 view.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
                 //Если кнопка сохранения видна и доступна то перевести фокус на него
-                if (tvRecipient.isEnabled && tvRecipient.isVisible) {
-                    tvRecipient.requestFocus()
+                if (linearInformation.isEnabled && linearInformation.isVisible) {
+                    view.clearFocus()
+                    linearInformation.requestFocus()
                 }
             }
             //Обработчик нажатия клавиш
             tvAuto.setOnKeyListener(::autoCompleteOnKeyListener)
-
-            tvRecipient.setAdapter(
-                ArrayAdapter(
-                    requireContext(),
-                    android.R.layout.simple_list_item_1,
-                    warehouse.map { (it as LoadingModel.Warehouse).name }
-                )
-            )
-            tvRecipient.setOnItemClickListener{
-                    parent, view, position, _ ->
-                val selectedModel = parent.getItemAtPosition(position) as String
-                //Выполняем функцию НайтиИЗаполнитьВыбранныйЭлемент куда передаем позицию выбранного элемента
-                findAndFillAnySelectedModel(
-                    warehouse,
-                    Utils.ObjectModelType.WAREHOUSE,
-                    tvRecipient,
-                    selectedModel
-                )
-                view.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
-                view.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
-                view.clearFocus()
+            tvAuto.setOnFocusChangeListener { v, hasFocus ->
+                if (v is MaterialAutoCompleteTextView && hasFocus && v.error != null) {
+                    v.error = null
+                }
             }
-            tvRecipient.setOnKeyListener(::autoCompleteOnKeyListener)
-            btnShowHide.setOnClickListener{
-                if (linearInformation.visibility == View.VISIBLE){
+            btnShowHide.setOnClickListener {
+                if (linearInformation.visibility == View.VISIBLE) {
                     constraintLayout.transitionToEnd()
-                }else{
+                } else {
                     constraintLayout.transitionToStart()
                 }
             }
@@ -185,6 +173,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
             }
 
             etxtRoute.setOnClickListener {
+                etxtRoute.error = null
                 loadingRouteDialog()
             }
             etxtSave.setOnClickListener {
@@ -200,19 +189,34 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         val btnOk = dialogView.findViewById<Button>(R.id.btn_ok)
         val btnClose = dialogView.findViewById<Button>(R.id.btn_close)
 
+
+
         btnOk.setOnClickListener {
-            //Задать текст поле Mаршрут TODO
+            binding.etxtRoute.setText("${loading.senderWarehouse.prefix} — ${loading.getterWarehouse.prefix}")
+            binding.tvRecipient.text = getterWarehouse.text
             dialog.dismiss()
         }
         btnClose.setOnClickListener {
             dialog.dismiss()
         }
 
-        if (loading.senderWarehouseUid.isNotEmpty()) {
-            senderWarehouse.setText(loading.senderWarehouse)
+        if (loading.senderWarehouse != LoadingModel.Warehouse()) {
+            senderWarehouse.setText(loading.senderWarehouse.name)
+        }else{
+            val warehouse = Utils.warehouse.find {
+                it is LoadingModel.Warehouse && it.ref == user.warehouse
+            } as? LoadingModel.Warehouse
+            warehouse?.let {
+                findAndFillAnySelectedModel(
+                    Utils.warehouse,
+                    Utils.ObjectModelType.WAREHOUSE,
+                    senderWarehouse,
+                    it.name
+                )
+            }
         }
-        if (loading.getterWarehouseUid.isNotEmpty()) {
-            getterWarehouse.setText(loading.getterWarehouse)
+        if (loading.getterWarehouse != LoadingModel.Warehouse()) {
+            getterWarehouse.setText(loading.getterWarehouse.name)
         }
 
         senderWarehouse.setAdapter(
@@ -262,6 +266,8 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         loading.barcodesBack = barcodeBackList
         if (loading.car == LoadingModel.Car()) {
             binding.tvAuto.error = resources.getString(R.string.text_field_is_empyt)
+        } else if (loading.getterWarehouse == LoadingModel.Warehouse()) {
+            binding.etxtRoute.error = resources.getString(R.string.text_field_is_empyt)
         } else {
             documentCreate = !documentCreate
             viewModel.createUpdateLoading(loading)
@@ -273,6 +279,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
             toast(pair.second)
             return
         }
+        Utils.refreshList = true
         closeActivity()
     }
 
@@ -283,32 +290,58 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
             documentCreate = false
             toast(it)
         }
+        viewModel.toastResIdLiveData.observe(viewLifecycleOwner) {
+            documentCreate = false
+            errorDialog(requireContext().getString(it), true)
+        }
         viewModel.createUpdateLiveDat.observe(viewLifecycleOwner, ::getCreateUpdateLoadingInfo)
         viewModel.barcodeListLiveData.observe(viewLifecycleOwner, ::fillBarcodeList)
     }
 
     private fun fillBarcodeList(barcodes: List<LoadingBarcode>?) {
         closeDialogLoading()
-        barcodes?.forEach { barcode ->
-            if (binding.radioFront.isChecked) {
-                barcodeFrontList.add(barcode)
-                barcodeFrontAdapter.addBarcodeData(barcode)
-            }else{
-                barcodeBackList.add(barcode)
-                barcodeBackAdapter.addBarcodeData(barcode)
+        if (barcodes != null) {
+            val targetList = if (binding.radioAcceptance.isChecked) {
+                if (binding.radioFront.isChecked) barcodeFrontList else barcodeBackList
+            } else null
+
+            barcodes.forEach { barcode ->
+                if (targetList != null && !targetList.contains(barcode)) {
+                    targetList.add(barcode)
+                    if (targetList == barcodeFrontList) {
+                        barcodeFrontAdapter.addBarcodeData(barcode)
+                    } else {
+                        barcodeBackAdapter.addBarcodeData(barcode)
+                    }
+                    weight += barcode.weight
+                    volume += barcode.volume
+                } else if (!binding.radioAcceptance.isChecked && barcode.barcode == scannedData) {
+                    val selectedList =
+                        if (binding.radioFront.isChecked) barcodeFrontList else barcodeBackList
+                    if (!selectedList.contains(barcode)) {
+                        selectedList.add(barcode)
+                        if (selectedList == barcodeFrontList) {
+                            barcodeFrontAdapter.addBarcodeData(barcode)
+                        } else {
+                            barcodeBackAdapter.addBarcodeData(barcode)
+                        }
+                        weight += barcode.weight
+                        volume += barcode.volume
+                    }
+                }
             }
-            weight+=barcode.weight
-            volume+=barcode.volume
         }
-        binding.txtWeightValue.text= String.format("%.2f", weight)
+        binding.txtWeightValue.text = String.format("%.2f", weight)
         binding.txtVolumeValue.text = String.format("%.6f", volume)
     }
 
     //Функция обработчика клавиш
     private fun autoCompleteOnKeyListener(view: View, key: Int, keyEvent: KeyEvent): Boolean {
         binding.tvAuto.error = null
+
         //Если нажата клавиша Enter
         if (key == 66 && keyEvent.action == KeyEvent.ACTION_UP) {
+            requireContext().hideKeyboard(view)
             view as AutoCompleteTextView
             with(binding) {
                 when (view) {
@@ -320,22 +353,10 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                             Utils.ObjectModelType.CAR,
                             view
                         )
-                        //Если кнопка сохранения видна и доступна то перевести фокус на него
-                        if (tvRecipient.isEnabled && tvRecipient.isVisible) {
-                            tvRecipient.requestFocus()
-                            return true
-                        }
-                        return false
-                    }
-                    tvRecipient -> {
-                        findAndFillAnyModel(
-                            warehouse,
-                            Utils.ObjectModelType.WAREHOUSE,
-                            view
-                        )
-                        tvRecipient.clearFocus()
+                        linearInformation.requestFocus()
                         return true
                     }
+
                     senderWarehouse -> {
                         findAndFillAnyModel(
                             warehouse,
@@ -348,17 +369,23 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                         }
                         return false
                     }
+
                     getterWarehouse -> {
                         findAndFillAnyModel(
                             warehouse,
                             Utils.ObjectModelType.WAREHOUSE,
                             view
                         )
-                        return true
+                        getterWarehouse.clearFocus()
+                        return false
                     }
+
                     else -> return false
                 }
             }
+        }else if(key == 10036 && keyEvent.action == KeyEvent.ACTION_DOWN){
+            clearAllFocus()
+            return true
         }
         return false
     }
@@ -377,13 +404,13 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                     return
                 }
             }
+
             view.text.isEmpty() -> return
             else -> ""
         }
         //Найти номер из списка номеров с помощью текстЭлемента
         textElementFound(anyList, model, view, textElement)
     }
-
 
 
     //Функция НайтиИЗаполнитьВыбранныйЭлемент получает данные списка Машин, поле НомераМашин и текст выбранного элемента в списке
@@ -426,19 +453,16 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                     loading.car = element
                     view.setText(element.number)
                 }
+
                 Utils.ObjectModelType.WAREHOUSE -> {
                     element as LoadingModel.Warehouse
-                    when(view.id){
+                    when (view.id) {
                         R.id.etxt_wareH_sender -> {
-                            loading.senderWarehouseUid = element.ref
-                            loading.senderWarehouse = element.name
+                            loading.senderWarehouse = element
                         }
+
                         R.id.etxt_wareH_getter -> {
-                            loading.getterWarehouseUid = element.ref
-                            loading.getterWarehouse = element.name
-                        }
-                        R.id.tv_recipient ->{
-                            loading.recipient = element
+                            loading.getterWarehouse = element
                         }
                     }
                     view.setText(element.name)
@@ -450,53 +474,56 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                     view.text.clear()
                     loading.car = LoadingModel.Car()
                 }
+
                 Utils.ObjectModelType.WAREHOUSE -> {
                     view.text.clear()
-                    when(view.id){
+                    when (view.id) {
                         R.id.etxt_wareH_sender -> {
-                            loading.senderWarehouseUid = ""
-                            loading.senderWarehouse = ""
+                            loading.senderWarehouse = LoadingModel.Warehouse()
                         }
+
                         R.id.etxt_wareH_getter -> {
-                            loading.getterWarehouseUid = ""
-                            loading.getterWarehouse = ""
-                        }
-                        R.id.tv_recipient ->{
-                            loading.recipient = LoadingModel.Warehouse()
+                            loading.getterWarehouse = LoadingModel.Warehouse()
                         }
                     }
                 }
             }
-
         }
     }
 
     @SuppressLint("SetTextI18n")
     private fun showLoading() {
         with(binding) {
+            if (loading.number.isNotEmpty() && loading.date.isNotEmpty()){
+                elayoutTxtNumber.visibility = View.VISIBLE
+                elayoutTxtDate.visibility = View.VISIBLE
+            }
             txtNumber.setText(loading.number)
-            txtDate.setText(loading.date)
+            txtDate.setText(loading.date.replace("T", " — "))
             tvAuto.setText(loading.car.number)
-            tvRecipient.setText(loading.recipient.name)
+            if (loading.getterWarehouse != LoadingModel.Warehouse())
+                etxtRoute.setText("${loading.senderWarehouse.prefix} — ${loading.getterWarehouse.prefix}")
+            tvRecipient.setText(loading.getterWarehouse.name)
             loading.barcodesFront.forEach {
                 barcodeFrontList.add(it)
                 barcodeFrontAdapter.addBarcodeData(it)
-                weight+=it.weight
-                volume+=it.volume
+                weight += it.weight
+                volume += it.volume
             }
             loading.barcodesBack.forEach {
                 barcodeBackList.add(it)
                 barcodeBackAdapter.addBarcodeData(it)
-                weight+=it.weight
-                volume+=it.volume
+                weight += it.weight
+                volume += it.volume
             }
-            txtWeightValue.text= String.format("%.2f", weight)
+            txtWeightValue.text = String.format("%.2f", weight)
             txtVolumeValue.text = String.format("%.6f", volume)
         }
     }
 
     private fun showDetails(pair: Pair<Loading, List<LoadingEnableVisible>>) {
         loading = pair.first
+        closeDialogLoading()
         if (this.loading.ref.isEmpty()) {
             binding.pbLoading.isVisible = false
             return
@@ -504,17 +531,40 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         showLoading()
     }
 
-    //Функция добавление сканированного штрих-кода в объект BarcodeAdapter
+    //Функция добавления/удаления сканированного штрих-кода в объект BarcodeAdapter
     private fun displayScanResult(initiatingIntent: Intent) {
-        binding.tvAuto.isEnabled = false
-        var decodedData = initiatingIntent.getStringExtra("com.symbol.datawedge.data_string")
-        decodedData = "90000153429210421"
+        with(binding) {
+            scannedData =
+                initiatingIntent.getStringExtra("com.symbol.datawedge.data_string").toString()
 
-        if (decodedData != null && decodedData.length>=17) {
-            viewModel.getBarcodeList(decodedData.takeLast(17), user.warehouse)
-            showDialogLoading()
+            if (::scannedData.isInitialized && scannedData.length >= 17) {
+                val last17Chars = scannedData.takeLast(17)
+
+                if (chbDelete.isChecked) {
+                    if (radioAcceptance.isChecked) {
+                        val adapter =
+                            if (radioFront.isChecked) barcodeFrontAdapter else barcodeBackAdapter
+                        val documentUid =
+                            adapter.getList().find { it.barcode == scannedData }?.acceptanceUid
+                        documentUid?.let { adapter.removeBarcodeByUid(it) }
+                    } else {
+                        val adapter =
+                            if (radioFront.isChecked) barcodeFrontAdapter else barcodeBackAdapter
+                        adapter.removeBarcodeByBarcode(scannedData)
+                    }
+
+                } else {
+                    val adapter =
+                        if (radioFront.isChecked) barcodeFrontAdapter else barcodeBackAdapter
+                    if (adapter.getList().find { it.barcode == scannedData } == null) {
+                        viewModel.getBarcodeList(last17Chars, user.warehouse)
+                        showDialogLoading()
+                    }else{
+                        toast(requireContext().getString(R.string.err_dublicate_barcode))
+                    }
+                }
+            }
         }
-        binding.tvAuto.isEnabled = true
     }
 
     private fun loadingRouteDialog() {
@@ -532,11 +582,26 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         dialog.show()
     }
 
-    private fun onRemoveBarcodeClick(barcode: LoadingBarcode){
-        weight-=barcode.weight
-        volume-=barcode.volume
-        binding.txtWeightValue.text= String.format("%.2f", weight.absoluteValue)
+    private fun onRemoveBarcodeClick(barcode: LoadingBarcode) {
+        weight -= barcode.weight
+        volume -= barcode.volume
+        if (binding.radioFront.isChecked) {
+            barcodeFrontList.remove(barcode)
+        } else {
+            barcodeBackList.remove(barcode)
+        }
+        binding.txtWeightValue.text = String.format("%.2f", weight.absoluteValue)
         binding.txtVolumeValue.text = String.format("%.6f", volume.absoluteValue)
+    }
+
+    private fun clearAllFocus(){
+        with(binding){
+            tvAuto.clearFocus()
+            if (::senderWarehouse.isInitialized){
+                senderWarehouse.clearFocus()
+                getterWarehouse.clearFocus()
+            }
+        }
     }
 
     private fun closeActivity() {
@@ -548,6 +613,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         super.onDestroy()
         context?.unregisterReceiver(broadcastReceiver)
         barcodeFrontAdapter.clearBarcodeData()
+        barcodeBackAdapter.clearBarcodeData()
     }
 
     companion object {

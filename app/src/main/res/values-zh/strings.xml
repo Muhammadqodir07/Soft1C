@@ -109,8 +109,9 @@
     <string name="not_found">未找到服务器</string>
     <string name="no_connection_exception">没有互联网连接</string>
     <string name="text_more">更多信息</string>
-    <string name="text_recipient">Получатель</string>
-    <string name="route">Маршрут</string>
-    <string name="text_front">Перед</string>
-    <string name="text_back">Зад</string>
+    <string name="text_recipient">" 接受者"</string>
+    <string name="route">路线</string>
+    <string name="text_front">前部</string>
+    <string name="text_back">后部</string>
+    <string name="err_dublicate_barcode">条形码已添加</string>
 </resources>

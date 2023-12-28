@@ -38,14 +38,14 @@
                     android:layout_width="64dp"
                     android:layout_height="64dp"
                     android:background = "@color/white"
-                    android:src="@drawable/acceptance_hd"
+                    android:src="@drawable/acceptance"
                     android:scaleType="centerCrop"
                     android:clickable = "false"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Прием товара"
+                    android:text="@string/text_title_acceptance"
                     android:textSize="18sp"
                     android:textColor="@color/black"/>
 
@@ -79,14 +79,14 @@
                     android:layout_width="64dp"
                     android:layout_height="64dp"
                     android:background="@color/white"
-                    android:src="@drawable/loading_hd"
+                    android:src="@drawable/loading"
                     android:scaleType="centerCrop"
                     android:clickable = "false"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text = "Погрузка товара"
+                    android:text = "@string/text_title_loading_list"
                     android:textSize="18sp"
                     android:textColor="@color/black" />
 

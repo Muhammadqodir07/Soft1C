@@ -116,10 +116,11 @@
     <string name="not_found">Base not found</string>
     <string name="no_connection_exception">"No internet connection "</string>
     <string name="text_more">More</string>
-    <string name="text_recipient">Получатель</string>
-    <string name="route">Маршрут</string>
-    <string name="text_front">Перед</string>
-    <string name="text_back">Зад</string>
+    <string name="text_recipient">Recipient</string>
+    <string name="route">Route</string>
+    <string name="text_front">Front</string>
+    <string name="text_back">Back</string>
     <string name="text_volume">Volume</string>
+    <string name="err_dublicate_barcode">Barcode is already added</string>
 
 </resources>

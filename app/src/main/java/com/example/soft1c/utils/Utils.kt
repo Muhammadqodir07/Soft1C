@@ -4,6 +4,8 @@ import com.example.soft1c.repository.model.Acceptance
 import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.LoadingModel
 import com.example.soft1c.repository.model.User
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 object Utils {
     var base_url = ""
@@ -35,6 +37,8 @@ object Utils {
     var refreshList: Boolean = false
 
     var debugMode = false
+    val inputDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+    val outputDateFormat = SimpleDateFormat("dd/MM/yy\nHH:mm", Locale.getDefault())
 
 
     fun setAttributes(
@@ -58,20 +62,6 @@ object Utils {
         const val REF_KEY = "Ссылка"
         const val NAME_KEY = "Наименование"
         const val CODE_KEY = "Код"
-    }
-
-    //Объект с ключевыми названиями машин
-    object Cars {
-        const val REF_KEY = "GUID"
-        const val NUMBER_KEY = "Номер"
-        const val MAX_WEIHT_KEY = "Вес"
-        const val MAX_CAPACITY_KEY = "Размер"
-    }
-
-    object Warehouses {
-        const val REF_KEY = "GUID"
-        const val NAME_KEY = "Наименование"
-        const val PREFIX_KEY = "Префикс"
     }
 
     object ObjectModelType {

@@ -1,27 +1,25 @@
 package com.example.soft1c.repository
 
+import com.example.soft1c.adapter.LoadingAdapter
 import com.example.soft1c.network.Network
 import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.Loading.Companion.CAR_KEY
 import com.example.soft1c.repository.model.Loading.Companion.CAR_NUMBER_KEY
 import com.example.soft1c.repository.model.Loading.Companion.DATE_KEY
 import com.example.soft1c.repository.model.Loading.Companion.DOCUMENT_DATE_KEY
-import com.example.soft1c.repository.model.Loading.Companion.GETTER_WAREHOUSE_KEY
-import com.example.soft1c.repository.model.Loading.Companion.GETTER_WAREHOUSE_UID_KEY
 import com.example.soft1c.repository.model.Loading.Companion.GUID_KEY
 import com.example.soft1c.repository.model.Loading.Companion.ITEMS_BACK_KEY
 import com.example.soft1c.repository.model.Loading.Companion.ITEMS_FRONT_KEY
 import com.example.soft1c.repository.model.Loading.Companion.NUMBER_KEY
-import com.example.soft1c.repository.model.Loading.Companion.RECIPIENT_KEY
 import com.example.soft1c.repository.model.Loading.Companion.REF_KEY
-import com.example.soft1c.repository.model.Loading.Companion.SENDER_WAREHOUSE_KEY
-import com.example.soft1c.repository.model.Loading.Companion.SENDER_WAREHOUSE_UID_KEY
 import com.example.soft1c.repository.model.Loading.Companion.WAREHOUSE_BEGIN_KEY
 import com.example.soft1c.repository.model.Loading.Companion.WAREHOUSE_END_KEY
 import com.example.soft1c.repository.model.LoadingBarcode
 import com.example.soft1c.repository.model.LoadingBarcode.Companion.ACCEPTANCE_GUID_KEY
 import com.example.soft1c.repository.model.LoadingBarcode.Companion.ACCEPTANCE_NUMBER_KEY
 import com.example.soft1c.repository.model.LoadingBarcode.Companion.BARCODE_KEY
+import com.example.soft1c.repository.model.LoadingBarcode.Companion.CLIENT_CODE_KEY
+import com.example.soft1c.repository.model.LoadingBarcode.Companion.PACKAGE_KEY
 import com.example.soft1c.repository.model.LoadingBarcode.Companion.SEAT_NUMBER_KEY
 import com.example.soft1c.repository.model.LoadingBarcode.Companion.VOLUME_KEY
 import com.example.soft1c.repository.model.LoadingBarcode.Companion.WEIGHT_KEY
@@ -83,7 +81,11 @@ class LoadingRepository {
                             if (response.isSuccessful) {
                                 val responseBody = response.body()?.string() ?: ""
                                 continuation.resume(getBarcodeListJson(responseBody))
-                            } else {
+                            }else if (response.code() == 502) {
+                                continuation.resume(emptyList())
+                                //TODO()
+                            }
+                            else {
                                 continuation.resume(emptyList())
                             }
                         }
@@ -99,10 +101,11 @@ class LoadingRepository {
     fun getBarcodeListJson(responseBody: String): List<LoadingBarcode>? {
         val barcodeList = mutableListOf<LoadingBarcode>()
         try {
-
             val arrayJson = JSONArray(responseBody)
             for (item in 0 until arrayJson.length()) {
                 val objectJson = arrayJson.getJSONObject(item)
+                val packageUid = objectJson.optString(PACKAGE_KEY, "")
+                val packages = AcceptanceRepository().getPackageNameFromUid(packageUid)
                 barcodeList.add(
                     LoadingBarcode(
                         barcode = objectJson.optString(BARCODE_KEY, ""),
@@ -111,6 +114,10 @@ class LoadingRepository {
                         acceptanceNumber = objectJson.optString(ACCEPTANCE_NUMBER_KEY, ""),
                         acceptanceUid = objectJson.optString(ACCEPTANCE_GUID_KEY, ""),
                         seatNumber = objectJson.optInt(SEAT_NUMBER_KEY, -1),
+                        packageTypeUid = packageUid,
+                        packageType = packages,
+                        clientCode = objectJson.optString(CLIENT_CODE_KEY, ""),
+                        date = objectJson.optString(LoadingBarcode.DATE_KEY, "")
                     )
                 )
             }
@@ -137,21 +144,20 @@ class LoadingRepository {
                 jsonObject.put(DATE_KEY, LocalDateTime.now().format(formatter))
             }
             jsonObject.put(CAR_KEY, loading.car.ref)
-            jsonObject.put(WAREHOUSE_BEGIN_KEY, loading.senderWarehouseUid)
-            jsonObject.put(WAREHOUSE_END_KEY, loading.getterWarehouseUid)
-            jsonObject.put(RECIPIENT_KEY, loading.recipient)
+            jsonObject.put(WAREHOUSE_BEGIN_KEY, loading.senderWarehouse.ref)
+            jsonObject.put(WAREHOUSE_END_KEY, loading.getterWarehouse.ref)
             // Создаем массив товаров и заполняем его штрих-кодами
             val frontBarcodeArray = JSONArray()
             for (barcode in loading.barcodesFront) {
                 val barcodeObject = JSONObject()
-                barcodeObject.put(BARCODE_KEY, barcode)
+                barcodeObject.put(BARCODE_KEY, barcode.barcode)
                 frontBarcodeArray.put(barcodeObject)
             }
             jsonObject.put(ITEMS_FRONT_KEY, frontBarcodeArray)
             val backBarcodeArray = JSONArray()
             for (barcode in loading.barcodesBack) {
                 val barcodeObject = JSONObject()
-                barcodeObject.put(BARCODE_KEY, barcode)
+                barcodeObject.put(BARCODE_KEY, barcode.barcode)
                 backBarcodeArray.put(barcodeObject)
             }
             // Добавляем массив товаров в объект JSON
@@ -173,6 +179,7 @@ class LoadingRepository {
                             //LoadingAdapter = ref
                             loading.ref = ref
                             loading.guid = guid
+                            LoadingAdapter.LOADING_GUID = ref
                             continuation.resume(Pair(loading, ""))
                         } else {
 
@@ -192,24 +199,28 @@ class LoadingRepository {
 
     suspend fun getLoadingListApi(): List<Loading> {
         return suspendCoroutine { continuation ->
-            Network.loadingApi.loadingList().enqueue(object : Callback<ResponseBody> {
-                override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>
-                ) {
-                    if (response.isSuccessful) {
-                        val responseBody = response.body()?.string() ?: ""
-                        continuation.resume(getLoadingList(responseBody))
-                    } else {
-                        continuation.resume(emptyList())
+            if (Utils.debugMode) {
+                continuation.resume(getLoadingList(Loading.DEFAULT_DATA_LIST))
+            } else {
+                Network.loadingApi.loadingList().enqueue(object : Callback<ResponseBody> {
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+                        if (response.isSuccessful) {
+                            val responseBody = response.body()?.string() ?: ""
+                            continuation.resume(getLoadingList(responseBody))
+                        } else {
+                            continuation.resume(emptyList())
+                        }
                     }
-                }
 
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    continuation.resumeWithException(t)
-                }
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        continuation.resumeWithException(t)
+                    }
 
-            })
+                })
+            }
         }
     }
 
@@ -236,22 +247,48 @@ class LoadingRepository {
     private fun getLoadingFromJsonObject(loadingJson: JSONObject, hasBarcodes: Boolean): Loading {
         val ref = loadingJson.getString(REF_KEY)
         val guid = loadingJson.getString(GUID_KEY)
-        val date = loadingJson.getString(DOCUMENT_DATE_KEY)
         val number = loadingJson.getString(NUMBER_KEY)
-        val carUid = loadingJson.getString(CAR_NUMBER_KEY)
-        val car = getCarNumberFromUid(carUid)
-        val senderWarehouseUid = loadingJson.getString(SENDER_WAREHOUSE_UID_KEY)
-        val senderWarehouse = loadingJson.getString(SENDER_WAREHOUSE_KEY)
-        val getterWarehouseUid = loadingJson.getString(GETTER_WAREHOUSE_UID_KEY)
-        val getterWarehouse = loadingJson.getString(GETTER_WAREHOUSE_KEY)
+        val senderWarehouseUid = loadingJson.getString(WAREHOUSE_BEGIN_KEY)
+        val getterWarehouseUid = loadingJson.getString(WAREHOUSE_END_KEY)
+        val sender = getWarehouseFromUid(senderWarehouseUid)
+        val getter = getWarehouseFromUid(getterWarehouseUid)
         if (hasBarcodes) {
-            val barcodesJsonArray = loadingJson.getJSONArray(ITEMS_FRONT_KEY)
-            val barcodes = mutableListOf<LoadingBarcode>()
-            for (i in 0 until barcodesJsonArray.length()) {
-                val jsonObject = barcodesJsonArray.getJSONObject(i)
-                barcodes.add(
+            val barcodesFrontJson = loadingJson.getJSONArray(ITEMS_FRONT_KEY)
+            val date = loadingJson.getString(DATE_KEY)
+            val carUid = loadingJson.getString(CAR_KEY)
+            val car = getCarNumberFromUid(carUid)
+            val barcodesFront = mutableListOf<LoadingBarcode>()
+            for (i in 0 until barcodesFrontJson.length()) {
+                val jsonObject = barcodesFrontJson.getJSONObject(i)
+                val packageUid = jsonObject.getString(PACKAGE_KEY)
+                barcodesFront.add(
                     LoadingBarcode(
-                        barcode = jsonObject.getString(BARCODE_KEY)
+                        barcode = jsonObject.getString(Loading.BARCODE_KEY),
+                        weight = jsonObject.getDouble(WEIGHT_KEY),
+                        volume = jsonObject.getDouble(VOLUME_KEY),
+                        clientCode = jsonObject.getString(CLIENT_CODE_KEY),
+                        packageTypeUid = packageUid,
+                        packageType = AcceptanceRepository().getPackageNameFromUid(packageUid),
+                        acceptanceUid = jsonObject.getString(ACCEPTANCE_GUID_KEY),
+                        date = jsonObject.getString("ДатаПриема")
+                    )
+                )
+            }
+            val barcodesBackJson = loadingJson.getJSONArray(ITEMS_BACK_KEY)
+            val barcodesBack = mutableListOf<LoadingBarcode>()
+            for (i in 0 until barcodesBackJson.length()) {
+                val jsonObject = barcodesBackJson.getJSONObject(i)
+                val packageUid = jsonObject.getString(PACKAGE_KEY)
+                barcodesBack.add(
+                    LoadingBarcode(
+                        barcode = jsonObject.getString(Loading.BARCODE_KEY),
+                        weight = jsonObject.getDouble(WEIGHT_KEY),
+                        volume = jsonObject.getDouble(VOLUME_KEY),
+                        clientCode = jsonObject.getString(CLIENT_CODE_KEY),
+                        packageTypeUid = packageUid,
+                        packageType = AcceptanceRepository().getPackageNameFromUid(packageUid),
+                        acceptanceUid = jsonObject.getString(ACCEPTANCE_GUID_KEY),
+                        date = jsonObject.getString("ДатаПриема")
                     )
                 )
             }
@@ -261,22 +298,22 @@ class LoadingRepository {
                 guid = guid,
                 date = date,
                 car = car,
-                senderWarehouseUid = senderWarehouseUid,
-                senderWarehouse = senderWarehouse,
-                getterWarehouseUid = getterWarehouseUid,
-                getterWarehouse = getterWarehouse,
-                barcodesFront = barcodes
+                senderWarehouse = sender,
+                getterWarehouse = getter,
+                barcodesFront = barcodesFront,
+                barcodesBack = barcodesBack
             )
         } else {
+            val carUid = loadingJson.getString(CAR_NUMBER_KEY)
+            val car = getCarNumberFromUid(carUid)
+            val date = loadingJson.getString(DOCUMENT_DATE_KEY)
             return Loading(
                 number = number,
                 ref = ref,
                 guid = guid,
                 date = date,
-                senderWarehouseUid = senderWarehouseUid,
-                senderWarehouse = senderWarehouse,
-                getterWarehouseUid = getterWarehouseUid,
-                getterWarehouse = getterWarehouse,
+                senderWarehouse = sender,
+                getterWarehouse = getter,
                 car = car
             )
         }
@@ -287,6 +324,13 @@ class LoadingRepository {
             (it as LoadingModel.Car).ref == carUid
         } ?: return LoadingModel.Car()
         return (elem as LoadingModel.Car)
+    }
+
+    private fun getWarehouseFromUid(warehouseUid: String): LoadingModel.Warehouse {
+        val elem = Utils.warehouse.find {
+            (it as LoadingModel.Warehouse).ref == warehouseUid
+        } ?: return LoadingModel.Warehouse()
+        return (elem as LoadingModel.Warehouse)
     }
 
 

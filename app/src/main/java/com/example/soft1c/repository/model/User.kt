@@ -3,7 +3,7 @@ package com.example.soft1c.repository.model
 data class User(var username: String = "",
                 var password: String = "",
                 var warehouse: String = "",
-                var acceptanceAccess: Boolean = false,
+                var acceptanceAccess: Boolean = true,
                 var loadingAccess: Boolean = true,
                 var isAdmin: Boolean = false,
                 var weightAccess: Boolean = false,
