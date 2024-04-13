@@ -127,9 +127,6 @@ class AcceptanceListFragment :
                     toast(getString(R.string.text_no_rights))
                 }
             }
-            ivBack.setOnClickListener {
-                findNavController().navigate(R.id.action_acceptanceListFragment_to_mainFragment)
-            }
             etxtDocumentNumber.setOnKeyListener(::findOpenDocumentByNumber)
             etxtDocumentNumber.addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(
@@ -154,12 +151,13 @@ class AcceptanceListFragment :
                 }
 
             })
+            etxtDocumentNumber.requestFocus()
             chbAcceptance.isChecked = true
 
             chbVisibiliy.setOnClickListener {
                 showColumnZone = !showColumnZone
                 initRvList()
-                viewModel.getAcceptanceList()
+                showAcceptanceList(sortedList)
                 showColumnZone()
             }
             chbShowText.setOnClickListener {
@@ -341,7 +339,7 @@ class AcceptanceListFragment :
     private fun sortList(sortBy: Int, ascending: Boolean): List<Acceptance> {
         sortedList = sortedList.sortedWith(
             when (sortBy) {
-                Filter.CLIENT -> compareBy { it.client.toIntOrNull() ?: Int.MIN_VALUE }
+                Filter.CLIENT -> compareBy { it.client.code.toIntOrNull() ?: Int.MIN_VALUE }
                 Filter.ZONE -> compareBy { it.zone.toIntOrNull() ?: Int.MIN_VALUE }
                 Filter.DOCUMENT -> compareBy {
                     it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt()
@@ -363,7 +361,7 @@ class AcceptanceListFragment :
         if (acceptanceList != null && acceptanceList != emptyList<Acceptance>()) {
             with(Filter) {
                 if (client.isNotEmpty()) sortedList =
-                    sortedList.filter { it.client.trimStart('0') == client }
+                    sortedList.filter { it.client.code.trimStart('0') == client }
                 if (_package.isNotEmpty()) sortedList =
                     sortedList.filter { it._package.filter { !it.isDigit() } == _package }
                 if (zone.isNotEmpty()) sortedList = sortedList.filter { it.zone == zone }
@@ -373,7 +371,7 @@ class AcceptanceListFragment :
                 if (ascending.first != -1) {
                     sortedList = sortedList.sortedWith(
                         when (ascending.first) {
-                            CLIENT -> compareBy { it.client.trimStart('0').toInt() }
+                            CLIENT -> compareBy { it.client.code.trimStart('0').toInt() }
                             ZONE -> compareBy { it.zone.toIntOrNull() ?: Int.MIN_VALUE }
                             DOCUMENT -> compareBy {
                                 it.number.replace("[A-Z]".toRegex(), "").trimStart('0').toInt()

@@ -21,14 +21,14 @@ class BarcodeAdapter(val onRemoveBarcode: (LoadingBarcode) -> Unit) :
     inner class BarcodeViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val barcodeClient: TextView = view.findViewById(R.id.txt_code_client)
         private val barcodeDate: TextView = view.findViewById(R.id.txt_date)
-        private val barcodePackage: TextView = view.findViewById(R.id.txt_package)
+        private val barcodeSeatNumber: TextView = view.findViewById(R.id.txt_seat_number)
         private val actionButton: ImageButton = view.findViewById(R.id.action_button)
 
         fun bind(barcode: LoadingBarcode, position: Int) {
             barcodeClient.text = barcode.clientCode
             barcodeDate.text = inputDateFormat.parse(barcode.date)
                 ?.let { outputDateFormat.format(it) }
-            barcodePackage.text = barcode.packageType.filter { !it.isDigit() }
+            barcodeSeatNumber.text = barcode.seatNumber.toString()
             actionButton.setOnClickListener {
                 removeBarcode(position)
                 onRemoveBarcode(barcode)
@@ -85,6 +85,10 @@ class BarcodeAdapter(val onRemoveBarcode: (LoadingBarcode) -> Unit) :
     }
     fun getList(): List<LoadingBarcode>{
         return scannedBarcodes
+    }
+
+    fun find(barcode: String): LoadingBarcode?{
+        return scannedBarcodes.find{it.barcode == barcode}
     }
 
     //Очищает список сканированных штрих-кодов и обновляет представление RecyclerView.

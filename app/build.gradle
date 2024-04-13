@@ -11,10 +11,11 @@ android {
         applicationId "com.example.soft1c"
         minSdk 26
         targetSdk 32
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "2.2.5"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        archivesBaseName = "Soft-1C_($versionName)"
     }
 
     buildTypes {
@@ -34,6 +35,11 @@ android {
     buildFeatures{
         viewBinding true
     }
+
+    applicationVariants.configureEach { variant ->
+        variant.resValue "string", "versionName", variant.versionName
+    }
+
     namespace 'com.example.soft1c'
 }
 

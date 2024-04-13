@@ -29,11 +29,11 @@ object Utils {
     //Переменная для хранения списка машин
     var cars: List<LoadingModel> = listOf()
     var warehouse: List<LoadingModel> = listOf()
+    var container: List<LoadingModel> = listOf()
 
     var acceptanceCopyList: MutableList<Acceptance> = mutableListOf()
 
     var user = User()
-    var anyModel: AnyModel? = null
     var refreshList: Boolean = false
 
     var debugMode = false
@@ -71,7 +71,8 @@ object Utils {
         const val ZONE = 4
         const val CAR = 5
         const val WAREHOUSE = 6
-        const val EMPTY = 7
+        const val CONTAINER = 7
+        const val EMPTY = 0
     }
 
     object OperationType {

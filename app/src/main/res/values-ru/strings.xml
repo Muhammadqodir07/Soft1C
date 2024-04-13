@@ -114,4 +114,15 @@
     <string name="text_front">Перед</string>
     <string name="text_back">Зад</string>
     <string name="err_dublicate_barcode">Штрих-код уже добавлен</string>
+
+    <string-array name="car_parts">
+        <item>Перед</item>
+        <item>Зад</item>
+    </string-array>
+    <string name="text_container">Контейнер</string>
+    <string name="seat_number">№ места</string>
+    <string name="txt_error_passport">Неправильный паспорт</string>
+    <string name="text_track_number">Номер трека</string>
+    <string name="txt_is_blacklist">Клиент в черном списке</string>
+    <string name="txt_client_acceptance_blocked">Клиент временно заблокирован</string>
 </resources>

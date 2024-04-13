@@ -41,7 +41,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-class LoadingRepository {
+open class LoadingRepository {
     private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
 
     suspend fun getLoadingApi(number: String): Pair<Loading, List<LoadingEnableVisible>>? {
@@ -224,7 +224,7 @@ class LoadingRepository {
         }
     }
 
-    private fun getLoadingList(responseString: String): List<Loading> {
+    fun getLoadingList(responseString: String): List<Loading> {
         val loadingList = mutableListOf<Loading>()
         val loadingArray = JSONArray(responseString)
         for (index in 0 until loadingArray.length()) {
@@ -235,7 +235,7 @@ class LoadingRepository {
         return loadingList
     }
 
-    private fun getLoadingJson(responseString: String): Pair<Loading, List<LoadingEnableVisible>>? {
+    fun getLoadingJson(responseString: String): Pair<Loading, List<LoadingEnableVisible>>? {
         val jsonArray = JSONArray(responseString)
         val jsonObject = jsonArray.getJSONObject(0)
         val loading = getLoadingFromJsonObject(jsonObject, true)
@@ -245,7 +245,7 @@ class LoadingRepository {
     }
 
     private fun getLoadingFromJsonObject(loadingJson: JSONObject, hasBarcodes: Boolean): Loading {
-        val ref = loadingJson.getString(REF_KEY)
+        val ref = loadingJson.optString(REF_KEY, "")
         val guid = loadingJson.getString(GUID_KEY)
         val number = loadingJson.getString(NUMBER_KEY)
         val senderWarehouseUid = loadingJson.getString(WAREHOUSE_BEGIN_KEY)
@@ -319,14 +319,14 @@ class LoadingRepository {
         }
     }
 
-    private fun getCarNumberFromUid(carUid: String): LoadingModel.Car {
+    fun getCarNumberFromUid(carUid: String): LoadingModel.Car {
         val elem = Utils.cars.find {
             (it as LoadingModel.Car).ref == carUid
         } ?: return LoadingModel.Car()
         return (elem as LoadingModel.Car)
     }
 
-    private fun getWarehouseFromUid(warehouseUid: String): LoadingModel.Warehouse {
+    fun getWarehouseFromUid(warehouseUid: String): LoadingModel.Warehouse {
         val elem = Utils.warehouse.find {
             (it as LoadingModel.Warehouse).ref == warehouseUid
         } ?: return LoadingModel.Warehouse()

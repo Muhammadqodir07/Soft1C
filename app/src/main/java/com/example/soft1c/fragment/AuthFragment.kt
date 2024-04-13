@@ -97,6 +97,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                 toast(getString(R.string.text_no_rights))
                 return@observe
             }
+            binding.txtError.text = ""
             try {
                 if (user.acceptanceAccess) {
                     if (Utils.packages.isEmpty()) {
@@ -105,13 +106,17 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                         baseViewModel.downloadType(Utils.ObjectModelType.ADDRESS)
                     } else {
                         if (user.loadingAccess) {
-                            findNavController().navigate(R.id.action_authFragment_to_mainFragment)
+                            if (Utils.warehouse.isEmpty()) {
+                                baseViewModel.loadType(Utils.ObjectModelType.CAR)
+                            } else {
+                                findNavController().navigate(R.id.action_authFragment_to_mainFragment)
+                            }
                         } else
                             findNavController().navigate(R.id.action_authFragment_to_acceptanceFragment)
                     }
                 } else if (user.loadingAccess) {
                     if (Utils.cars.isEmpty()) {
-                        requiredTypes = 3
+                        requiredTypes = 2
                         showDialogLoading()
                         baseViewModel.loadType(Utils.ObjectModelType.CAR)
                     } else {
@@ -395,6 +400,14 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
         when (pairOf.first) {
             Utils.ObjectModelType.CAR -> {
                 Utils.cars = pairOf.second
+//                setTextDialogLoading(resources.getString(R.string.text_container))
+//                baseViewModel.loadType(Utils.ObjectModelType.CONTAINER)
+                setTextDialogLoading(resources.getString(R.string.text_warehouse))
+                baseViewModel.loadType(Utils.ObjectModelType.WAREHOUSE)
+            }
+
+            Utils.ObjectModelType.CONTAINER -> {
+                Utils.container = pairOf.second
                 setTextDialogLoading(resources.getString(R.string.text_warehouse))
                 baseViewModel.loadType(Utils.ObjectModelType.WAREHOUSE)
             }
@@ -407,11 +420,9 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                 }
                 closeDialogLoading()
                 if (user.acceptanceAccess)
-                    if (findNavController().currentDestination?.id == R.id.authFragment)
-                        findNavController().navigate(R.id.action_authFragment_to_mainFragment)
+                    findNavController().navigate(R.id.action_authFragment_to_mainFragment)
                 else
-                    if (findNavController().currentDestination?.id == R.id.authFragment)
-                        findNavController().navigate(R.id.action_authFragment_to_loadingFragment)
+                    findNavController().navigate(R.id.action_authFragment_to_loadingFragment)
             }
         }
     }

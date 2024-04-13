@@ -5,6 +5,9 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.KeyEvent
 import android.view.View
+import android.widget.CheckBox
+import android.widget.LinearLayout
+import android.widget.ScrollView
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -13,6 +16,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.soft1c.R
 import com.example.soft1c.adapter.LoadingAdapter
 import com.example.soft1c.databinding.FragmentLoadingListBinding
+import com.example.soft1c.reloading.adapter.ReloadingAdapter
+import com.example.soft1c.reloading.utils.getDisplayWidth
+import com.example.soft1c.reloading.viewmodel.ReloadingViewModel
 import com.example.soft1c.repository.model.ItemClicked
 import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.LoadingEnableVisible
@@ -20,10 +26,13 @@ import com.example.soft1c.utils.Utils
 import com.example.soft1c.viewmodel.LoadingViewModel
 import com.google.android.material.textfield.TextInputEditText
 
-class LoadingListFragment : BaseFragment<FragmentLoadingListBinding>(FragmentLoadingListBinding::inflate) {
+class LoadingListFragment :
+    BaseFragment<FragmentLoadingListBinding>(FragmentLoadingListBinding::inflate) {
 
     private lateinit var loadingAdapter: LoadingAdapter
+    private lateinit var reloadingAdapter: ReloadingAdapter
     private val viewModel: LoadingViewModel by viewModels()
+    private val reloadingViewModel: ReloadingViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,26 +45,65 @@ class LoadingListFragment : BaseFragment<FragmentLoadingListBinding>(FragmentLoa
         observeViewModels()
     }
 
-    private fun observeViewModels(){
+    private fun observeViewModels() {
         viewModel.toastLiveDat.observe(viewLifecycleOwner, ::toast)
         viewModel.loadingListLiveData.observe(viewLifecycleOwner, ::showLoadingList)
         viewModel.loadingLiveData.observe(viewLifecycleOwner, ::loadingByNumber)
+        reloadingViewModel.reloadingListLiveData.observe(viewLifecycleOwner, ::showReloadingList)
+        reloadingViewModel.reloadingLiveData.observe(viewLifecycleOwner, ::reloadingByNumber)
     }
 
-    private fun showLoadingList(list: List<Loading>){
-        if(LoadingAdapter.LOADING_GUID.isEmpty() && list.isNotEmpty()){
+    private fun showLoadingList(list: List<Loading>) {
+        if (LoadingAdapter.LOADING_GUID.isEmpty() && list.isNotEmpty()) {
             LoadingAdapter.LOADING_GUID = list[0].ref
         }
         showPbLoading(false)
         loadingAdapter.submitList(list)
+        //reloadingViewModel.getReloadingList()
     }
 
-    private fun initUI(){
+    private fun showReloadingList(list: List<Loading>) {
+        showPbLoading(false)
+        reloadingAdapter.submitList(list)
+    }
+
+    private fun initUI() {
         if (Utils.refreshList) viewModel.getLoadingList()
         showPbLoading(true)
         initRvList()
 
-        with(binding){
+        val chbListener = View.OnClickListener {
+            with(binding)
+            {
+                val isLoading = it.id == binding.chbLoading.id
+                val isReloading = it.id == binding.chbReloading.id
+
+                if ((it as CheckBox).isChecked) {
+                    chbLoading.isChecked = isLoading
+                    chbReloading.isChecked = isReloading
+                }
+                with(scrollRvLayout) {
+                    if (isLoading) {
+                        fullScroll(ScrollView.FOCUS_LEFT)
+                    } else if (isReloading) {
+                        fullScroll(ScrollView.FOCUS_RIGHT)
+                    }
+                }
+            }
+        }
+
+        with(binding) {
+            chbLoading.setOnClickListener(chbListener)
+            chbReloading.setOnClickListener(chbListener)
+            for (i in 0 until linearScrollChild.childCount) {
+                val childView = linearScrollChild.getChildAt(i)
+                val layoutParams = LinearLayout.LayoutParams(
+                    getDisplayWidth(requireContext()), // Width size here
+                    LinearLayout.LayoutParams.MATCH_PARENT // Height size here
+                )
+                childView.layoutParams = layoutParams
+            }
+
             ivAdd.setOnClickListener {
                 findNavController().navigate(R.id.action_loadingListFragment_to_loadingFragment)
             }
@@ -77,7 +125,10 @@ class LoadingListFragment : BaseFragment<FragmentLoadingListBinding>(FragmentLoa
                     if (text.length == 9) {
                         // Perform your desired operations here
                         showDialogLoading()
-                        viewModel.getLoading(text)
+                        if (chbLoading.isChecked)
+                            viewModel.getLoading(text)
+                        else
+                            reloadingViewModel.getReloading(text)
                     }
                 }
             })
@@ -89,16 +140,19 @@ class LoadingListFragment : BaseFragment<FragmentLoadingListBinding>(FragmentLoa
     }
 
     private fun findOpenDocumentByNumber(eview: View, key: Int, event: KeyEvent): Boolean {
-        if(key == 66 && event.action == KeyEvent.ACTION_UP){
+        if (key == 66 && event.action == KeyEvent.ACTION_UP) {
             val thisView = (eview as TextInputEditText)
-            if(thisView.text!!.isEmpty()){
+            if (thisView.text!!.isEmpty()) {
                 thisView.error = resources.getString(R.string.text_field_is_empyt)
                 thisView.requestFocus()
                 return false
             }
             thisView.error = null
             showDialogLoading()
-            viewModel.getLoading(thisView.text.toString())
+            if (binding.chbLoading.isChecked)
+                viewModel.getLoading(thisView.text.toString())
+            else
+                reloadingViewModel.getReloading("bfea5de4-b0f0-11ee-911c-000c29ed8257")
             return true
         }
         return false
@@ -106,10 +160,23 @@ class LoadingListFragment : BaseFragment<FragmentLoadingListBinding>(FragmentLoa
 
     private fun initRvList() {
         loadingAdapter = LoadingAdapter(::onItemClicked)
-        with(binding.rvLoadingList){
+        reloadingAdapter = ReloadingAdapter(::onItemClicked)
+        with(binding.rvLoadingList) {
             adapter = loadingAdapter
             setHasFixedSize(true)
-            layoutManager= LinearLayoutManager(requireContext())
+            layoutManager = LinearLayoutManager(requireContext())
+            addItemDecoration(
+                DividerItemDecoration(
+                    requireContext(),
+                    DividerItemDecoration.VERTICAL
+                )
+            )
+        }
+
+        with(binding.rvReloadingList){
+            adapter = reloadingAdapter
+            setHasFixedSize(true)
+            layoutManager = LinearLayoutManager(requireContext())
             addItemDecoration(
                 DividerItemDecoration(
                     requireContext(),
@@ -120,27 +187,41 @@ class LoadingListFragment : BaseFragment<FragmentLoadingListBinding>(FragmentLoa
     }
 
     private fun onItemClicked(itemClicked: ItemClicked, loading: Loading) {
-        when(itemClicked) {
+        when (itemClicked) {
             ItemClicked.ITEM -> {
                 val args = Bundle().apply {
                     putString(LoadingFragment.KEY_LOADING_NUMBER, loading.guid)
                 }
                 openLoadingDetail(args)
             }
+
             else -> return
         }
     }
 
     private fun openLoadingDetail(bundle: Bundle) {
-        findNavController().navigate(R.id.action_loadingListFragment_to_loadingFragment, bundle)
+        if (binding.chbLoading.isChecked)
+            findNavController().navigate(R.id.action_loadingListFragment_to_loadingFragment, bundle)
+        else
+            findNavController().navigate(R.id.action_loadingListFragment_to_reloadingFragment, bundle)
     }
 
-    private fun loadingByNumber(pair: Pair<Loading, List<LoadingEnableVisible>>){
+    private fun loadingByNumber(pair: Pair<Loading, List<LoadingEnableVisible>>) {
         val loading = pair.first
         closeDialogLoading()
         binding.etxtDocumentNumber.text?.clear()
-        if(loading.ref.isNotEmpty())
+        if (loading.ref.isNotEmpty())
             onItemClicked(ItemClicked.ITEM, loading)
+        else
+            toast(resources.getString(R.string.text_element_not_found))
+    }
+
+    private fun reloadingByNumber(pair: Pair<Loading, List<LoadingEnableVisible>>) {
+        val reloading = pair.first
+        closeDialogLoading()
+        binding.etxtDocumentNumber.text?.clear()
+        if (reloading.ref.isNotEmpty())
+            onItemClicked(ItemClicked.ITEM, reloading)
         else
             toast(resources.getString(R.string.text_element_not_found))
     }

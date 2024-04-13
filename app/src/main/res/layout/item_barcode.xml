@@ -30,7 +30,7 @@
         android:textSize="14sp"/>
 
     <TextView
-        android:id="@+id/txt_package"
+        android:id="@+id/txt_seat_number"
         style="@style/TextNumber"
         android:layout_width="0dp"
         android:layout_height="match_parent"

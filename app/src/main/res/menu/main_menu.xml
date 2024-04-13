@@ -20,7 +20,7 @@
         android:checkable="true"
         android:visible="false"/>
     <item
-        android:title="2.0"
+        android:title="@string/versionName"
         android:enabled="false"/>
 
 </menu>

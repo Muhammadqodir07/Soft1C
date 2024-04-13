@@ -148,6 +148,13 @@ class BaseRepository(private val lang: String) {
                         )
                     )
 
+                    Utils.ObjectModelType.CONTAINER -> continuation.resume(
+                        Pair(
+                            type,
+                            getLoadModelListJson(LoadingModel.Container.DEFAULT_DATA, type)
+                        )
+                    )
+
                     else -> continuation.resume(
                         Pair(
                             type,
@@ -159,6 +166,7 @@ class BaseRepository(private val lang: String) {
                 when (type) {
                     Utils.ObjectModelType.CAR -> Network.loadingApi.carsList()
                     Utils.ObjectModelType.WAREHOUSE -> Network.loadingApi.warehouseList()
+                    Utils.ObjectModelType.CONTAINER -> Network.loadingApi.containerList()
                     else -> Network.loadingApi.carsList()
                 }.enqueue(object : Callback<ResponseBody> {
                     //При получении ответа от сервера.
@@ -188,7 +196,6 @@ class BaseRepository(private val lang: String) {
                     }
                 })
             }
-
         }
     }
 
@@ -209,6 +216,12 @@ class BaseRepository(private val lang: String) {
                     val name = objectJson.getString(LoadingModel.Warehouse.NAME_KEY)
                     val prefix = objectJson.optString(LoadingModel.Warehouse.PREFIX_KEY)
                     LoadingModel.Warehouse(ref, name, prefix)
+                }
+
+                Utils.ObjectModelType.CONTAINER -> {
+                    val ref = objectJson.getString(LoadingModel.Container.REF_KEY)
+                    val name = objectJson.getString(LoadingModel.Container.NAME_KEY)
+                    LoadingModel.Container(ref, name)
                 }
 
                 else -> null
@@ -236,7 +249,7 @@ class BaseRepository(private val lang: String) {
                 acceptanceCargo = true
             )
         } else {
-            val loadingAccess = jsonObject.optBoolean(LOADING_RIGHT, true)
+            val loadingAccess = jsonObject.optBoolean(LOADING_RIGHT, false)
             val acceptanceAdd = jsonObject.optBoolean(ACCEPTANCE_ADD, false)
             val weightAdd = jsonObject.optBoolean(WEIGHT_ADD, false)
             val sizeAdd = jsonObject.optBoolean(SIZE_ADD, false)

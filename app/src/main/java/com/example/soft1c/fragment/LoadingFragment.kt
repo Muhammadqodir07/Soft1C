@@ -14,6 +14,8 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.ScrollView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
@@ -21,6 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.soft1c.R
 import com.example.soft1c.adapter.BarcodeAdapter
 import com.example.soft1c.databinding.FragmentLoadingBinding
+import com.example.soft1c.reloading.utils.getDisplayWidth
 import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.LoadingBarcode
 import com.example.soft1c.repository.model.LoadingEnableVisible
@@ -30,6 +33,7 @@ import com.example.soft1c.utils.Utils.cars
 import com.example.soft1c.utils.Utils.user
 import com.example.soft1c.utils.Utils.warehouse
 import com.example.soft1c.viewmodel.LoadingViewModel
+import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -164,13 +168,28 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                 adapter = barcodeBackAdapter
             }
 
-            radioFront.setOnClickListener {
-                constraintRv.transitionToStart()
+            for (i in 0 until linearScrollChild.childCount) {
+                val childView = linearScrollChild.getChildAt(i)
+                val layoutParams = LinearLayout.LayoutParams(
+                    getDisplayWidth(requireContext()), // Width size here
+                    LinearLayout.LayoutParams.MATCH_PARENT // Height size here
+                )
+                childView.layoutParams = layoutParams
             }
+            tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+                override fun onTabSelected(tab: TabLayout.Tab) {
+                    with(binding.scrollRvLayout) {
+                        when (tab.position) {
+                            0 -> fullScroll(ScrollView.FOCUS_LEFT)
+                            1 -> fullScroll(ScrollView.FOCUS_RIGHT)
+                            else -> {}
+                        }
+                    }
+                }
 
-            radioBack.setOnClickListener {
-                constraintRv.transitionToEnd()
-            }
+                override fun onTabUnselected(tab: TabLayout.Tab) {}
+                override fun onTabReselected(tab: TabLayout.Tab) {}
+            })
 
             etxtRoute.setOnClickListener {
                 etxtRoute.error = null
@@ -300,34 +319,28 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
 
     private fun fillBarcodeList(barcodes: List<LoadingBarcode>?) {
         closeDialogLoading()
-        if (barcodes != null) {
-            val targetList = if (binding.radioAcceptance.isChecked) {
-                if (binding.radioFront.isChecked) barcodeFrontList else barcodeBackList
-            } else null
-
-            barcodes.forEach { barcode ->
-                if (targetList != null && !targetList.contains(barcode)) {
-                    targetList.add(barcode)
-                    if (targetList == barcodeFrontList) {
+        barcodes?.forEach { barcode ->
+            if (binding.radioAcceptance.isChecked && !(barcodeFrontList+barcodeBackList).contains(barcode)) {
+                if (binding.tabLayout.selectedTabPosition == 0) {
+                    barcodeFrontAdapter.addBarcodeData(barcode)
+                    barcodeFrontList.add(barcode)
+                } else {
+                    barcodeBackAdapter.addBarcodeData(barcode)
+                    barcodeBackList.add(barcode)
+                }
+                weight += barcode.weight
+                volume += barcode.volume
+            } else if (!binding.radioAcceptance.isChecked && barcode.barcode == scannedData) {
+                if (!(barcodeFrontList+barcodeBackList).contains(barcode)) {
+                    if (binding.tabLayout.selectedTabPosition == 0) {
                         barcodeFrontAdapter.addBarcodeData(barcode)
+                        barcodeFrontList.add(barcode)
                     } else {
                         barcodeBackAdapter.addBarcodeData(barcode)
+                        barcodeBackList.add(barcode)
                     }
                     weight += barcode.weight
                     volume += barcode.volume
-                } else if (!binding.radioAcceptance.isChecked && barcode.barcode == scannedData) {
-                    val selectedList =
-                        if (binding.radioFront.isChecked) barcodeFrontList else barcodeBackList
-                    if (!selectedList.contains(barcode)) {
-                        selectedList.add(barcode)
-                        if (selectedList == barcodeFrontList) {
-                            barcodeFrontAdapter.addBarcodeData(barcode)
-                        } else {
-                            barcodeBackAdapter.addBarcodeData(barcode)
-                        }
-                        weight += barcode.weight
-                        volume += barcode.volume
-                    }
                 }
             }
         }
@@ -442,6 +455,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
             when (it) {
                 is LoadingModel.Car -> it.number == textElement
                 is LoadingModel.Warehouse -> it.name == textElement
+                else -> false
             }
         }
 
@@ -540,23 +554,26 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
             if (::scannedData.isInitialized && scannedData.length >= 17) {
                 val last17Chars = scannedData.takeLast(17)
 
+                if (Utils.debugMode)
+                    scannedData = "90000153429210421"
+
                 if (chbDelete.isChecked) {
                     if (radioAcceptance.isChecked) {
                         val adapter =
-                            if (radioFront.isChecked) barcodeFrontAdapter else barcodeBackAdapter
+                            if (tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
                         val documentUid =
-                            adapter.getList().find { it.barcode == scannedData }?.acceptanceUid
+                            adapter.find(scannedData)?.acceptanceUid
                         documentUid?.let { adapter.removeBarcodeByUid(it) }
                     } else {
                         val adapter =
-                            if (radioFront.isChecked) barcodeFrontAdapter else barcodeBackAdapter
+                            if (tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
                         adapter.removeBarcodeByBarcode(scannedData)
                     }
 
                 } else {
                     val adapter =
-                        if (radioFront.isChecked) barcodeFrontAdapter else barcodeBackAdapter
-                    if (adapter.getList().find { it.barcode == scannedData } == null) {
+                        if (binding.tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
+                    if (adapter.getList().find { it.barcode == scannedData } == null || radioAcceptance.isChecked) {
                         viewModel.getBarcodeList(last17Chars, user.warehouse)
                         showDialogLoading()
                     }else{
@@ -585,7 +602,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     private fun onRemoveBarcodeClick(barcode: LoadingBarcode) {
         weight -= barcode.weight
         volume -= barcode.volume
-        if (binding.radioFront.isChecked) {
+        if (binding.tabLayout.selectedTabPosition == 0) {
             barcodeFrontList.remove(barcode)
         } else {
             barcodeBackList.remove(barcode)

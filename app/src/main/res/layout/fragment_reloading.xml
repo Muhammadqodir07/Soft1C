@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragment.LoadingFragment">
+    tools:context=".reloading.fragment.ReloadingFragment">
 
     <ProgressBar
         android:id="@+id/pb_loading"
@@ -34,89 +34,207 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/elayout_txt_number"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/txt_number"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:backgroundTint="@color/white"
-                    android:enabled="false"
-                    android:hint="@string/text_number"
-
-                    android:textSize="@dimen/text_input_size_16" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/elayout_txt_date"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/txt_date"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:backgroundTint="@color/white"
-                    android:enabled="false"
-                    android:hint="@string/text_date"
-                    android:textSize="@dimen/text_input_size_16" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/elayout_route"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColorHint="@color/black">
+                android:orientation="horizontal">
 
-                <EditText
-                    android:id="@+id/etxt_route"
-                    style="@style/TextInputLoading"
-                    android:layout_width="match_parent"
-                    android:focusable="false"
-                    android:hint="@string/route"
-                    android:inputType="none" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/elayout_tv_auto"
-                style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColorHint="@color/black">
-
-                <AutoCompleteTextView
-                    android:id="@+id/tv_auto"
-                    style="@style/TextInputLoading"
-                    android:layout_width="match_parent"
-                    android:hint="@string/text_number_of_auto"
-                    android:inputType="textAutoCorrect" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/elayout_recipient"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:enabled="false">
-
-                <EditText
-                    android:id="@+id/tv_recipient"
-                    android:layout_width="match_parent"
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:backgroundTint="@color/white"
-                    android:focusable="false"
-                    android:hint="@string/text_recipient"
-                    android:inputType="none"
-                    android:textSize="@dimen/text_input_size_16" />
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-            </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/elayout_txt_number_reload"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/txt_number_reload"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:backgroundTint="@color/white"
+                            android:enabled="false"
+                            android:hint="@string/text_number"
+
+                            android:textSize="@dimen/text_input_size_16" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/elayout_route_reload"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColorHint="@color/black">
+
+                        <EditText
+                            android:id="@+id/etxt_route_reload"
+                            style="@style/TextInputLoading"
+                            android:layout_width="match_parent"
+                            android:focusable="false"
+                            android:hint="@string/route"
+                            android:inputType="none" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/elayout_txt_container_reload"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColorHint="@color/black"
+                        android:visibility="gone">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/etxt_container_reload"
+                            style="@style/TextInputLoading"
+                            android:layout_width="match_parent"
+                            android:hint="Контейнер"
+                            android:inputType="textAutoCorrect" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/elayout_tv_auto_reload"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColorHint="@color/black">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/tv_auto_reload"
+                            style="@style/TextInputLoading"
+                            android:layout_width="match_parent"
+                            android:hint="@string/text_number_of_auto"
+                            android:inputType="textAutoCorrect" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+
+                <!--@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-->
+                <!--@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-->
+                <!--@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-->
+                <!--@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-->
+
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/elayout_txt_number_load"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/txt_number_load"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:backgroundTint="@color/white"
+                            android:enabled="false"
+                            android:hint="@string/text_number"
+
+                            android:textSize="@dimen/text_input_size_16" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/elayout_route_load"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColorHint="@color/black">
+
+                        <EditText
+                            android:id="@+id/etxt_route_load"
+                            style="@style/TextInputLoading"
+                            android:layout_width="match_parent"
+                            android:focusable="false"
+                            android:hint="@string/route"
+                            android:inputType="none" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/elayout_txt_container_load"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColorHint="@color/black"
+                        android:visibility="gone">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/etxt_container_load"
+                            style="@style/TextInputLoading"
+                            android:layout_width="match_parent"
+                            android:hint="Контейнер"
+                            android:inputType="textAutoCorrect" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/elayout_tv_auto_load"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColorHint="@color/black">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/tv_auto_load"
+                            style="@style/TextInputLoading"
+                            android:layout_width="match_parent"
+                            android:hint="@string/text_number_of_auto"
+                            android:inputType="textAutoCorrect" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/linear_front"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="6dp">
+
+                <TextView
+                    style="@style/TextNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="3"
+                    android:text="Front"
+                    android:textSize="20sp"/>
+
+                <Spinner
+                    android:id="@+id/spinnerFront"
+                    style="@style/Heading"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="7"
+                    android:spinnerMode="dropdown"
+                    android:entries="@array/car_parts"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/linear_back"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="6dp">
+
+                <TextView
+                    style="@style/TextNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="3"
+                    android:text="Back"
+                    android:textSize="20sp"/>
+
+                <Spinner
+                    android:id="@+id/spinnerBack"
+                    style="@style/Heading"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="7"
+                    android:entries="@array/car_parts"/>
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -216,12 +334,12 @@
             <com.google.android.material.tabs.TabItem
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/text_front" />
+                android:text="Keep" />
 
             <com.google.android.material.tabs.TabItem
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/text_back" />
+                android:text="Add" />
 
         </com.google.android.material.tabs.TabLayout>
 
@@ -255,14 +373,14 @@
                 android:text="@string/text_date" />
 
             <TextView
-                android:id="@+id/txt_package"
+                android:id="@+id/txt_seat_number"
                 style="@style/TextNumber"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center|start"
                 android:paddingStart="5dp"
-                android:text="@string/seat_number" />
+                android:text="@string/text_number_of_seats" />
 
             <TextView
                 android:id="@+id/txt_empty"
@@ -291,16 +409,16 @@
 
                 <!-- RecyclerViews or other content -->
                 <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_barcode_front"
+                    android:id="@+id/rv_barcode_keep"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@color/frontColor" />
+                    android:background="#AAF7C1C1" />
 
                 <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_barcode_back"
+                    android:id="@+id/rv_barcode_add"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@color/backColor" />
+                    android:background="#AAC7F7C1" />
             </LinearLayout>
         </com.example.soft1c.reloading.utils.view.RecyclerViewPager>
 
@@ -309,10 +427,10 @@
             android:id="@+id/linear_limits"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingVertical="4dp"
-            android:orientation="horizontal"
-            android:weightSum="16"
             android:background="@color/white"
+            android:orientation="horizontal"
+            android:paddingVertical="4dp"
+            android:weightSum="16"
             app:layout_constraintBottom_toTopOf="@id/linear_btn_group"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
@@ -352,9 +470,9 @@
             android:id="@+id/linear_btn_group"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp"
+            android:paddingBottom="4dp"
             android:background="@color/white"
+            android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent">
 

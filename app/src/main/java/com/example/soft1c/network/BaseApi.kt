@@ -58,7 +58,6 @@ interface BaseApi {
 }
 
 interface LoadingApi{
-    // Метод HTTP GET для получения списка машин из сервера. Метод вернет объект Call с телом ответа ResponseBody
     @GET("autorization")
     fun loadAuth(): Call<ResponseBody>
 
@@ -68,6 +67,9 @@ interface LoadingApi{
     @GET("Sklads")
     fun warehouseList(): Call<ResponseBody>
 
+    @GET("container")
+    fun containerList(): Call<ResponseBody>
+
     @POST("pogruzka")
     fun createUpdateLoading(@Body requestBody: RequestBody): Call<ResponseBody>
 
@@ -75,8 +77,14 @@ interface LoadingApi{
     fun loadingList(
     ): Call<ResponseBody>
 
+    @GET("Razgruzka")
+    fun reloadingList(): Call<ResponseBody>
+
     @GET("pogruzka")
     fun loading(@Query("GUIDНаСервере") number: String): Call<ResponseBody>
+
+    @GET("Razgruzka")
+    fun reloading(@Query("GUIDНаСервере") number: String): Call<ResponseBody>
 
     @GET("Barcodes")
     fun barcodeList(

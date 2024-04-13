@@ -19,4 +19,6 @@
     <color name="selectedWeight">#FF669900</color>
     <color name="capacity">#FFFF4444</color>
     <color name="selectedCapacity">#FFCC0000</color>
+    <color name="frontColor">#C1FFF3BB</color>
+    <color name="backColor">#64BFB792</color>
 </resources>

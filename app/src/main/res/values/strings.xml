@@ -29,6 +29,7 @@
     <string name="text_zone">Zone</string>
     <string name="text_number_of_auto">Number of auto</string>
     <string name="text_number">Number</string>
+    <string name="text_track_number">Track number</string>
     <string name="text_exclamation">!!!</string>
     <string name="text_currency">$</string>
     <string name="text_arrow">↑↑</string>
@@ -122,5 +123,17 @@
     <string name="text_back">Back</string>
     <string name="text_volume">Volume</string>
     <string name="err_dublicate_barcode">Barcode is already added</string>
+
+    <string-array name="car_parts">
+         <item>Front</item>
+         <item>Back</item>
+    </string-array>
+
+    <string name="text_container">Container</string>
+    <string name="seat_number">Seat</string>
+
+    <string name="txt_error_passport">Wrong passport</string>
+    <string name="txt_is_blacklist">Client is in blacklist</string>
+    <string name="txt_client_acceptance_blocked">Client temporarily blocked</string>
 
 </resources>

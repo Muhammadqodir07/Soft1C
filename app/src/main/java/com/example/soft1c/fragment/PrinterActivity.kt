@@ -1,7 +1,11 @@
 package com.example.soft1c.fragment
 
 import android.bluetooth.BluetoothAdapter
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
 import android.os.Looper
@@ -24,7 +28,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 
-class PrinterActivity : AppCompatActivity(){
+class PrinterActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityPrinterBinding
     private lateinit var acceptance: Acceptance
@@ -43,14 +47,15 @@ class PrinterActivity : AppCompatActivity(){
         val intent = intent
         date = convertDate(intent.getStringExtra("date"))
         with(binding) {
+            etxtPageCount.setText(intent.getStringExtra("seatsNumber") ?: "1")
             txtBarcodeNumber.text =
                 (getString(R.string.txt_number) + ": " + acceptance.number)
                     ?: "No data available"
             txtCurrentDate.text =
-                (getString(R.string.text_date) + ": " +  date)
+                (getString(R.string.text_date) + ": " + date)
                     ?: "No data available"
             txtClientNumber.text =
-                (getString(R.string.text_code) + ": " + acceptance.client)
+                (getString(R.string.text_code) + ": " + acceptance.client.code)
                     ?: "No data available"
             txtBarcodeSeats.text =
                 (getString(R.string.text_seats) + ": " + acceptance.countSeat.toString())
@@ -100,7 +105,8 @@ class PrinterActivity : AppCompatActivity(){
         try {
             val matrix = writer.encode(barcodeInput, BarcodeFormat.CODE_128, 4000, 1000)
 
-            barcodeBitmap = Bitmap.createBitmap(matrix.width, matrix.height + 400, Bitmap.Config.ARGB_8888)
+            barcodeBitmap =
+                Bitmap.createBitmap(matrix.width, matrix.height + 400, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(barcodeBitmap)
 
             val encoder = BarcodeEncoder()
@@ -125,6 +131,7 @@ class PrinterActivity : AppCompatActivity(){
             e.printStackTrace()
         }
     }
+
     private fun closeActivity() {
         onBackPressed()
     }
@@ -148,7 +155,7 @@ class PrinterActivity : AppCompatActivity(){
                 TscDll.sendcommand("BARCODE 561,170,\"128M\",60,0,180,3,6,\"${barcodeInput}\"\r\n")
                 TscDll.sendcommand("CODEPAGE 1251\r\n")
                 TscDll.sendcommand("TEXT 563,105,\"ROMAN.TTF\",180,1,28,\"${acceptance.number}\"\r\n")
-                TscDll.sendcommand("TEXT 564,368,\"0\",180,74,53,\"${acceptance.client}\"\r\n")
+                TscDll.sendcommand("TEXT 564,368,\"0\",180,74,53,\"${acceptance.client.code}\"\r\n")
                 TscDll.sendcommand("TEXT 129,160,\"ROMAN.TTF\",180,1,12,\"SEATS:\"\r\n")
                 TscDll.sendcommand("TEXT 130,111,\"0\",180,20,20,\"${acceptance.countSeat}\"\r\n")
                 TscDll.sendcommand("TEXT 508,232,\"0\",180,12,13,\"DATE:\"\r\n")
@@ -157,11 +164,12 @@ class PrinterActivity : AppCompatActivity(){
                 Thread.sleep(500)
                 TscDll.closeport()
                 Looper.myLooper()?.quit()
-                acceptance.isPrinted = true
                 acceptance.type = 2
                 createUpdateAcceptance()
             } catch (e: Exception) {
-                binding.testTV.text = e.message
+                runOnUiThread {
+                    binding.testTV.text = e.message
+                }
                 e.printStackTrace()
             }
         }.start()
@@ -183,15 +191,16 @@ class PrinterActivity : AppCompatActivity(){
 //^XZ
 //"""
 
-    private var filePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        if (uri != null) {
-            val inputStream = contentResolver.openInputStream(uri)
-            val text = inputStream?.bufferedReader()?.readText()
-            if (text != null) {
-                binding.testTV.setText(text)
+    private var filePickerLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            if (uri != null) {
+                val inputStream = contentResolver.openInputStream(uri)
+                val text = inputStream?.bufferedReader()?.readText()
+                if (text != null) {
+                    binding.testTV.setText(text)
+                }
             }
         }
-    }
 
     fun convertDate(date: String?): String {
         if (date != null) {
@@ -201,7 +210,7 @@ class PrinterActivity : AppCompatActivity(){
 
             val formattedDateTime = dateTime.format(outputFormatter)
             return formattedDateTime
-        }else{
+        } else {
             return ""
         }
     }

@@ -90,7 +90,7 @@ class AcceptanceSizeFragment :
         acceptance = triple.first
         with(binding) {
             txtDocNumber.text = acceptance.number
-            txtCode.text = acceptance.client
+            txtCode.text = acceptance.client.code
             txtSeatCount.text = acceptance.countSeat.toString()
             txtPackage.text = acceptance._package.filter { !it.isDigit() }
         }
@@ -306,6 +306,8 @@ class AcceptanceSizeFragment :
                         else saveSize = true
                         lastChangedItemIndex = indexList
                     }
+                    if (listData.lastIndex != lastChangedItemIndex)
+                        lastChangedItemIndex++
                 }
             }
             etxtChangeColumnsNumber.setText("1")
@@ -318,13 +320,8 @@ class AcceptanceSizeFragment :
         sizeAdapter.submitList(listData)
         sizeAdapter.notifyDataSetChanged()
         binding.rvMain.scrollToPosition(lastChangedItemIndex)
-        if (lastChangedItemIndex + 1 < sizeAdapter.currentList.size) {
-            sizeAdapter.focusNumber = sizeAdapter.currentList[lastChangedItemIndex + 1].seatNumber
-            fillIndexSeatNumber(lastChangedItemIndex + 1)
-        } else {
-            sizeAdapter.focusNumber = sizeAdapter.currentList[lastChangedItemIndex].seatNumber
-            fillIndexSeatNumber(lastChangedItemIndex)
-        }
+        sizeAdapter.focusNumber = sizeAdapter.currentList[lastChangedItemIndex].seatNumber
+        fillIndexSeatNumber(lastChangedItemIndex)
         acceptanceSize.dataArray = listData
         if (!saveSize) {
             binding.etxtLength.requestFocus()

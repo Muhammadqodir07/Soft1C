@@ -1,6 +1,7 @@
 package com.example.soft1c.repository.model
 
 sealed class LoadingModel{
+
     data class Car(
         var ref: String = "", // Ссылка
         var number: String = "" //Номер
@@ -34,6 +35,33 @@ sealed class LoadingModel{
             const val REF_KEY = "GUID"
             const val NAME_KEY = "Наименование"
             const val PREFIX_KEY = "ПрефиксДляНумерации"
+
+            const val DEFAULT_DATA = """[
+{
+"GUID": "a86db662-a170-11ea-bcca-b82a72dc4ef3",
+"Наименование": "Alashankou",
+"ПрефиксДляНумерации": "ALK"
+},
+{
+"GUID": "2b1bfb4c-7ddf-11ec-80d5-000c29508723",
+"Наименование": "Andijan Dustlik",
+"ПрефиксДляНумерации": "AD"
+},
+{
+"GUID": "a3c0a10d-cb65-11eb-80dd-b88303f1228d",
+"Наименование": "Bahtu",
+"ПрефиксДляНумерации": "BHT"
+}]"""
+        }
+    }
+
+    data class Container(
+        var ref: String = "",
+        var name: String = ""
+    ): LoadingModel(){
+        companion object{
+            const val REF_KEY = "GUID"
+            const val NAME_KEY = "Наименование"
 
             const val DEFAULT_DATA = """[
 {

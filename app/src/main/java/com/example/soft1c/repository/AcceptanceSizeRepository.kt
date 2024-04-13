@@ -2,6 +2,7 @@ package com.example.soft1c.repository
 
 import com.example.soft1c.network.Network
 import com.example.soft1c.repository.model.SizeAcceptance
+import com.example.soft1c.utils.Utils
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
@@ -10,6 +11,7 @@ import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.util.Collections.emptyList
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -19,25 +21,33 @@ class AcceptanceSizeRepository {
     //Получение данных размера
     suspend fun getSizeDataApi(acceptanceGuid: String): Pair<SizeAcceptance, String> {
         return suspendCoroutine { continuation ->
-            Network.api.getAcceptanceSizeData(acceptanceGuid).enqueue(object :
-                Callback<ResponseBody> {
-                override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>,
-                ) {
-                    if (response.isSuccessful) {
-                        val responseBody = response.body()?.string() ?: ""
-                        continuation.resume(Pair(getSizeDataFromJson(responseBody), ""))
-                    } else {
-                        continuation.resume(Pair(SizeAcceptance(dataArray = emptyList()), response.errorBody()?.string() ?: response.message()))
+            if (Utils.debugMode) {
+                continuation.resume(Pair(getSizeDataFromJson(SizeAcceptance.DEFAULT_DATA), ""))
+            } else {
+                Network.api.getAcceptanceSizeData(acceptanceGuid).enqueue(object :
+                    Callback<ResponseBody> {
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>,
+                    ) {
+                        if (response.isSuccessful) {
+                            val responseBody = response.body()?.string() ?: ""
+                            continuation.resume(Pair(getSizeDataFromJson(responseBody), ""))
+                        } else {
+                            continuation.resume(
+                                Pair(
+                                    SizeAcceptance(dataArray = emptyList()),
+                                    response.errorBody()?.string() ?: response.message()
+                                )
+                            )
+                        }
                     }
-                }
 
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    continuation.resumeWithException(t)
-                }
-
-            })
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        continuation.resumeWithException(t)
+                    }
+                })
+            }
         }
     }
 
@@ -82,7 +92,11 @@ class AcceptanceSizeRepository {
                         }
                         continuation.resume(Pair(error, true))
                     } else {
-                        continuation.resume(Pair(response.errorBody()?.string() ?: response.message(), false))
+                        continuation.resume(
+                            Pair(
+                                response.errorBody()?.string() ?: response.message(), false
+                            )
+                        )
                     }
                 }
 
@@ -101,12 +115,14 @@ class AcceptanceSizeRepository {
         val priceM = jsonObject.getDouble(PRICE_M_KEY)
         val priceWeight = jsonObject.getDouble(PRICE_WEIGHT_KEY)
         val dataArray = getSizeDataArray(jsonObject.getJSONArray(ARRAY_DATA_KEY))
-        return SizeAcceptance(recordAllowed = recordAllowed,
+        return SizeAcceptance(
+            recordAllowed = recordAllowed,
             sum = sum,
             allWeight = allWeight,
             priceM3 = priceM,
             priceWeight = priceWeight,
-            dataArray = dataArray)
+            dataArray = dataArray
+        )
     }
 
     private fun getSizeDataArray(jsonArray: JSONArray): List<SizeAcceptance.SizeData> {
@@ -119,11 +135,14 @@ class AcceptanceSizeRepository {
             val height = jsonItemObject.getInt(HEIGHT_KEY)
             val weight = jsonItemObject.getDouble(WEIGHT_KEY)
             dataList.add(
-                SizeAcceptance.SizeData(seatNumber = seatNumber,
-                length = length,
-                width = width,
-                height = height,
-                weight = weight))
+                SizeAcceptance.SizeData(
+                    seatNumber = seatNumber,
+                    length = length,
+                    width = width,
+                    height = height,
+                    weight = weight
+                )
+            )
         }
         return dataList
     }

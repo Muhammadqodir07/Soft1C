@@ -224,7 +224,7 @@ class AcceptanceWeightFragment :
     private fun showAcceptance() {
         with(binding) {
             setCheckEmptyText(txtZone, acceptance.zone)
-            etxtCodeClient.setText(acceptance.client)
+            etxtCodeClient.setText(acceptance.client.code)
             etxtSeatsNumber.setText(acceptance.countSeat.toString())
             etxtDocumentNumber.setText(acceptance.number)
             setCheckEmptyText(txtPackage, acceptance._package)
