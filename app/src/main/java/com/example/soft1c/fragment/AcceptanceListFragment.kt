@@ -138,12 +138,17 @@ class AcceptanceListFragment :
                 }
 
                 override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    if (count>=5 && count+start != 9){
+                        val text = s.toString().trim()
+                        showDialogLoading()
+                        checkOperationType()
+                        viewModel.getAcceptance(text, operationType)
+                    }
                 }
 
                 override fun afterTextChanged(s: Editable?) {
                     val text = s.toString().trim()
                     if (text.length == 9) {
-                        // Perform your desired operations here
                         showDialogLoading()
                         checkOperationType()
                         viewModel.getAcceptance(text, operationType)
