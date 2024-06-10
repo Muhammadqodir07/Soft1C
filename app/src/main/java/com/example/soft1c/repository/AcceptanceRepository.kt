@@ -90,27 +90,28 @@ class AcceptanceRepository {
 
     suspend fun getAcceptanceListApi(): List<Acceptance> {
         return suspendCoroutine { continuation ->
-            if(Utils.debugMode){
+            if (Utils.debugMode) {
                 continuation.resume(getAcceptanceList(Acceptance.LIST_DEFAULT_DATA))
-            }else{
-            Network.api.acceptanceList().enqueue(object : Callback<ResponseBody> {
-                override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>,
-                ) {
-                    if (response.isSuccessful) {
-                        val responseBody = response.body()?.string() ?: ""
-                        continuation.resume(getAcceptanceList(responseBody))
-                    } else {
-                        continuation.resume(emptyList())
+            } else {
+                Network.api.acceptanceList().enqueue(object : Callback<ResponseBody> {
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>,
+                    ) {
+                        if (response.isSuccessful) {
+                            val responseBody = response.body()?.string() ?: ""
+                            continuation.resume(getAcceptanceList(responseBody))
+                        } else {
+                            continuation.resume(emptyList())
+                        }
                     }
-                }
 
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    continuation.resumeWithException(t)
-                }
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        continuation.resumeWithException(t)
+                    }
 
-            })}
+                })
+            }
         }
 
     }
@@ -182,78 +183,87 @@ class AcceptanceRepository {
             jsonObject.put(PRINTED_KEY, acceptance.isPrinted)
             val requestBody =
                 jsonObject.toString().toRequestBody("application/json".toMediaTypeOrNull())
-            Network.api.createUpdateAcceptance(requestBody)
-                .enqueue(object : Callback<ResponseBody> {
-                    override fun onResponse(
-                        call: Call<ResponseBody>,
-                        response: Response<ResponseBody>,
-                    ) {
-                        if (response.isSuccessful) {
-                            val body = response.body()?.string() ?: ""
-                            if (body.isEmpty())
-                                continuation.resume(Pair(acceptance, ""))
-                            val jsonObject = JSONArray(body).getJSONObject(0)
-                            var ref = ""
-                            var guid = ""
-                            var nextIsNeed = false
-                            try {
-                                if (jsonObject.getString(RESULT_KEY).equals("Ошибка")) {
-                                    continuation.resume(
-                                        Pair(
-                                            acceptance,
-                                            jsonObject.getString(ERROR_REASON_KEY)
-                                        )
-                                    )
-                                }
-                                ref = jsonObject.getString(REF_KEY)
-                                guid = jsonObject.getString(BATCH_GUID_KEY)
-                                nextIsNeed = jsonObject.getString(NEXT_IS_NEED_KEY).toBoolean()
-                            } catch (e: Exception) {
-                                continuation.resume(Pair(acceptance, e.message.toString()))
-                            }
-                            acceptance.ref = ref
-                            AcceptanceAdapter.ACCEPTANCE_GUID = ref
-                            AcceptanceFragment.NEXT_IS_NEED = nextIsNeed
-
-                            acceptance.batchGuid = guid
-                            AcceptanceFragment.BATCH_GUID = guid
-
-                            continuation.resume(Pair(acceptance, ""))
-                        } else {
-                            val errorBody = response.errorBody()?.string() ?: ""
-                            if (errorBody.isNotEmpty()) {
+            if (Utils.debugMode) {
+                continuation.resume(Pair(acceptance, ""))
+            } else {
+                Network.api.createUpdateAcceptance(requestBody)
+                    .enqueue(object : Callback<ResponseBody> {
+                        override fun onResponse(
+                            call: Call<ResponseBody>,
+                            response: Response<ResponseBody>,
+                        ) {
+                            if (response.isSuccessful) {
+                                val body = response.body()?.string() ?: ""
+                                if (body.isEmpty())
+                                    continuation.resume(Pair(acceptance, ""))
+                                val jsonObject = JSONArray(body).getJSONObject(0)
+                                var ref = ""
+                                var guid = ""
+                                var nextIsNeed = false
                                 try {
-                                    val json = JSONObject(errorBody)
-                                    val jsonError = json.optString("error", "Error in Server")
-                                    continuation.resume(Pair(acceptance, jsonError))
-                                } catch (e: JSONException) {
+                                    if (jsonObject.getString(RESULT_KEY).equals("Ошибка")) {
+                                        continuation.resume(
+                                            Pair(
+                                                acceptance,
+                                                jsonObject.getString(ERROR_REASON_KEY)
+                                            )
+                                        )
+                                    }
+                                    ref = jsonObject.getString(REF_KEY)
+                                    guid = jsonObject.getString(BATCH_GUID_KEY)
+                                    nextIsNeed = jsonObject.getString(NEXT_IS_NEED_KEY).toBoolean()
+                                } catch (e: Exception) {
+                                    continuation.resume(Pair(acceptance, e.message.toString()))
+                                }
+                                acceptance.ref = ref
+                                AcceptanceAdapter.ACCEPTANCE_GUID = ref
+                                AcceptanceFragment.NEXT_IS_NEED = nextIsNeed
+
+                                acceptance.batchGuid = guid
+                                AcceptanceFragment.BATCH_GUID = guid
+
+                                continuation.resume(Pair(acceptance, ""))
+                            } else {
+                                val errorBody = response.errorBody()?.string() ?: ""
+                                if (errorBody.isNotEmpty()) {
                                     try {
-                                        val jsonArray = JSONArray(errorBody)
-                                        if (jsonArray.length() > 0) {
-                                            val jsonObject = jsonArray.getJSONObject(0)
-                                            val errorReason =
-                                                jsonObject.optString(
-                                                    ERROR_REASON_KEY,
-                                                    "Error in Server"
+                                        val json = JSONObject(errorBody)
+                                        val jsonError = json.optString("error", "Error in Server")
+                                        continuation.resume(Pair(acceptance, jsonError))
+                                    } catch (e: JSONException) {
+                                        try {
+                                            val jsonArray = JSONArray(errorBody)
+                                            if (jsonArray.length() > 0) {
+                                                val jsonObject = jsonArray.getJSONObject(0)
+                                                val errorReason =
+                                                    jsonObject.optString(
+                                                        ERROR_REASON_KEY,
+                                                        "Error in Server"
+                                                    )
+                                                continuation.resume(Pair(acceptance, errorReason))
+                                            } else {
+                                                continuation.resume(
+                                                    Pair(
+                                                        acceptance,
+                                                        "Error in Server"
+                                                    )
                                                 )
-                                            continuation.resume(Pair(acceptance, errorReason))
-                                        } else {
+                                            }
+                                        } catch (e: JSONException) {
                                             continuation.resume(Pair(acceptance, "Error in Server"))
                                         }
-                                    } catch (e: JSONException) {
-                                        continuation.resume(Pair(acceptance, "Error in Server"))
                                     }
+                                } else {
+                                    continuation.resume(Pair(acceptance, response.message()))
                                 }
-                            } else {
-                                continuation.resume(Pair(acceptance, response.message()))
                             }
                         }
-                    }
 
-                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                        continuation.resumeWithException(t)
-                    }
-                })
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            continuation.resumeWithException(t)
+                        }
+                    })
+            }
         }
     }
 

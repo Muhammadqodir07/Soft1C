@@ -240,10 +240,12 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
             val url = getSharedPref(Network.KEY_BASE_URL)
             val baseName = getSharedPref(Network.KEY_BASENAME)
             val username = getSharedPref(Network.KEY_USERNAME)
+            val protocol = getSharedPref(Network.KEY_PROTOCOL).toIntOrNull() ?: 0
             etxtUrlAdress.setText(address)
             etxtUrlPort.setText(port)
             etxtBasename.setText(baseName)
             etxtUsername.setText(username)
+            spinnerProtocols.setSelection(protocol)
             Utils.setAttributes(
                 url,
                 baseName,
@@ -262,6 +264,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
             var port = etxtUrlPort.text.toString()
             setSharedPref(Network.KEY_PORT, port)
             if (port.isEmpty()) port = "" else port = ":${port}"
+            setSharedPref(Network.KEY_PROTOCOL, spinnerProtocols.selectedItemPosition.toString())
             val url = "${spinnerProtocols.selectedItem}://${address}${port}"
 
             setSharedPref(Network.KEY_BASE_URL, url)

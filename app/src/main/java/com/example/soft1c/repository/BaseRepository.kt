@@ -37,7 +37,6 @@ class BaseRepository(private val lang: String) {
                             call: Call<ResponseBody>,
                             response: Response<ResponseBody>,
                         ) {
-                            //Если ответ есть то авторизовать
                             if (response.isSuccessful) {
                                 val body = response.body()?.string() ?: ""
                                 continuation.resume(getRights(body))
@@ -314,5 +313,8 @@ class BaseRepository(private val lang: String) {
 
     companion object {
         const val CLIENT_CONTROL = "КонтрольКлиентаПоПаспорту"
+        const val VERSION = "НомерВерсии"
+        const val MODEL = "Модель"
+        const val DEVICE_ID = "ID_Устройства"
     }
 }

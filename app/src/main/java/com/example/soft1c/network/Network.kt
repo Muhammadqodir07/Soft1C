@@ -17,7 +17,7 @@ object Network {
 //    lateinit var retrofit: Retrofit
 
     fun refreshConnection(){
-        Client = OkHttpClient.Builder()
+        Client = getUnsafeOkHttpClient()
             .addInterceptor(BasicAuthInterceptor())
             .addNetworkInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
             .connectTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the connection timeout to 30 seconds
@@ -77,7 +77,7 @@ object Network {
     }
 
     // Объекта OkHttpClient, который предоставляет средства для работы с сетевыми запросами и ответами.
-    private var Client = OkHttpClient.Builder()
+    private var Client = getUnsafeOkHttpClient()
         .addInterceptor(BasicAuthInterceptor())
         .addNetworkInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
         .connectTimeout(Utils.clientTimeout, TimeUnit.SECONDS) // set the connection timeout to 30 seconds
@@ -124,5 +124,6 @@ object Network {
     const val KEY_BASE_URL = "key_base_url"
     const val KEY_ADDRESS = "key_address"
     const val KEY_PORT = "key_port"
+    const val KEY_PROTOCOL = "key_protocol"
     const val KEY_MACADDRESS = "key_port"
 }

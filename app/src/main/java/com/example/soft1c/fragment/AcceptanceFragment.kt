@@ -9,7 +9,8 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.CheckBox
-import android.widget.Toast
+import androidx.activity.addCallback
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -44,6 +45,10 @@ class AcceptanceFragment :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val callback = requireActivity().onBackPressedDispatcher.addCallback(this) {
+            acceptanceCopyList.clear()
+            findNavController().popBackStack()
+        }
         val acceptanceNumber = arguments?.getString(KEY_ACCEPTANCE_NUMBER, "") ?: ""
         acceptance = if (acceptanceNumber.isNotEmpty()) {
             viewModel.getAcceptance(acceptanceNumber, Utils.OperationType.ACCEPTANCE)
@@ -99,7 +104,7 @@ class AcceptanceFragment :
             createCopyForm()
         } else {
             if (!isBottomSaveButton)
-                closeActivity()
+                activity?.onBackPressed()
             else {
                 setInitFocuses()
                 toast(getString(R.string.text_successfully_saved))
@@ -146,10 +151,10 @@ class AcceptanceFragment :
 //            }
 
             btnClose.setOnClickListener {
-                closeActivity()
+                activity?.onBackPressed()
             }
             btnCloseCopy.setOnClickListener {
-                closeActivity()
+                activity?.onBackPressed()
             }
             if (!Utils.Settings.passportClientControl) {
                 elayoutPassport.visibility = View.GONE
@@ -160,8 +165,7 @@ class AcceptanceFragment :
                 if (it.isChecked) {
                     etxtPassport.setText(clientPassport)
                     etxtPassport.setSelection(etxtPassport.text!!.length)
-                }
-                else{
+                } else {
                     etxtPassport.setText("")
                     etxtPassport.error = null
                 }
@@ -292,8 +296,23 @@ class AcceptanceFragment :
                 createUpdateAcceptance()
                 showDialogLoading()
             }
-            btnPrint.setOnClickListener {
-                if (etxtDocumentNumber.text?.isNotEmpty() == true) {
+            btnCopy.setOnClickListener {
+                createCopyForm()
+            }
+            btnCop.setOnClickListener {
+                createCopyForm()
+            }
+
+            if (acceptance.number.isNotEmpty()) {
+                btnDocInfo.setOnClickListener {
+                    showEditWarningDialog(
+                        disabilityReason,
+                        showCheckBox = false,
+                        navigateToLog = true
+                    )
+                }
+
+                btnPrint.setOnClickListener {
                     val intent = Intent(requireContext(), PrinterActivity::class.java)
                     intent.putExtra("docNumber", acceptance.number)
                     intent.putExtra("clientNumber", acceptance.client.code)
@@ -304,19 +323,10 @@ class AcceptanceFragment :
                         intent.putExtra("macAddress", macAddress)
                     }
                     startActivity(intent)
-                } else {
-                    Toast.makeText(context, R.string.text_empty_document, Toast.LENGTH_SHORT).show()
                 }
-            }
-            btnCopy.setOnClickListener {
-                createCopyForm()
-            }
-            btnCop.setOnClickListener {
-                createCopyForm()
-            }
-
-            btnDocInfo.setOnClickListener {
-                showEditWarningDialog(disabilityReason, showCheckBox = false, navigateToLog = true)
+            }else{
+                btnDocInfo.visibility = View.GONE
+                btnPrint.visibility = View.GONE
             }
         }
     }
@@ -356,6 +366,23 @@ class AcceptanceFragment :
             }
         }
         viewModel.createUpdateAcceptance(acceptance)
+    }
+
+    private fun saveAcceptanceConfirmationDialog(documentsCount: Int) {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("Save $documentsCount previously documents?")
+
+        builder.setPositiveButton("Yes") { _, _ ->
+            acceptanceCopyList.forEach {
+                viewModel.createUpdateAcceptance(it)
+            }
+        }
+        builder.setNegativeButton("No") { dialog, _ ->
+            dialog.dismiss()
+        }
+
+        val dialog = builder.create()
+        dialog.show()
     }
 
     private fun createCopyForm() {
@@ -700,11 +727,12 @@ class AcceptanceFragment :
                     }
 
                     etxtPassport -> {
-                        val passportIsValid = acceptance.client.isPassportNumberMatching(etxtPassport.text.toString())
+                        val passportIsValid =
+                            acceptance.client.isPassportNumberMatching(etxtPassport.text.toString())
                         if (passportIsValid.first) {
                             acceptance.correctPassport = true
                             enableFieldsAfterFieldClient(true)
-                        }else{
+                        } else {
                             errorDialog(resources.getString(passportIsValid.second), false)
                             acceptance.correctPassport = false
                             etxtPassport.requestFocus()
@@ -858,11 +886,6 @@ class AcceptanceFragment :
         }
     }
 
-    private fun closeActivity() {
-        acceptanceCopyList.clear()
-        activity?.onBackPressed()
-    }
-
     private fun showDetails(triple: Triple<Acceptance, FieldsAccess, String>) {
         if (triple.third.isNotEmpty()) {
             errorDialog(triple.third, false)
@@ -874,6 +897,8 @@ class AcceptanceFragment :
             return
         }
         clientFound = true
+        acceptance.correctPassport = true
+
         showAcceptance()
         setInitFocuses()
         showPbLoading(false)
@@ -979,12 +1004,6 @@ class AcceptanceFragment :
             return cacheFile.readText().trim()
         }
         return null
-    }
-
-    private fun checkEditRights() {
-        if ((user.username != acceptance.whoAccept && !user.isAdmin)) {
-            fieldsEnable(false)
-        }
     }
 
     companion object {
