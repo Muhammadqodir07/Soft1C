@@ -1,10 +1,10 @@
 package com.example.soft1c.repository.model
 
 data class Acceptance(
-    val number: String, // Номер
+    var number: String, // Номер
     var ref: String = "", // Ссылка
     var client: Client = Client(), // Клиент
-    val date: String = "", // Дата
+    var date: String = "", // Дата
     var weight: Boolean = false, //
     var capacity: Boolean = false,
     var z: Boolean = false, // ZТовар

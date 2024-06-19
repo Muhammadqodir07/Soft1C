@@ -81,11 +81,10 @@ open class LoadingRepository {
                             if (response.isSuccessful) {
                                 val responseBody = response.body()?.string() ?: ""
                                 continuation.resume(getBarcodeListJson(responseBody))
-                            }else if (response.code() == 502) {
+                            } else if (response.code() == 502) {
                                 continuation.resume(emptyList())
                                 //TODO()
-                            }
-                            else {
+                            } else {
                                 continuation.resume(emptyList())
                             }
                         }
@@ -263,14 +262,15 @@ open class LoadingRepository {
                 val packageUid = jsonObject.getString(PACKAGE_KEY)
                 barcodesFront.add(
                     LoadingBarcode(
-                        barcode = jsonObject.getString(Loading.BARCODE_KEY),
+                        barcode = jsonObject.getString(BARCODE_KEY),
                         weight = jsonObject.getDouble(WEIGHT_KEY),
                         volume = jsonObject.getDouble(VOLUME_KEY),
                         clientCode = jsonObject.getString(CLIENT_CODE_KEY),
+                        seatNumber = jsonObject.optInt(SEAT_NUMBER_KEY, -1),
                         packageTypeUid = packageUid,
                         packageType = AcceptanceRepository().getPackageNameFromUid(packageUid),
                         acceptanceUid = jsonObject.getString(ACCEPTANCE_GUID_KEY),
-                        date = jsonObject.getString("ДатаПриема")
+                        date = jsonObject.getString(DATE_KEY)
                     )
                 )
             }
@@ -281,14 +281,15 @@ open class LoadingRepository {
                 val packageUid = jsonObject.getString(PACKAGE_KEY)
                 barcodesBack.add(
                     LoadingBarcode(
-                        barcode = jsonObject.getString(Loading.BARCODE_KEY),
+                        barcode = jsonObject.getString(BARCODE_KEY),
                         weight = jsonObject.getDouble(WEIGHT_KEY),
                         volume = jsonObject.getDouble(VOLUME_KEY),
                         clientCode = jsonObject.getString(CLIENT_CODE_KEY),
+                        seatNumber = jsonObject.optInt(SEAT_NUMBER_KEY, -1),
                         packageTypeUid = packageUid,
                         packageType = AcceptanceRepository().getPackageNameFromUid(packageUid),
                         acceptanceUid = jsonObject.getString(ACCEPTANCE_GUID_KEY),
-                        date = jsonObject.getString("ДатаПриема")
+                        date = jsonObject.getString(DATE_KEY)
                     )
                 )
             }

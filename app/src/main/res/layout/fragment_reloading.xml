@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".reloading.fragment.ReloadingFragment">
+    tools:context=".fragment.ReloadingFragment">
 
     <ProgressBar
         android:id="@+id/pb_loading"
@@ -393,12 +393,12 @@
                 android:text="" />
         </LinearLayout>
 
-        <com.example.soft1c.reloading.utils.view.RecyclerViewPager
+        <com.example.soft1c.utils.view.RecyclerViewPager
             android:id="@+id/scroll_rv_layout"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:scrollbars="none"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/linear_limits"
             app:layout_constraintTop_toBottomOf="@id/linear_heading">
 
             <LinearLayout
@@ -420,7 +420,7 @@
                     android:layout_height="match_parent"
                     android:background="#AAC7F7C1" />
             </LinearLayout>
-        </com.example.soft1c.reloading.utils.view.RecyclerViewPager>
+        </com.example.soft1c.utils.view.RecyclerViewPager>
 
 
         <LinearLayout

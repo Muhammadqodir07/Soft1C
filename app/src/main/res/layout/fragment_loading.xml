@@ -34,6 +34,43 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
+            <LinearLayout
+                android:id="@+id/linear_btn_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dp"
+                android:background="@color/white">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/elayout_save"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1">
+
+                    <Button
+                        android:id="@+id/etxt_save"
+                        style="@style/AutoCompleteSave"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="@string/text_save"
+                        android:textAlignment="center"
+                        tools:ignore="LabelFor" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <Button
+                    android:id="@+id/btn_close"
+                    style="?android:attr/buttonBarButtonStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/default_margin_chb"
+                    android:layout_weight="1"
+                    android:text="@string/text_close" />
+
+            </LinearLayout>
+
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/elayout_txt_number"
                 android:layout_width="match_parent"
@@ -275,12 +312,12 @@
                 android:text="" />
         </LinearLayout>
 
-        <com.example.soft1c.reloading.utils.view.RecyclerViewPager
+        <com.example.soft1c.utils.view.RecyclerViewPager
             android:id="@+id/scroll_rv_layout"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:scrollbars="none"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/linear_limits"
             app:layout_constraintTop_toBottomOf="@id/linear_heading">
 
             <LinearLayout
@@ -302,7 +339,7 @@
                     android:layout_height="match_parent"
                     android:background="@color/backColor" />
             </LinearLayout>
-        </com.example.soft1c.reloading.utils.view.RecyclerViewPager>
+        </com.example.soft1c.utils.view.RecyclerViewPager>
 
 
         <LinearLayout
@@ -313,7 +350,7 @@
             android:orientation="horizontal"
             android:weightSum="16"
             android:background="@color/white"
-            app:layout_constraintBottom_toTopOf="@id/linear_btn_group"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
 
@@ -345,45 +382,6 @@
                 android:layout_weight="4"
                 android:text="@string/app_name" />
 
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/linear_btn_group"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp"
-            android:background="@color/white"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/elayout_save"
-                style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
-
-                <Button
-                    android:id="@+id/etxt_save"
-                    style="@style/AutoCompleteSave"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:text="@string/text_save"
-                    android:textAlignment="center"
-                    tools:ignore="LabelFor" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <Button
-                android:id="@+id/btn_close"
-                style="?android:attr/buttonBarButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/default_margin_chb"
-                android:layout_weight="1"
-                android:text="@string/text_close" />
 
         </LinearLayout>
     </androidx.constraintlayout.motion.widget.MotionLayout>

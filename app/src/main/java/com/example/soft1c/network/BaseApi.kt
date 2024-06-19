@@ -45,7 +45,10 @@ interface BaseApi {
     fun client(@Query("Kod") clientCode: String): Call<ResponseBody>
 
     @PATCH("Priemki")
-    fun createUpdateAcceptance(@Body requestBody: RequestBody): Call<ResponseBody>
+    fun createUpdateAcceptance(
+        @Query("FillBarcodes") fillBarcodes: String,
+        @Body requestBody: RequestBody
+    ): Call<ResponseBody>
 
     @GET("VvodRazmerov")
     fun getAcceptanceSizeData(@Query("GUID") guid: String): Call<ResponseBody>

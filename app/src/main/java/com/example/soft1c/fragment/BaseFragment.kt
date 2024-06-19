@@ -42,6 +42,11 @@ open class BaseFragment<T : ViewBinding>(
         return _binding?.root
     }
 
+    override fun onResume() {
+        super.onResume()
+        closeDialogLoading()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

@@ -45,9 +45,9 @@ class PrinterActivity : AppCompatActivity() {
         setContentView(binding.root)
         acceptance = AcceptanceFragment.ACCEPTANCE
         val intent = intent
-        date = convertDate(intent.getStringExtra("date"))
+        date = convertDate(acceptance.date)
         with(binding) {
-            etxtPageCount.setText(intent.getStringExtra("seatsNumber") ?: "1")
+            etxtPageCount.setText(acceptance.countSeat.toString())
             txtBarcodeNumber.text =
                 (getString(R.string.txt_number) + ": " + acceptance.number)
                     ?: "No data available"
@@ -100,7 +100,7 @@ class PrinterActivity : AppCompatActivity() {
     }
 
     private fun generateBarcode() {
-        barcodeInput = "${intent.getStringExtra("docNumber")}"
+        barcodeInput = acceptance.number
         val writer = MultiFormatWriter()
         try {
             val matrix = writer.encode(barcodeInput, BarcodeFormat.CODE_128, 4000, 1000)
@@ -203,15 +203,15 @@ class PrinterActivity : AppCompatActivity() {
         }
 
     fun convertDate(date: String?): String {
-        if (date != null) {
+        return if (date != null) {
             val outputFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
             val dateTime = LocalDateTime.parse(date)
 
             val formattedDateTime = dateTime.format(outputFormatter)
-            return formattedDateTime
+            formattedDateTime
         } else {
-            return ""
+            ""
         }
     }
 }

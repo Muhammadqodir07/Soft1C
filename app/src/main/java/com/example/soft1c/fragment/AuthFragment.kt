@@ -273,7 +273,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
             val username = checkFieldReturn(etxtUsername)
             if (username.isEmpty()) return else setSharedPref(Network.KEY_USERNAME, username)
             val password = checkFieldReturn(etxtPassword)
-            if (password.isEmpty()) return else setSharedPref(Network.KEY_PASSWORD, password)
+            if (password.isNotEmpty()) setSharedPref(Network.KEY_PASSWORD, password)
             Utils.setAttributes(
                 url,
                 baseName,

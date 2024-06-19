@@ -15,15 +15,15 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.soft1c.R
 import com.example.soft1c.adapter.LoadingAdapter
+import com.example.soft1c.adapter.ReloadingAdapter
 import com.example.soft1c.databinding.FragmentLoadingListBinding
-import com.example.soft1c.reloading.adapter.ReloadingAdapter
-import com.example.soft1c.reloading.utils.getDisplayWidth
-import com.example.soft1c.reloading.viewmodel.ReloadingViewModel
 import com.example.soft1c.repository.model.ItemClicked
 import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.LoadingEnableVisible
 import com.example.soft1c.utils.Utils
+import com.example.soft1c.utils.getDisplayWidth
 import com.example.soft1c.viewmodel.LoadingViewModel
+import com.example.soft1c.viewmodel.ReloadingViewModel
 import com.google.android.material.textfield.TextInputEditText
 
 class LoadingListFragment :

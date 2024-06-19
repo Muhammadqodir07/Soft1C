@@ -1,4 +1,4 @@
-package com.example.soft1c.reloading.adapter
+package com.example.soft1c.adapter
 
 import android.view.View
 import android.view.ViewGroup

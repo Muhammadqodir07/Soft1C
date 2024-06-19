@@ -129,7 +129,7 @@
 
     <fragment
         android:id="@+id/reloadingFragment"
-        android:name="com.example.soft1c.reloading.fragment.ReloadingFragment"
+        android:name="com.example.soft1c.fragment.ReloadingFragment"
         android:label="ReloadingFragment"
         tools:layout="@layout/fragment_reloading" />
 </navigation>

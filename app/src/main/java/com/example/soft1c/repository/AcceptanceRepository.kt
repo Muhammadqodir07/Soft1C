@@ -17,6 +17,8 @@ import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -186,7 +188,7 @@ class AcceptanceRepository {
             if (Utils.debugMode) {
                 continuation.resume(Pair(acceptance, ""))
             } else {
-                Network.api.createUpdateAcceptance(requestBody)
+                Network.api.createUpdateAcceptance("true", requestBody)
                     .enqueue(object : Callback<ResponseBody> {
                         override fun onResponse(
                             call: Call<ResponseBody>,
@@ -218,6 +220,9 @@ class AcceptanceRepository {
                                 acceptance.ref = ref
                                 AcceptanceAdapter.ACCEPTANCE_GUID = ref
                                 AcceptanceFragment.NEXT_IS_NEED = nextIsNeed
+
+                                acceptance.number = jsonObject.getString(NUMBER_KEY).toString()
+                                acceptance.date = jsonObject.optString(DATE_KEY, LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).toString()
 
                                 acceptance.batchGuid = guid
                                 AcceptanceFragment.BATCH_GUID = guid

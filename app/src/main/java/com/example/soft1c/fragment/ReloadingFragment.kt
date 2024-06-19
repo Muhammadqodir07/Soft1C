@@ -1,4 +1,4 @@
-package com.example.soft1c.reloading.fragment
+package com.example.soft1c.fragment
 
 import android.R
 import android.annotation.SuppressLint
@@ -20,15 +20,9 @@ import android.widget.ScrollView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.soft1c.adapter.BarcodeAdapter
 import com.example.soft1c.databinding.FragmentReloadingBinding
-import com.example.soft1c.fragment.BaseFragment
-import com.example.soft1c.fragment.LoadingFragment
-import com.example.soft1c.reloading.utils.etxtFocusChangeListener
-import com.example.soft1c.reloading.utils.findAndFillAnyModel
-import com.example.soft1c.reloading.utils.findAndFillAnySelectedModel
-import com.example.soft1c.reloading.utils.getDisplayWidth
-import com.example.soft1c.reloading.viewmodel.ReloadingViewModel
 import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.LoadingBarcode
 import com.example.soft1c.repository.model.LoadingEnableVisible
@@ -38,8 +32,11 @@ import com.example.soft1c.utils.Utils.cars
 import com.example.soft1c.utils.Utils.container
 import com.example.soft1c.utils.Utils.user
 import com.example.soft1c.utils.Utils.warehouse
+import com.example.soft1c.utils.getDisplayWidth
+import com.example.soft1c.viewmodel.ReloadingViewModel
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import com.google.android.material.textfield.TextInputEditText
 
 class ReloadingFragment :
     BaseFragment<FragmentReloadingBinding>(FragmentReloadingBinding::inflate) {
@@ -153,6 +150,15 @@ class ReloadingFragment :
                     documentCreate = !documentCreate
                     viewModel.createUpdateLoading(loading)
                 }
+            }
+
+            rvBarcodeKeep.apply {
+                layoutManager = LinearLayoutManager(context)
+                adapter = barcodeKeepAdapter
+            }
+            rvBarcodeAdd.apply {
+                layoutManager = LinearLayoutManager(context)
+                adapter = barcodeAddAdapter
             }
 
 
@@ -426,7 +432,8 @@ class ReloadingFragment :
                     if (targetList != null && !targetList.contains(barcode)) {
                         targetList.add(barcode)
                         if (targetList == barcodeKeepList) {
-                            barcodeKeepAdapter.addBarcodeData(barcode)
+                            if ((reloading.barcodesFront+reloading.barcodesBack).contains(barcode))
+                                barcodeKeepAdapter.addBarcodeData(barcode)
                         } else {
                             barcodeAddAdapter.addBarcodeData(barcode)
                         }
@@ -646,7 +653,8 @@ class ReloadingFragment :
             scannedData =
                 initiatingIntent.getStringExtra("com.symbol.datawedge.data_string").toString()
 
-            scannedData = "90001522226070124"
+            if (Utils.debugMode)
+                scannedData = "90000153429210421"
 
             if (::scannedData.isInitialized && scannedData.length >= 17) {
                 val last17Chars = scannedData.takeLast(17)
@@ -710,6 +718,80 @@ class ReloadingFragment :
                 } catch (e: Exception) {
                     // Catch if the UI does not exist when we receive the broadcast
                 }
+            }
+        }
+    }
+
+    fun findAndFillAnySelectedModel(
+        anyList: List<LoadingModel>,
+        model: Int,
+        selectedModel: String
+    ): LoadingModel? {
+        //Переменная текстЭлемента. Если текст выбранного элемента не пусто то передать его, если пусто то вернуться
+        val textElement = when {
+            selectedModel.isNotEmpty() -> selectedModel
+            selectedModel.isEmpty() -> return null
+            else -> ""
+        }
+        //Найти номер из списка номеров с помощью текстЭлемента
+        return textElementFound(anyList, model, textElement)
+    }
+
+    fun findAndFillAnyModel(
+        anyList: List<LoadingModel>,
+        model: Int,
+        view: AutoCompleteTextView,
+    ): LoadingModel? {
+        val textElement = when {
+            view.text.isNotEmpty() -> {
+                if (!view.adapter.isEmpty) {
+                    view.adapter.getItem(0).toString()
+                } else {
+                    view.text.clear()
+                    return null
+                }
+            }
+
+            view.text.isEmpty() -> return null
+            else -> ""
+        }
+        //Найти номер из списка номеров с помощью текстЭлемента
+        return textElementFound(anyList, model, textElement)
+    }
+
+    //Находим номер из списка номеров с помощью текстЭлемента
+    private fun textElementFound(
+        anyList: List<LoadingModel>,
+        model: Int,
+        textElement: String,
+    ): LoadingModel? {
+        //Переменная элемент. Найти из списка машин номер по условию СписокМашин.Номер = текстЭлемента с помощью встроенной функции find
+        val element = anyList.find {
+            when (it) {
+                is LoadingModel.Car -> it.number == textElement
+                is LoadingModel.Warehouse -> it.name == textElement
+                is LoadingModel.Container -> it.name == textElement
+            }
+        }
+
+        return when (element) {
+            is LoadingModel.Car -> element
+            is LoadingModel.Container -> element
+            is LoadingModel.Warehouse -> element
+            else -> when (model) {
+                Utils.ObjectModelType.CAR -> LoadingModel.Car()
+                Utils.ObjectModelType.CONTAINER -> LoadingModel.Container()
+                Utils.ObjectModelType.WAREHOUSE -> LoadingModel.Warehouse()
+                else -> null
+            }
+        }
+    }
+
+    fun etxtFocusChangeListener(view: View, hasFocus: Boolean) {
+        if (hasFocus) {
+            view as TextInputEditText
+            view.text?.let {
+                view.selectAll()
             }
         }
     }

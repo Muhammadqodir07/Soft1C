@@ -1,7 +1,6 @@
-package com.example.soft1c.reloading.repository
+package com.example.soft1c.repository
 
 import com.example.soft1c.network.Network
-import com.example.soft1c.repository.LoadingRepository
 import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.LoadingBarcode
 import com.example.soft1c.repository.model.LoadingEnableVisible

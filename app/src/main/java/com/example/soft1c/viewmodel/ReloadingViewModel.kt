@@ -1,4 +1,4 @@
-package com.example.soft1c.reloading.viewmodel
+package com.example.soft1c.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -7,7 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.soft1c.R
 import com.example.soft1c.network.Network
-import com.example.soft1c.reloading.repository.ReloadingRepository
+import com.example.soft1c.repository.ReloadingRepository
 import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.LoadingBarcode
 import com.example.soft1c.repository.model.LoadingEnableVisible

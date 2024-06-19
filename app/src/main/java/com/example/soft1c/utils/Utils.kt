@@ -1,5 +1,8 @@
 package com.example.soft1c.utils
 
+import android.content.Context
+import android.util.DisplayMetrics
+import android.view.WindowManager
 import com.example.soft1c.repository.model.Acceptance
 import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.LoadingModel
@@ -85,4 +88,18 @@ object Utils {
         var passportClientControl: Boolean = true
         const val SHOW_DISABILITY_DIALOG = "ПоказатьОкноСИнфойНедоступности"
     }
+}
+
+fun getDisplayWidth(context: Context): Int {
+    val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    val displayMetrics = DisplayMetrics()
+
+    // Get the default display
+    windowManager.defaultDisplay.getMetrics(displayMetrics)
+
+    val screenWidthPixels = displayMetrics.widthPixels
+    val density = context.resources.displayMetrics.density
+    val paddingInPixels = (8 * density + 0.5f).toInt() // Converting dp to pixels
+
+    return screenWidthPixels - paddingInPixels * 2 // Subtracting padding from both sides
 }

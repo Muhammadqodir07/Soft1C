@@ -1,4 +1,4 @@
-package com.example.soft1c.reloading.utils.view
+package com.example.soft1c.utils.view
 
 import android.annotation.SuppressLint
 import android.content.Context

@@ -41,6 +41,7 @@ class AcceptanceFragment :
     private var documentCreate = false
     private var isCopiedAcceptance = false
     private var isBottomSaveButton = false
+    private var goToPrint = false
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,6 +104,9 @@ class AcceptanceFragment :
         if (NEXT_IS_NEED) {
             createCopyForm()
         } else {
+            if (goToPrint){
+                navigateToPrint(pair.first)
+            }
             if (!isBottomSaveButton)
                 activity?.onBackPressed()
             else {
@@ -303,6 +307,15 @@ class AcceptanceFragment :
                 createCopyForm()
             }
 
+            btnPrint.setOnClickListener {
+                if (acceptance.number.isNotEmpty()) {
+                    navigateToPrint(acceptance)
+                }else{
+                    goToPrint = true
+                    createUpdateAcceptance()
+                }
+            }
+
             if (acceptance.number.isNotEmpty()) {
                 btnDocInfo.setOnClickListener {
                     showEditWarningDialog(
@@ -312,21 +325,8 @@ class AcceptanceFragment :
                     )
                 }
 
-                btnPrint.setOnClickListener {
-                    val intent = Intent(requireContext(), PrinterActivity::class.java)
-                    intent.putExtra("docNumber", acceptance.number)
-                    intent.putExtra("clientNumber", acceptance.client.code)
-                    intent.putExtra("seatsNumber", acceptance.countSeat.toString())
-                    intent.putExtra("date", acceptance.date)
-                    val macAddress = getMacAddressFromCache(requireActivity())
-                    if (macAddress != null) {
-                        intent.putExtra("macAddress", macAddress)
-                    }
-                    startActivity(intent)
-                }
-            }else{
+            } else {
                 btnDocInfo.visibility = View.GONE
-                btnPrint.visibility = View.GONE
             }
         }
     }
@@ -1004,6 +1004,17 @@ class AcceptanceFragment :
             return cacheFile.readText().trim()
         }
         return null
+    }
+
+    private fun navigateToPrint(acceptance: Acceptance) {
+        goToPrint = false
+        ACCEPTANCE = acceptance
+        val intent = Intent(requireContext(), PrinterActivity::class.java)
+        val macAddress = getMacAddressFromCache(requireActivity())
+        if (macAddress != null) {
+            intent.putExtra("macAddress", macAddress)
+        }
+        startActivity(intent)
     }
 
     companion object {

@@ -23,7 +23,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.soft1c.R
 import com.example.soft1c.adapter.BarcodeAdapter
 import com.example.soft1c.databinding.FragmentLoadingBinding
-import com.example.soft1c.reloading.utils.getDisplayWidth
 import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.LoadingBarcode
 import com.example.soft1c.repository.model.LoadingEnableVisible
@@ -32,6 +31,7 @@ import com.example.soft1c.utils.Utils
 import com.example.soft1c.utils.Utils.cars
 import com.example.soft1c.utils.Utils.user
 import com.example.soft1c.utils.Utils.warehouse
+import com.example.soft1c.utils.getDisplayWidth
 import com.example.soft1c.viewmodel.LoadingViewModel
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.MaterialAutoCompleteTextView

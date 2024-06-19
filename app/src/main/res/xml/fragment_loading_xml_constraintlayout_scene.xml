@@ -32,6 +32,12 @@
             android:src="@drawable/ic_drop_up"
             motion:layout_constraintEnd_toEndOf="parent"
             motion:layout_constraintTop_toTopOf="@id/linear_topbar" />
+        <Constraint
+            android:id="@+id/scroll_rv_layout"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:scrollbars="none"
+            motion:layout_constraintTop_toBottomOf="@id/linear_heading" />
     </ConstraintSet>
 
     <ConstraintSet android:id="@+id/gone">
@@ -57,5 +63,12 @@
             android:src="@drawable/ic_drop_up"
             motion:layout_constraintEnd_toEndOf="parent"
             motion:layout_constraintTop_toTopOf="@id/linear_topbar" />
+        <Constraint
+            android:id="@+id/scroll_rv_layout"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:scrollbars="none"
+            motion:layout_constraintBottom_toTopOf="@id/linear_limits"
+            motion:layout_constraintTop_toBottomOf="@id/linear_heading" />
     </ConstraintSet>
 </MotionScene>
