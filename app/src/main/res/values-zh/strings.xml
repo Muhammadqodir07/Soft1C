@@ -112,12 +112,12 @@
     <string name="text_recipient">" 接受者"</string>
     <string name="route">路线</string>
     <string name="text_front">前部</string>
-    <string name="text_back">后部</string>
+    <string name="text_back">背面部</string>
     <string name="err_dublicate_barcode">条形码已添加</string>
 
     <string-array name="car_parts">
-        <item>前部</item>
-        <item>后部</item>
+        <item>@string/car_parts_1</item>
+        <item>@string/car_parts_2</item>
     </string-array>
     <string name="text_container">容器</string>
     <string name="seat_number">件号</string>
@@ -125,4 +125,8 @@
     <string name="text_track_number">快递单号</string>
     <string name="txt_is_blacklist">客户被列入黑名单</string>
     <string name="txt_client_acceptance_blocked">客户暂时被封锁</string>
+    <string name="txt_doc_not_printed">收货未打印</string>
+    <string name="car_parts_1">前部</string>
+    <string name="car_parts_2">背面部</string>
+    <string name="stg_fill_barcodes">自动生成条码</string>
 </resources>

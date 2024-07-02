@@ -86,7 +86,12 @@ object Utils {
 
     object Settings {
         var passportClientControl: Boolean = true
+        var fillBarcodes: String? = null
+        var macAddress: String? = null
         const val SHOW_DISABILITY_DIALOG = "ПоказатьОкноСИнфойНедоступности"
+        const val SETTINGS_PREF_NAME = "settings_pref"
+        const val MAC_ADDRESS_PREF = "mac_address"
+        const val FILL_BARCODE_PREF = "fill_barcode"
     }
 }
 

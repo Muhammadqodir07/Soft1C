@@ -104,6 +104,9 @@ class AcceptanceSizeFragment :
         }
         acceptanceSize = pair.first
         showPbLoading(false)
+        if (!acceptanceSize.recordAllowed){
+            errorDialog(getString(R.string.txt_doc_not_printed), false)
+        }
         with(binding) {
             txtWeight.text = acceptanceSize.allWeight.toString()
             txtSum.text = acceptanceSize.sum.toString()

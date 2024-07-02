@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.view.KeyEvent
@@ -41,6 +42,10 @@ import kotlin.math.absoluteValue
 
 
 class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBinding::inflate) {
+
+    private val ACTION_CHAINWAY = "com.scanner.broadcast"
+    private val ACTION_ZEBRA = "com.Soft1C.ACTION"
+    private val CATEGORY_DEFAULT = Intent.CATEGORY_DEFAULT
 
     // Объект класса позволяющего связывать штрих-коды с элементами интерфейса
     private var barcodeFrontAdapter: BarcodeAdapter = BarcodeAdapter { barcode ->
@@ -86,21 +91,50 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
 
 
         //Регистрация приёмника broadcastReceiver с использованием фильтра filter
-        val filter = IntentFilter()
-        filter.addCategory(Intent.CATEGORY_DEFAULT)
-        filter.addAction("com.Soft1C.ACTION")
-        context?.registerReceiver(broadcastReceiver, filter)
+        registerBroadcastReceiver()
         //Устанавливание слушателей для поля НомераМашин
         initUI()
         observeViewModel()
     }
 
-    private var broadcastReceiver = object : BroadcastReceiver() {
+    private fun registerBroadcastReceiver() {
+        val filter = IntentFilter().apply {
+            addCategory(CATEGORY_DEFAULT)
+        }
+
+        val (action, broadcastReceiver) = if (Build.BRAND == "Chainway") {
+            ACTION_CHAINWAY to chainwayBroadcastReceiver
+        } else {
+            ACTION_ZEBRA to zebraBroadcastReceiver
+        }
+
+        filter.addAction(action)
+        context?.registerReceiver(broadcastReceiver, filter)
+    }
+
+    private val zebraBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            val action = intent?.action
-            if (action == "com.Soft1C.ACTION") {
+            intent?.action?.takeIf { it == ACTION_ZEBRA }?.let {
                 try {
-                    displayScanResult(intent)
+                    intent.getStringExtra("com.symbol.datawedge.data_string")?.let { data ->
+                        displayScanResult(data)
+                    }
+                } catch (e: Exception) {
+                    // Catch if the UI does not exist when we receive the broadcast
+                }
+            }
+        }
+    }
+
+    private val chainwayBroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            intent?.action?.takeIf { it == ACTION_CHAINWAY }?.let {
+                try {
+                    intent.getStringExtra("data")?.let { data ->
+                        if (data.isNotEmpty()) {
+                            displayScanResult(data)
+                        }
+                    }
                 } catch (e: Exception) {
                     // Catch if the UI does not exist when we receive the broadcast
                 }
@@ -221,7 +255,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
 
         if (loading.senderWarehouse != LoadingModel.Warehouse()) {
             senderWarehouse.setText(loading.senderWarehouse.name)
-        }else{
+        } else {
             val warehouse = Utils.warehouse.find {
                 it is LoadingModel.Warehouse && it.ref == user.warehouse
             } as? LoadingModel.Warehouse
@@ -320,7 +354,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     private fun fillBarcodeList(barcodes: List<LoadingBarcode>?) {
         closeDialogLoading()
         barcodes?.forEach { barcode ->
-            if (binding.radioAcceptance.isChecked && !(barcodeFrontList+barcodeBackList).contains(barcode)) {
+            if (binding.radioAcceptance.isChecked && !(barcodeFrontList + barcodeBackList).contains(barcode)) {
                 if (binding.tabLayout.selectedTabPosition == 0) {
                     barcodeFrontAdapter.addBarcodeData(barcode)
                     barcodeFrontList.add(barcode)
@@ -331,7 +365,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                 weight += barcode.weight
                 volume += barcode.volume
             } else if (!binding.radioAcceptance.isChecked && barcode.barcode == scannedData) {
-                if (!(barcodeFrontList+barcodeBackList).contains(barcode)) {
+                if (!(barcodeFrontList + barcodeBackList).contains(barcode)) {
                     if (binding.tabLayout.selectedTabPosition == 0) {
                         barcodeFrontAdapter.addBarcodeData(barcode)
                         barcodeFrontList.add(barcode)
@@ -396,7 +430,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                     else -> return false
                 }
             }
-        }else if(key == 10036 && keyEvent.action == KeyEvent.ACTION_DOWN){
+        } else if (key == 10036 && keyEvent.action == KeyEvent.ACTION_DOWN) {
             clearAllFocus()
             return true
         }
@@ -508,7 +542,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     @SuppressLint("SetTextI18n")
     private fun showLoading() {
         with(binding) {
-            if (loading.number.isNotEmpty() && loading.date.isNotEmpty()){
+            if (loading.number.isNotEmpty() && loading.date.isNotEmpty()) {
                 elayoutTxtNumber.visibility = View.VISIBLE
                 elayoutTxtDate.visibility = View.VISIBLE
             }
@@ -546,10 +580,9 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     }
 
     //Функция добавления/удаления сканированного штрих-кода в объект BarcodeAdapter
-    private fun displayScanResult(initiatingIntent: Intent) {
+    private fun displayScanResult(data: String) {
         with(binding) {
-            scannedData =
-                initiatingIntent.getStringExtra("com.symbol.datawedge.data_string").toString()
+            scannedData = data
 
             if (::scannedData.isInitialized && scannedData.length >= 17) {
                 val last17Chars = scannedData.takeLast(17)
@@ -573,10 +606,12 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                 } else {
                     val adapter =
                         if (binding.tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
-                    if (adapter.getList().find { it.barcode == scannedData } == null || radioAcceptance.isChecked) {
+                    if (adapter.getList()
+                            .find { it.barcode == scannedData } == null || radioAcceptance.isChecked
+                    ) {
                         viewModel.getBarcodeList(last17Chars, user.warehouse)
                         showDialogLoading()
-                    }else{
+                    } else {
                         toast(requireContext().getString(R.string.err_dublicate_barcode))
                     }
                 }
@@ -611,10 +646,10 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         binding.txtVolumeValue.text = String.format("%.6f", volume.absoluteValue)
     }
 
-    private fun clearAllFocus(){
-        with(binding){
+    private fun clearAllFocus() {
+        with(binding) {
             tvAuto.clearFocus()
-            if (::senderWarehouse.isInitialized){
+            if (::senderWarehouse.isInitialized) {
                 senderWarehouse.clearFocus()
                 getterWarehouse.clearFocus()
             }
@@ -628,7 +663,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     //При выходе из формы отсоединяем приёмник broadcastReceiver и очищаем список сканированных штрих-кодов
     override fun onDestroy() {
         super.onDestroy()
-        context?.unregisterReceiver(broadcastReceiver)
+        context?.unregisterReceiver(zebraBroadcastReceiver)
         barcodeFrontAdapter.clearBarcodeData()
         barcodeBackAdapter.clearBarcodeData()
     }

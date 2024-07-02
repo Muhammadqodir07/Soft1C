@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.soft1c.R
 import com.example.soft1c.databinding.ActivityPrinterBinding
 import com.example.soft1c.repository.model.Acceptance
+import com.example.soft1c.utils.Utils.Settings.macAddress
 import com.example.soft1c.viewmodel.AcceptanceViewModel
 import com.example.tscdll.TSCActivity
 import com.google.zxing.BarcodeFormat
@@ -36,7 +37,6 @@ class PrinterActivity : AppCompatActivity() {
     private var date: String? = null
     private lateinit var barcodeBitmap: Bitmap
     private lateinit var barcodeInput: String
-    private var macAddress: String? = null
     private val TscDll = TSCActivity()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,7 +60,6 @@ class PrinterActivity : AppCompatActivity() {
             txtBarcodeSeats.text =
                 (getString(R.string.text_seats) + ": " + acceptance.countSeat.toString())
                     ?: "No data available"
-            macAddress = intent.getStringExtra("macAddress")
             generateBarcode()
             val view = findViewById<LinearLayout>(R.id.linear_for_print)
             view.setBackgroundColor(Color.WHITE)

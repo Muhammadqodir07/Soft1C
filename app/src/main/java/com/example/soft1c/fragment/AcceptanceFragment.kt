@@ -1,6 +1,5 @@
 package com.example.soft1c.fragment
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.SpannableStringBuilder
@@ -25,7 +24,6 @@ import com.example.soft1c.utils.Utils
 import com.example.soft1c.utils.Utils.acceptanceCopyList
 import com.example.soft1c.viewmodel.AcceptanceViewModel
 import com.google.android.material.textfield.TextInputEditText
-import java.io.File
 
 class AcceptanceFragment :
     BaseFragment<FragmentAcceptanceBinding>(FragmentAcceptanceBinding::inflate) {
@@ -998,22 +996,10 @@ class AcceptanceFragment :
         }
     }
 
-    private fun getMacAddressFromCache(context: Context): String? {
-        val cacheFile = File(context.cacheDir, "mac_address.txt")
-        if (cacheFile.exists()) {
-            return cacheFile.readText().trim()
-        }
-        return null
-    }
-
     private fun navigateToPrint(acceptance: Acceptance) {
         goToPrint = false
         ACCEPTANCE = acceptance
         val intent = Intent(requireContext(), PrinterActivity::class.java)
-        val macAddress = getMacAddressFromCache(requireActivity())
-        if (macAddress != null) {
-            intent.putExtra("macAddress", macAddress)
-        }
         startActivity(intent)
     }
 

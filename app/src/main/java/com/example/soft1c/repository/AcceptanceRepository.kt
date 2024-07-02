@@ -188,7 +188,7 @@ class AcceptanceRepository {
             if (Utils.debugMode) {
                 continuation.resume(Pair(acceptance, ""))
             } else {
-                Network.api.createUpdateAcceptance("true", requestBody)
+                Network.api.createUpdateAcceptance(Utils.Settings.fillBarcodes.toString(), requestBody)
                     .enqueue(object : Callback<ResponseBody> {
                         override fun onResponse(
                             call: Call<ResponseBody>,

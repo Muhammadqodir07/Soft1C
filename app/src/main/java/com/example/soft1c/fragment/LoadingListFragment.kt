@@ -65,6 +65,9 @@ class LoadingListFragment :
     private fun showReloadingList(list: List<Loading>) {
         showPbLoading(false)
         reloadingAdapter.submitList(list)
+        if(binding.chbReloading.isChecked){
+            binding.scrollRvLayout.fullScroll(ScrollView.FOCUS_RIGHT)
+        }
     }
 
     private fun initUI() {

@@ -1,10 +1,12 @@
 package com.example.soft1c.fragment
 
+import android.content.Context
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
+import android.widget.CheckBox
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
@@ -17,12 +19,13 @@ import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.LoadingModel
 import com.example.soft1c.utils.MainActivity
 import com.example.soft1c.utils.Utils
+import com.example.soft1c.utils.Utils.Settings.fillBarcodes
+import com.example.soft1c.utils.Utils.Settings.macAddress
 import com.example.soft1c.utils.Utils.password
 import com.example.soft1c.utils.Utils.user
 import com.example.soft1c.viewmodel.BaseViewModel
 import com.google.android.material.textfield.TextInputEditText
 import com.phearme.macaddressedittext.MacAddressEditText
-import java.io.File
 
 class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::inflate) {
 
@@ -318,23 +321,31 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
     private fun macAddressDialog() {
         val dialogView =
             LayoutInflater.from(requireContext()).inflate(R.layout.dialog_mac_address, null)
-        val macAddressEditText = dialogView.findViewById<MacAddressEditText>(R.id.item_mac_addres)
+        val etxtMacAddress = dialogView.findViewById<MacAddressEditText>(R.id.item_mac_addres)
+        val chbFillBarcode = dialogView.findViewById<CheckBox>(R.id.chb_fill_barcode)
 
-        // Check if the cache file exists
-        val cacheFile = File(requireActivity().cacheDir, "mac_address.txt")
-        if (cacheFile.exists()) {
-            val macAddress = cacheFile.readText()
-            macAddressEditText.setText(macAddress)
+        // Get the shared preferences
+        val sharedPreferences = requireActivity().getSharedPreferences(Utils.Settings.SETTINGS_PREF_NAME, Context.MODE_PRIVATE)
+
+        // Check if the MAC address exists in shared preferences
+        macAddress = sharedPreferences.getString(Utils.Settings.MAC_ADDRESS_PREF, "")
+        fillBarcodes = sharedPreferences.getString(Utils.Settings.FILL_BARCODE_PREF, "")
+        if (!macAddress.isNullOrEmpty()) {
+            etxtMacAddress.setText(macAddress)
         }
+        chbFillBarcode.isChecked = !fillBarcodes.isNullOrEmpty() && fillBarcodes.equals("true")
 
         val dialog = AlertDialog.Builder(requireContext())
             .setTitle(R.string.text_enter_mac_address)
             .setView(dialogView)
             .setPositiveButton(R.string.text_save) { dialog, _ ->
-                val macAddress = macAddressEditText.text.toString().trim()
+                macAddress = etxtMacAddress.text.toString().trim()
+                fillBarcodes = chbFillBarcode.isChecked.toString()
 
-                // Save the Mac address to the cache
-                cacheFile.writeText(macAddress)
+
+                // Save the MAC address to shared preferences
+                sharedPreferences.edit().putString(Utils.Settings.MAC_ADDRESS_PREF, macAddress).apply()
+                sharedPreferences.edit().putString(Utils.Settings.FILL_BARCODE_PREF, fillBarcodes).apply()
 
                 // Close the dialog
                 dialog.dismiss()
