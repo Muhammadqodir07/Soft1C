@@ -129,4 +129,7 @@
     <string name="car_parts_1">Начало</string>
     <string name="car_parts_2">Конец</string>
     <string name="stg_fill_barcodes">Заполнить ШК приёмки</string>
+    <string name="txt_success_connection">Успешное соединение</string>
+    <string name="txt_no_connection">Нет соединения</string>
+    <string name="txt_check_connection">Проверить свзяь</string>
 </resources>

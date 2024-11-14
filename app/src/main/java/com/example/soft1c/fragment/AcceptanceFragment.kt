@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.CheckBox
+import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
@@ -30,7 +31,7 @@ class AcceptanceFragment :
 
     private var clientFound = false
     private lateinit var acceptance: Acceptance
-    private lateinit var disabilityReason: SpannableStringBuilder
+    private var disabilityReason: SpannableStringBuilder? = null
     private var clientPassport = ""
     private val user = Utils.user
 
@@ -71,6 +72,21 @@ class AcceptanceFragment :
     }
 
     private fun observeViewModels() {
+        viewModel.connectionLiveData.observe(viewLifecycleOwner) {
+            if (it) {
+                Toast.makeText(
+                    requireContext(),
+                    resources.getString(R.string.txt_success_connection),
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                Toast.makeText(
+                    requireContext(),
+                    resources.getString(R.string.txt_no_connection),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
         viewModel.acceptanceLiveData.observe(viewLifecycleOwner, ::showDetails)
         viewModel.toastLiveData.observe(viewLifecycleOwner) {
             documentCreate = false
@@ -78,7 +94,7 @@ class AcceptanceFragment :
         }
         viewModel.toastResIdLiveData.observe(viewLifecycleOwner) {
             documentCreate = false
-            errorDialog(requireContext().getString(it), true)
+            errorDialog(requireContext().getString(it), false)
         }
         viewModel.clientLiveData.observe(viewLifecycleOwner, ::clientObserve)
         viewModel.createUpdateLiveData.observe(viewLifecycleOwner, ::createUpdateAcceptance)
@@ -92,6 +108,8 @@ class AcceptanceFragment :
     }
 
     private fun createUpdateAcceptance(pair: Pair<Acceptance, String>) {
+        binding.etxtSave.isEnabled = true
+        binding.btnSave.isEnabled = true
         if (pair.second.isNotEmpty()) {
             errorDialog(pair.second, false)
             documentCreate = false
@@ -102,7 +120,7 @@ class AcceptanceFragment :
         if (NEXT_IS_NEED) {
             createCopyForm()
         } else {
-            if (goToPrint){
+            if (goToPrint) {
                 navigateToPrint(pair.first)
             }
             if (!isBottomSaveButton)
@@ -308,23 +326,20 @@ class AcceptanceFragment :
             btnPrint.setOnClickListener {
                 if (acceptance.number.isNotEmpty()) {
                     navigateToPrint(acceptance)
-                }else{
+                } else {
                     goToPrint = true
                     createUpdateAcceptance()
                 }
             }
 
-            if (acceptance.number.isNotEmpty()) {
-                btnDocInfo.setOnClickListener {
-                    showEditWarningDialog(
-                        disabilityReason,
-                        showCheckBox = false,
-                        navigateToLog = true
-                    )
+            btnDocInfo.setOnClickListener {
+                showEditWarningDialog(
+                    disabilityReason,
+                    showCheckBox = false,
+                    navigateToLog = true
+                ) {
+                    viewModel.checkConnection()
                 }
-
-            } else {
-                btnDocInfo.visibility = View.GONE
             }
         }
     }
@@ -363,7 +378,13 @@ class AcceptanceFragment :
                 viewModel.createUpdateAcceptance(acceptance)
             }
         }
-        viewModel.createUpdateAcceptance(acceptance)
+        with(binding) {
+            if (etxtSave.isEnabled) {
+                etxtSave.isEnabled = false
+                btnSave.isEnabled = false
+                viewModel.createUpdateAcceptance(acceptance)
+            }
+        }
     }
 
     private fun saveAcceptanceConfirmationDialog(documentsCount: Int) {
@@ -872,7 +893,7 @@ class AcceptanceFragment :
                     disabilityReason,
                     showCheckBox = true,
                     navigateToLog = false
-                )
+                ) { false }
             }
         }
     }

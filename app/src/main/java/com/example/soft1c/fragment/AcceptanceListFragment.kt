@@ -63,6 +63,7 @@ class AcceptanceListFragment :
             toast(getString(it))
         }
         viewModel.acceptanceListLiveData.observe(viewLifecycleOwner) { it ->
+            closeDialogLoading()
             val list = it.sortedByDescending { LocalDateTime.parse(it.date) }
             acceptanceList = list
             if (sortedList.isNotEmpty() && !Utils.refreshList) {

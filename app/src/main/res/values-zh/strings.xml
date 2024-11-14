@@ -129,4 +129,7 @@
     <string name="car_parts_1">前部</string>
     <string name="car_parts_2">背面部</string>
     <string name="stg_fill_barcodes">自动生成条码</string>
+    <string name="txt_success_connection">成功连接</string>
+    <string name="txt_no_connection">无连接</string>
+    <string name="txt_check_connection">检查连接</string>
 </resources>

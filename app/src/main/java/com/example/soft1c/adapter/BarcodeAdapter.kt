@@ -19,12 +19,14 @@ class BarcodeAdapter(val onRemoveBarcode: (LoadingBarcode) -> Unit) :
 
     //Внутренний класс предоставляющий ссылки на элементы пользовательского интерфейса, которые будут отображаться для каждого элемента списка.
     inner class BarcodeViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        private val barcodeDocNumber: TextView = view.findViewById(R.id.txt_doc_number)
         private val barcodeClient: TextView = view.findViewById(R.id.txt_code_client)
         private val barcodeDate: TextView = view.findViewById(R.id.txt_date)
         private val barcodeSeatNumber: TextView = view.findViewById(R.id.txt_seat_number)
         private val actionButton: ImageButton = view.findViewById(R.id.action_button)
 
         fun bind(barcode: LoadingBarcode, position: Int) {
+            barcodeDocNumber.text = barcode.acceptanceNumber.replace("[A-Z]".toRegex(), "").trimStart('0')
             barcodeClient.text = barcode.clientCode
             barcodeDate.text = inputDateFormat.parse(barcode.date)
                 ?.let { outputDateFormat.format(it) }

@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.widget.CheckBox
+import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
@@ -73,10 +74,10 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                             item.isChecked = !item.isChecked
                             if (item.isChecked) {
                                 Utils.debugMode = true
-                                Utils.clientTimeout = 80L
+                                Utils.authorizationTimeout = 80L
                             } else {
                                 Utils.debugMode = false
-                                Utils.clientTimeout = 30L
+                                Utils.authorizationTimeout = 30L
                             }
                         }
 
@@ -329,11 +330,11 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
 
         // Check if the MAC address exists in shared preferences
         macAddress = sharedPreferences.getString(Utils.Settings.MAC_ADDRESS_PREF, "")
-        fillBarcodes = sharedPreferences.getString(Utils.Settings.FILL_BARCODE_PREF, "")
+        fillBarcodes = sharedPreferences.getString(Utils.Settings.FILL_BARCODE_PREF, "").toString()
         if (!macAddress.isNullOrEmpty()) {
             etxtMacAddress.setText(macAddress)
         }
-        chbFillBarcode.isChecked = !fillBarcodes.isNullOrEmpty() && fillBarcodes.equals("true")
+        chbFillBarcode.isChecked = fillBarcodes.isNotEmpty() && fillBarcodes == "true"
 
         val dialog = AlertDialog.Builder(requireContext())
             .setTitle(R.string.text_enter_mac_address)
@@ -395,12 +396,12 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                     } else {
                         closeDialogLoading()
                         if (findNavController().currentDestination?.id == R.id.authFragment)
-                            findNavController().navigate(R.id.action_authFragment_to_loadingFragment)
+                            navigate(R.id.action_authFragment_to_loadingFragment)
                     }
                 } else {
                     closeDialogLoading()
                     if (findNavController().currentDestination?.id == R.id.authFragment)
-                        findNavController().navigate(R.id.action_authFragment_to_acceptanceFragment)
+                        navigate(R.id.action_authFragment_to_acceptanceFragment)
                 }
             }
         }
@@ -434,11 +435,16 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                 }
                 closeDialogLoading()
                 if (user.acceptanceAccess)
-                    findNavController().navigate(R.id.action_authFragment_to_mainFragment)
+                    navigate(R.id.action_authFragment_to_mainFragment)
                 else
-                    findNavController().navigate(R.id.action_authFragment_to_loadingFragment)
+                    navigate(R.id.action_authFragment_to_loadingFragment)
             }
         }
+    }
+
+    private fun navigate(@IdRes action: Int){
+        Network.refreshConnection(Utils.clientTimeout)
+        findNavController().navigate(action)
     }
 
 }

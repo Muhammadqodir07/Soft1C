@@ -5,6 +5,7 @@ import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.LoadingBarcode
 import com.example.soft1c.repository.model.LoadingEnableVisible
 import com.example.soft1c.utils.Utils
+import com.example.soft1c.utils.withRefreshedConnection
 import okhttp3.ResponseBody
 import org.json.JSONArray
 import org.json.JSONObject
@@ -20,56 +21,60 @@ class ReloadingRepository : LoadingRepository() {
     private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
 
     suspend fun getReloadingApi(number: String): Pair<Loading, List<LoadingEnableVisible>>? {
-        return suspendCoroutine { continuation ->
-            if (Utils.debugMode) {
-                val doc = getLoadingList(Loading.DEFAULT_DATA_LIST)
-                continuation.resume(Pair(doc.first(), mutableListOf()))
-            } else {
-                Network.loadingApi.reloading(number).enqueue(object : Callback<ResponseBody> {
-                    override fun onResponse(
-                        call: Call<ResponseBody>,
-                        response: Response<ResponseBody>
-                    ) {
-                        if (response.isSuccessful) {
-                            val responseBody = response.body()?.string() ?: ""
-                            continuation.resume(getReloadingJson(responseBody))
-                        } else {
-                            continuation.resume(Pair(Loading(""), emptyList()))
+        return withRefreshedConnection{
+            suspendCoroutine { continuation ->
+                if (Utils.debugMode) {
+                    val doc = getLoadingList(Loading.DEFAULT_DATA_LIST)
+                    continuation.resume(Pair(doc.first(), mutableListOf()))
+                } else {
+                    Network.loadingApi.reloading(number).enqueue(object : Callback<ResponseBody> {
+                        override fun onResponse(
+                            call: Call<ResponseBody>,
+                            response: Response<ResponseBody>
+                        ) {
+                            if (response.isSuccessful) {
+                                val responseBody = response.body()?.string() ?: ""
+                                continuation.resume(getReloadingJson(responseBody))
+                            } else {
+                                continuation.resume(Pair(Loading(""), emptyList()))
+                            }
                         }
-                    }
 
-                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                        continuation.resumeWithException(t)
-                    }
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            continuation.resumeWithException(t)
+                        }
 
-                })
+                    })
+                }
             }
         }
     }
 
     suspend fun getReloadingListApi(): List<Loading> {
-        return suspendCoroutine { continuation ->
-            if (Utils.debugMode) {
-                continuation.resume(getLoadingList(Loading.DEFAULT_DATA_LIST))
-            } else {
-                Network.loadingApi.reloadingList().enqueue(object : Callback<ResponseBody> {
-                    override fun onResponse(
-                        call: Call<ResponseBody>,
-                        response: Response<ResponseBody>
-                    ) {
-                        if (response.isSuccessful) {
-                            val responseBody = response.body()?.string() ?: ""
-                            continuation.resume(getReloadingList(responseBody))
-                        } else {
-                            continuation.resume(emptyList())
+        return withRefreshedConnection{
+            suspendCoroutine { continuation ->
+                if (Utils.debugMode) {
+                    continuation.resume(getLoadingList(Loading.DEFAULT_DATA_LIST))
+                } else {
+                    Network.loadingApi.reloadingList().enqueue(object : Callback<ResponseBody> {
+                        override fun onResponse(
+                            call: Call<ResponseBody>,
+                            response: Response<ResponseBody>
+                        ) {
+                            if (response.isSuccessful) {
+                                val responseBody = response.body()?.string() ?: ""
+                                continuation.resume(getReloadingList(responseBody))
+                            } else {
+                                continuation.resume(emptyList())
+                            }
                         }
-                    }
 
-                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                        continuation.resumeWithException(t)
-                    }
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            continuation.resumeWithException(t)
+                        }
 
-                })
+                    })
+                }
             }
         }
     }

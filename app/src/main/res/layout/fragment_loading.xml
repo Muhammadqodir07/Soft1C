@@ -154,6 +154,8 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
+
+
         </LinearLayout>
 
         <LinearLayout
@@ -212,6 +214,29 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/linear_topbar" />
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/elayout_barcode"
+            android:layout_width="match_parent"
+            app:endIconDrawable="@drawable/ic_checked"
+            app:endIconMode="custom"
+            app:endIconTint="@color/black"
+            app:layout_constraintTop_toBottomOf="@id/linear_topbar"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColorHint="@color/black">
+
+            <EditText
+                android:id="@+id/etxt_barcode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/white"
+                android:hint="@string/text_barcode"
+                android:inputType="number"
+                android:textSize="@dimen/text_input_size_16" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
         <LinearLayout
             android:id="@+id/linear_scan"
             android:layout_width="match_parent"
@@ -220,7 +245,7 @@
             android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/linear_topbar">
+            app:layout_constraintTop_toBottomOf="@id/elayout_barcode">
 
             <Button
                 android:id="@+id/btn_scan"
@@ -236,7 +261,7 @@
             android:layout_width="match_parent"
             android:layout_height="2dp"
             android:background="?android:attr/listDivider"
-            app:layout_constraintTop_toBottomOf="@id/linear_scan" />
+            app:layout_constraintTop_toBottomOf="@id/linear_topbar" />
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tabLayout"
@@ -272,6 +297,16 @@
             app:layout_constraintTop_toBottomOf="@id/tabLayout">
 
             <TextView
+                android:id="@+id/txt_doc_number"
+                style="@style/TextNumber"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.7"
+                android:gravity="center|start"
+                android:text="@string/text_document_number"
+                android:textSize="16sp"/>
+
+            <TextView
                 android:id="@+id/txt_client_code"
                 style="@style/TextNumber"
                 android:layout_width="0dp"
@@ -296,7 +331,7 @@
                 style="@style/TextNumber"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_weight="0.5"
                 android:gravity="center|start"
                 android:paddingStart="5dp"
                 android:text="@string/seat_number" />

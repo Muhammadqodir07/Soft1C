@@ -43,7 +43,7 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
         } else {
             toastMutableData.postValue("Error on $coroutineContext , error message ${throwable.localizedMessage}")
         }
-        Network.refreshConnection()
+        Network.refreshConnection(Utils.clientTimeout)
     }
 
     private val toastMutableData = SingleLiveEvent<String>()
@@ -52,6 +52,7 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
     private val acceptanceMutableData =
         SingleLiveEvent<Triple<Acceptance, FieldsAccess, String>>()
     private val clientMutableData = SingleLiveEvent<Pair<Client, Boolean>>()
+    private val connectionMutableData = SingleLiveEvent<Boolean>()
     private val createUpdateMutableData = SingleLiveEvent<Pair<Acceptance, String>>()
     private val acceptanceSizeMutableData = SingleLiveEvent<Pair<SizeAcceptance, String>>()
     private val updateAcceptanceSizeMutableData = SingleLiveEvent<Pair<String, Boolean>>()
@@ -70,6 +71,9 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
 
     val clientLiveData: LiveData<Pair<Client, Boolean>>
         get() = clientMutableData
+
+    val connectionLiveData: LiveData<Boolean>
+        get() = connectionMutableData
 
     val createUpdateLiveData: LiveData<Pair<Acceptance, String>>
         get() = createUpdateMutableData
@@ -126,9 +130,9 @@ open class AcceptanceViewModel(application: Application) : AndroidViewModel(appl
 
     }
 
-    fun sendLogs() {
+    fun checkConnection() {
         viewModelScope.launch((exceptionScope + Dispatchers.IO)) {
-            logSendingResultMutableData.postValue(repository.sendLogs(Utils.logFor1C))
+            connectionMutableData.postValue(repository.checkConnection())
         }
     }
 }

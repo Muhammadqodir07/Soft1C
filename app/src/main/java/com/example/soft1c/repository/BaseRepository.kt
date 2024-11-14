@@ -11,6 +11,7 @@ import com.example.soft1c.repository.model.User.Companion.SIZE_ADD
 import com.example.soft1c.repository.model.User.Companion.WAREHOUSE
 import com.example.soft1c.repository.model.User.Companion.WEIGHT_ADD
 import com.example.soft1c.utils.Utils
+import com.example.soft1c.utils.withRefreshedConnection
 import okhttp3.ResponseBody
 import org.json.JSONArray
 import org.json.JSONObject
@@ -27,19 +28,48 @@ class BaseRepository(private val lang: String) {
     var errorCode = 0
 
     suspend fun getAccessToken(): Boolean {
-        return suspendCoroutine { continuation ->
-            if (Utils.debugMode) {
-                continuation.resume(getRights(User.DEFAULT_DATA))
-            } else {
-                Network.Api.auto()
+        return withRefreshedConnection {
+            suspendCoroutine { continuation ->
+                if (Utils.debugMode) {
+                    continuation.resume(getRights(User.DEFAULT_DATA))
+                } else {
+                    Network.Api.auto()
+                        .enqueue(object : Callback<ResponseBody> {
+                            override fun onResponse(
+                                call: Call<ResponseBody>,
+                                response: Response<ResponseBody>,
+                            ) {
+                                if (response.isSuccessful) {
+                                    val body = response.body()?.string() ?: ""
+                                    continuation.resume(getRights(body))
+                                    return
+                                }
+                                errorCode = response.code()
+                                continuation.resume(false)
+                            }
+
+                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                Timber.d("error ${t.message}")
+                                continuation.resumeWithException(t)
+                            }
+                        })
+                }
+            }
+        }
+    }
+
+    suspend fun getLoadingToken(): Boolean {
+        return withRefreshedConnection {
+            suspendCoroutine { continuation ->
+                Network.loadingApi.loadAuth()
                     .enqueue(object : Callback<ResponseBody> {
                         override fun onResponse(
                             call: Call<ResponseBody>,
                             response: Response<ResponseBody>,
                         ) {
+                            //Если ответ есть то авторизовать
                             if (response.isSuccessful) {
-                                val body = response.body()?.string() ?: ""
-                                continuation.resume(getRights(body))
+                                continuation.resume(true)
                                 return
                             }
                             errorCode = response.code()
@@ -55,73 +85,55 @@ class BaseRepository(private val lang: String) {
         }
     }
 
-    suspend fun getLoadingToken(): Boolean {
-        return suspendCoroutine { continuation ->
-            Network.loadingApi.loadAuth()
-                .enqueue(object : Callback<ResponseBody> {
-                    override fun onResponse(
-                        call: Call<ResponseBody>,
-                        response: Response<ResponseBody>,
-                    ) {
-                        //Если ответ есть то авторизовать
-                        if (response.isSuccessful) {
-                            continuation.resume(true)
-                            return
-                        }
-                        errorCode = response.code()
-                        continuation.resume(false)
-                    }
-
-                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                        Timber.d("error ${t.message}")
-                        continuation.resumeWithException(t)
-                    }
-                })
-        }
-    }
-
     suspend fun getAnyApi(type: Int): Pair<Int, List<AnyModel>> {
-        return suspendCoroutine { continuation ->
-            if (Utils.debugMode) {
-                val data = when (type) {
-                    Utils.ObjectModelType.ADDRESS -> AnyModel.AddressModel.DEFAULT_DATA
-                    Utils.ObjectModelType._PACKAGE -> AnyModel.PackageModel.DEFAULT_DATA
-                    Utils.ObjectModelType.PRODUCT_TYPE -> AnyModel.ProductType.DEFAULT_DATA
-                    Utils.ObjectModelType.ZONE -> AnyModel.Zone.DEFAULT_DATA
-                    else -> AnyModel.AddressModel.DEFAULT_DATA
-                }
-                continuation.resume(Pair(type, getAddressListJson(data, type)))
-            } else {
-                when (type) {
-                    Utils.ObjectModelType.ADDRESS -> Network.api.addressList()
-                    Utils.ObjectModelType._PACKAGE -> Network.api.packageList()
-                    Utils.ObjectModelType.PRODUCT_TYPE -> Network.api.productTypeList()
-                    Utils.ObjectModelType.ZONE -> Network.api.zoneList()
-                    else -> Network.api.addressList()
-                }
-                    .enqueue(object : Callback<ResponseBody> {
-                        override fun onResponse(
-                            call: Call<ResponseBody>,
-                            response: Response<ResponseBody>,
-                        ) {
-                            if (response.isSuccessful) {
-                                val responseBody = response.body()?.string() ?: ""
-                                continuation.resume(
-                                    Pair(
-                                        type,
-                                        getAddressListJson(responseBody, type)
+        return withRefreshedConnection {
+            suspendCoroutine { continuation ->
+                if (Utils.debugMode) {
+                    val data = when (type) {
+                        Utils.ObjectModelType.ADDRESS -> AnyModel.AddressModel.DEFAULT_DATA
+                        Utils.ObjectModelType._PACKAGE -> AnyModel.PackageModel.DEFAULT_DATA
+                        Utils.ObjectModelType.PRODUCT_TYPE -> AnyModel.ProductType.DEFAULT_DATA
+                        Utils.ObjectModelType.ZONE -> AnyModel.Zone.DEFAULT_DATA
+                        else -> AnyModel.AddressModel.DEFAULT_DATA
+                    }
+                    continuation.resume(Pair(type, getAddressListJson(data, type)))
+                } else {
+                    when (type) {
+                        Utils.ObjectModelType.ADDRESS -> Network.api.addressList()
+                        Utils.ObjectModelType._PACKAGE -> Network.api.packageList()
+                        Utils.ObjectModelType.PRODUCT_TYPE -> Network.api.productTypeList()
+                        Utils.ObjectModelType.ZONE -> Network.api.zoneList()
+                        else -> Network.api.addressList()
+                    }
+                        .enqueue(object : Callback<ResponseBody> {
+                            override fun onResponse(
+                                call: Call<ResponseBody>,
+                                response: Response<ResponseBody>,
+                            ) {
+                                if (response.isSuccessful) {
+                                    val responseBody = response.body()?.string() ?: ""
+                                    continuation.resume(
+                                        Pair(
+                                            type,
+                                            getAddressListJson(responseBody, type)
+                                        )
                                     )
-                                )
-                            } else {
-                                continuation.resume(Pair(Utils.ObjectModelType.EMPTY, emptyList()))
+                                } else {
+                                    continuation.resume(
+                                        Pair(
+                                            Utils.ObjectModelType.EMPTY,
+                                            emptyList()
+                                        )
+                                    )
+                                }
+
                             }
 
-                        }
-
-                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                            continuation.resumeWithException(t)
-                        }
-                    })
+                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                continuation.resumeWithException(t)
+                            }
+                        })
+                }
             }
         }
     }
@@ -129,71 +141,73 @@ class BaseRepository(private val lang: String) {
 
     //Приостанавливаемая функция suspend. Блокирует вызывающий поток до тех пор, пока результат не будет получен.
     suspend fun getLoading(type: Int): Pair<Int, List<LoadingModel>> {
-        return suspendCoroutine { continuation ->
+        return withRefreshedConnection {
+            suspendCoroutine { continuation ->
 //            вызов API сети для асинхронного получения списка машин.
-            if (Utils.debugMode) {
-                when (type) {
-                    Utils.ObjectModelType.CAR -> continuation.resume(
-                        Pair(
-                            type,
-                            getLoadModelListJson(LoadingModel.Car.DEFAULT_DATA, type)
-                        )
-                    )
-
-                    Utils.ObjectModelType.WAREHOUSE -> continuation.resume(
-                        Pair(
-                            type,
-                            getLoadModelListJson(LoadingModel.Warehouse.DEFAULT_DATA, type)
-                        )
-                    )
-
-                    Utils.ObjectModelType.CONTAINER -> continuation.resume(
-                        Pair(
-                            type,
-                            getLoadModelListJson(LoadingModel.Container.DEFAULT_DATA, type)
-                        )
-                    )
-
-                    else -> continuation.resume(
-                        Pair(
-                            type,
-                            getLoadModelListJson(LoadingModel.Car.DEFAULT_DATA, type)
-                        )
-                    )
-                }
-            } else {
-                when (type) {
-                    Utils.ObjectModelType.CAR -> Network.loadingApi.carsList()
-                    Utils.ObjectModelType.WAREHOUSE -> Network.loadingApi.warehouseList()
-                    Utils.ObjectModelType.CONTAINER -> Network.loadingApi.containerList()
-                    else -> Network.loadingApi.carsList()
-                }.enqueue(object : Callback<ResponseBody> {
-                    //При получении ответа от сервера.
-                    override fun onResponse(
-                        call: Call<ResponseBody>,
-                        response: Response<ResponseBody>
-                    ) {
-                        //Если ответ успешен, получает тело ответа и передает его в функцию getCarsListJson()
-                        if (response.isSuccessful) {
-                            val responseBody = response.body()?.string() ?: ""
-                            continuation.resume(
-                                Pair(
-                                    type,
-                                    getLoadModelListJson(responseBody, type)
-                                )
+                if (Utils.debugMode) {
+                    when (type) {
+                        Utils.ObjectModelType.CAR -> continuation.resume(
+                            Pair(
+                                type,
+                                getLoadModelListJson(LoadingModel.Car.DEFAULT_DATA, type)
                             )
-                        }
-                        //Иначе вызывает continuation.resumeWithException(), передавая исключение Throwable("Failed to fetch cars list").
-                        else {
-                            continuation.resume(Pair(Utils.ObjectModelType.EMPTY, emptyList()))
-                        }
-                    }
+                        )
 
-                    //ПриОшибке во время запроса. Вызывает continuation.resumeWithException(), передавая исключение Throwable.
-                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                        continuation.resumeWithException(t)
+                        Utils.ObjectModelType.WAREHOUSE -> continuation.resume(
+                            Pair(
+                                type,
+                                getLoadModelListJson(LoadingModel.Warehouse.DEFAULT_DATA, type)
+                            )
+                        )
+
+                        Utils.ObjectModelType.CONTAINER -> continuation.resume(
+                            Pair(
+                                type,
+                                getLoadModelListJson(LoadingModel.Container.DEFAULT_DATA, type)
+                            )
+                        )
+
+                        else -> continuation.resume(
+                            Pair(
+                                type,
+                                getLoadModelListJson(LoadingModel.Car.DEFAULT_DATA, type)
+                            )
+                        )
                     }
-                })
+                } else {
+                    when (type) {
+                        Utils.ObjectModelType.CAR -> Network.loadingApi.carsList()
+                        Utils.ObjectModelType.WAREHOUSE -> Network.loadingApi.warehouseList()
+                        Utils.ObjectModelType.CONTAINER -> Network.loadingApi.containerList()
+                        else -> Network.loadingApi.carsList()
+                    }.enqueue(object : Callback<ResponseBody> {
+                        //При получении ответа от сервера.
+                        override fun onResponse(
+                            call: Call<ResponseBody>,
+                            response: Response<ResponseBody>
+                        ) {
+                            //Если ответ успешен, получает тело ответа и передает его в функцию getCarsListJson()
+                            if (response.isSuccessful) {
+                                val responseBody = response.body()?.string() ?: ""
+                                continuation.resume(
+                                    Pair(
+                                        type,
+                                        getLoadModelListJson(responseBody, type)
+                                    )
+                                )
+                            }
+                            //Иначе вызывает continuation.resumeWithException(), передавая исключение Throwable("Failed to fetch cars list").
+                            else {
+                                continuation.resume(Pair(Utils.ObjectModelType.EMPTY, emptyList()))
+                            }
+                        }
+
+                        //ПриОшибке во время запроса. Вызывает continuation.resumeWithException(), передавая исключение Throwable.
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            continuation.resumeWithException(t)
+                        }
+                    })
+                }
             }
         }
     }

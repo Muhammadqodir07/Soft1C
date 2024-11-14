@@ -12,6 +12,7 @@ import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.LoadingBarcode
 import com.example.soft1c.repository.model.LoadingEnableVisible
 import com.example.soft1c.utils.SingleLiveEvent
+import com.example.soft1c.utils.Utils
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,7 +28,7 @@ class ReloadingViewModel(application: Application): AndroidViewModel(application
         } else {
             toastMutableData.postValue("Error on $coroutineContext , error message ${throwable.localizedMessage}")
         }
-        Network.refreshConnection()
+        Network.refreshConnection(Utils.clientTimeout)
     }
 
     private val toastMutableData = SingleLiveEvent<String>()

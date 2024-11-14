@@ -140,4 +140,9 @@
     <string name="txt_doc_not_printed">Document is not printed</string>
     <string name="stg_fill_barcodes">Fill barcodes of acceptance</string>
 
+    <string name="txt_success_connection">Success connection</string>
+    <string name="txt_no_connection">No connection</string>
+    <string name="txt_check_connection">Check connection</string>
+
+
 </resources>

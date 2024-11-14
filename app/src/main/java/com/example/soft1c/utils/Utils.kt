@@ -3,6 +3,7 @@ package com.example.soft1c.utils
 import android.content.Context
 import android.util.DisplayMetrics
 import android.view.WindowManager
+import com.example.soft1c.network.Network
 import com.example.soft1c.repository.model.Acceptance
 import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.LoadingModel
@@ -21,7 +22,8 @@ object Utils {
     var auth = ""
     var lang = ""
 
-    var clientTimeout = 30L
+    var authorizationTimeout = 30L
+    var clientTimeout = 20L
     var logFor1C = ""
 
     var productTypes: List<AnyModel> = listOf()
@@ -86,7 +88,7 @@ object Utils {
 
     object Settings {
         var passportClientControl: Boolean = true
-        var fillBarcodes: String? = null
+        var fillBarcodes: String = false.toString()
         var macAddress: String? = null
         const val SHOW_DISABILITY_DIALOG = "ПоказатьОкноСИнфойНедоступности"
         const val SETTINGS_PREF_NAME = "settings_pref"
@@ -107,4 +109,12 @@ fun getDisplayWidth(context: Context): Int {
     val paddingInPixels = (8 * density + 0.5f).toInt() // Converting dp to pixels
 
     return screenWidthPixels - paddingInPixels * 2 // Subtracting padding from both sides
+}
+
+suspend fun <T> withRefreshedConnection(action: suspend () -> T): T {
+    // Ensure the connection is refreshed before proceeding
+    Network.refreshConnection(Utils.clientTimeout)
+
+    // Now execute the actual suspend function
+    return action()
 }

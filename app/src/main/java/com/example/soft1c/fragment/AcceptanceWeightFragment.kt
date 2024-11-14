@@ -6,6 +6,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.AutoCompleteTextView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import com.example.soft1c.R
@@ -51,12 +52,19 @@ class AcceptanceWeightFragment :
 
 
     private fun observeViewModels() {
+        viewModel.connectionLiveData.observe(viewLifecycleOwner){
+            if (it) {
+                Toast.makeText(requireContext(), "Success connection", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), "No connection", Toast.LENGTH_SHORT).show()
+            }
+        }
         viewModel.acceptanceLiveData.observe(viewLifecycleOwner, ::showDetails)
         viewModel.toastLiveData.observe(viewLifecycleOwner) {
             errorDialog(it, true)
         }
         viewModel.toastResIdLiveData.observe(viewLifecycleOwner) {
-            errorDialog(getString(it), true)
+            errorDialog(getString(it), false)
         }
         viewModel.createUpdateLiveData.observe(viewLifecycleOwner, ::createUpdateAcceptance)
         viewModel.logSendingResultLiveData.observe(viewLifecycleOwner) {
@@ -69,6 +77,9 @@ class AcceptanceWeightFragment :
     }
 
     private fun createUpdateAcceptance(pair: Pair<Acceptance, String>) {
+        binding.etxtSave.isEnabled = true
+        binding.etxtSaveCopy.isEnabled = true
+
         if (pair.second.isNotEmpty()) {
             errorDialog(pair.second, false)
             return
@@ -120,7 +131,9 @@ class AcceptanceWeightFragment :
                         disabilityReason,
                         showCheckBox = false,
                         navigateToLog = true
-                    )
+                    ) {
+                        viewModel.checkConnection()
+                    }
                 } else {
                     logFileDialog()
                 }
@@ -186,12 +199,17 @@ class AcceptanceWeightFragment :
 
     private fun createUpdateAcceptance() {
         with(binding) {
+
             val weight = etxtWeight.text.toString()
             if (weight.isNotEmpty())
                 acceptance.allWeight = weight.toDouble()
             acceptance.type = 1
+            if (etxtSave.isEnabled) {
+                etxtSave.isEnabled = false
+                etxtSaveCopy.isEnabled = false
+                viewModel.createUpdateAcceptance(acceptance)
+            }
         }
-        viewModel.createUpdateAcceptance(acceptance)
     }
 
     private fun showPbLoading(show: Boolean) {
@@ -270,7 +288,7 @@ class AcceptanceWeightFragment :
                     disabilityReason,
                     showCheckBox = true,
                     navigateToLog = false
-                )
+                ) {}
             }
             return
         }
