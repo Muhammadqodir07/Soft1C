@@ -1,6 +1,5 @@
 package com.example.soft1c.fragment
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.SpannableStringBuilder
@@ -10,6 +9,8 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.CheckBox
 import android.widget.Toast
+import androidx.activity.addCallback
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -24,14 +25,13 @@ import com.example.soft1c.utils.Utils
 import com.example.soft1c.utils.Utils.acceptanceCopyList
 import com.example.soft1c.viewmodel.AcceptanceViewModel
 import com.google.android.material.textfield.TextInputEditText
-import java.io.File
 
 class AcceptanceFragment :
     BaseFragment<FragmentAcceptanceBinding>(FragmentAcceptanceBinding::inflate) {
 
     private var clientFound = false
     private lateinit var acceptance: Acceptance
-    private lateinit var disabilityReason: SpannableStringBuilder
+    private var disabilityReason: SpannableStringBuilder? = null
     private var clientPassport = ""
     private val user = Utils.user
 
@@ -40,10 +40,15 @@ class AcceptanceFragment :
     private var documentCreate = false
     private var isCopiedAcceptance = false
     private var isBottomSaveButton = false
+    private var goToPrint = false
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val callback = requireActivity().onBackPressedDispatcher.addCallback(this) {
+            acceptanceCopyList.clear()
+            findNavController().popBackStack()
+        }
         val acceptanceNumber = arguments?.getString(KEY_ACCEPTANCE_NUMBER, "") ?: ""
         acceptance = if (acceptanceNumber.isNotEmpty()) {
             viewModel.getAcceptance(acceptanceNumber, Utils.OperationType.ACCEPTANCE)
@@ -67,6 +72,21 @@ class AcceptanceFragment :
     }
 
     private fun observeViewModels() {
+        viewModel.connectionLiveData.observe(viewLifecycleOwner) {
+            if (it) {
+                Toast.makeText(
+                    requireContext(),
+                    resources.getString(R.string.txt_success_connection),
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                Toast.makeText(
+                    requireContext(),
+                    resources.getString(R.string.txt_no_connection),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
         viewModel.acceptanceLiveData.observe(viewLifecycleOwner, ::showDetails)
         viewModel.toastLiveData.observe(viewLifecycleOwner) {
             documentCreate = false
@@ -74,7 +94,7 @@ class AcceptanceFragment :
         }
         viewModel.toastResIdLiveData.observe(viewLifecycleOwner) {
             documentCreate = false
-            errorDialog(requireContext().getString(it), true)
+            errorDialog(requireContext().getString(it), false)
         }
         viewModel.clientLiveData.observe(viewLifecycleOwner, ::clientObserve)
         viewModel.createUpdateLiveData.observe(viewLifecycleOwner, ::createUpdateAcceptance)
@@ -88,18 +108,23 @@ class AcceptanceFragment :
     }
 
     private fun createUpdateAcceptance(pair: Pair<Acceptance, String>) {
+        binding.etxtSave.isEnabled = true
+        binding.btnSave.isEnabled = true
         if (pair.second.isNotEmpty()) {
             errorDialog(pair.second, false)
             documentCreate = false
             return
         }
-        Utils.refreshList = true
         closeDialogLoading()
+        Utils.refreshList = true
         if (NEXT_IS_NEED) {
             createCopyForm()
         } else {
+            if (goToPrint) {
+                navigateToPrint(pair.first)
+            }
             if (!isBottomSaveButton)
-                closeActivity()
+                activity?.onBackPressed()
             else {
                 setInitFocuses()
                 toast(getString(R.string.text_successfully_saved))
@@ -110,11 +135,15 @@ class AcceptanceFragment :
 
     private fun clientObserve(pair: Pair<Client, Boolean>) {
         clientFound = pair.second
-        enableFieldsAfterFieldClient(clientFound)
+        if (Utils.Settings.passportClientControl) {
+            binding.etxtPassport.isEnabled = true
+        } else {
+            enableFieldsAfterFieldClient(clientFound)
+        }
         closeDialogLoading()
-        acceptance.client = pair.first.code
-        clientPassport = pair.first.serialDoc+pair.first.numberDoc
-        binding.etxtCodeClient.setText(acceptance.client)
+        acceptance.client = pair.first
+        clientPassport = pair.first.numberDoc
+        binding.etxtCodeClient.setText(acceptance.client.code)
         if (clientFound) {
             if (Utils.Settings.passportClientControl) {
                 binding.etxtPassport.requestFocus()
@@ -142,27 +171,29 @@ class AcceptanceFragment :
 //            }
 
             btnClose.setOnClickListener {
-                closeActivity()
+                activity?.onBackPressed()
             }
             btnCloseCopy.setOnClickListener {
-                closeActivity()
+                activity?.onBackPressed()
             }
             if (!Utils.Settings.passportClientControl) {
                 elayoutPassport.visibility = View.GONE
-                chPassport.visibility = View.GONE
+                chPassportCopy.visibility = View.GONE
             }
-            chPassport.setOnClickListener {
+            chPassportCopy.setOnClickListener {
                 it as CheckBox
                 if (it.isChecked) {
                     etxtPassport.setText(clientPassport)
-                }
-                else{
+                    etxtPassport.setSelection(etxtPassport.text!!.length)
+                } else {
+                    etxtPassport.setText("")
                     etxtPassport.error = null
                 }
             }
             etxtCodeClient.setOnKeyListener(::customSetOnKeyListener)
             etxtPassport.setOnKeyListener(::customSetOnKeyListener)
             etxtCardNumber.setOnKeyListener(::customSetOnKeyListener)
+            etxtTrackNumber.setOnKeyListener(::customSetOnKeyListener)
             etxtStorePhone.setOnKeyListener(::customSetOnKeyListener)
             etxtSeatsNumberCopy.setOnKeyListener(::customSetOnKeyListener)
             etxtPackageCount.setOnKeyListener(::customSetOnKeyListener)
@@ -186,9 +217,6 @@ class AcceptanceFragment :
                 view?.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
                 view?.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
                 etxtCodeClient.requestFocus()
-                if (etxtCardNumber.isEnabled && etxtCardNumber.isVisible) {
-                    etxtCardNumber.requestFocus()
-                }
             }
 
             etxtStoreAddress.setAdapter(
@@ -265,6 +293,7 @@ class AcceptanceFragment :
             etxtStoreNumber.setOnFocusChangeListener(::etxtFocusChangeListener)
             etxtPassport.setOnFocusChangeListener(::etxtFocusChangeListener)
             etxtCardNumber.setOnFocusChangeListener(::etxtFocusChangeListener)
+            etxtTrackNumber.setOnFocusChangeListener(::etxtFocusChangeListener)
             etxtAutoNumber.setOnFocusChangeListener(::etxtFocusChangeListener)
             etxtRepresentative.setOnFocusChangeListener(::etxtFocusChangeListener)
             etxtCountInPackage.setOnFocusChangeListener(::etxtFocusChangeListener)
@@ -287,22 +316,6 @@ class AcceptanceFragment :
                 createUpdateAcceptance()
                 showDialogLoading()
             }
-            btnPrint.setOnClickListener {
-                if (etxtDocumentNumber.text?.isNotEmpty() == true) {
-                    val intent = Intent(requireContext(), PrinterActivity::class.java)
-                    intent.putExtra("docNumber", acceptance.number)
-                    intent.putExtra("clientNumber", acceptance.client)
-                    intent.putExtra("seatsNumber", acceptance.countSeat.toString())
-                    intent.putExtra("date", acceptance.date)
-                    val macAddress = getMacAddressFromCache(requireActivity())
-                    if (macAddress != null) {
-                        intent.putExtra("macAddress", macAddress)
-                    }
-                    startActivity(intent)
-                } else {
-                    Toast.makeText(context, R.string.text_empty_document, Toast.LENGTH_SHORT).show()
-                }
-            }
             btnCopy.setOnClickListener {
                 createCopyForm()
             }
@@ -310,8 +323,23 @@ class AcceptanceFragment :
                 createCopyForm()
             }
 
+            btnPrint.setOnClickListener {
+                if (acceptance.number.isNotEmpty()) {
+                    navigateToPrint(acceptance)
+                } else {
+                    goToPrint = true
+                    createUpdateAcceptance()
+                }
+            }
+
             btnDocInfo.setOnClickListener {
-                showEditWarningDialog(disabilityReason, showCheckBox = false, navigateToLog = true)
+                showEditWarningDialog(
+                    disabilityReason,
+                    showCheckBox = false,
+                    navigateToLog = true
+                ) {
+                    viewModel.checkConnection()
+                }
             }
         }
     }
@@ -332,17 +360,48 @@ class AcceptanceFragment :
     }
 
     private fun createUpdateAcceptance() {
-        if (documentCreate) return
+        if (documentCreate) {
+            closeDialogLoading()
+            return
+        }
         fillAcceptance()
         documentCreate = !documentCreate
         acceptance.creator = user.username
         acceptance.type = 0
+        if (Utils.Settings.passportClientControl && !acceptance.correctPassport) {
+            closeDialogLoading()
+            errorDialog(resources.getString(R.string.txt_error_passport), false)
+            return
+        }
         if (acceptanceCopyList.isNotEmpty()) {
             acceptanceCopyList.forEach { acceptance ->
                 viewModel.createUpdateAcceptance(acceptance)
             }
         }
-        viewModel.createUpdateAcceptance(acceptance)
+        with(binding) {
+            if (etxtSave.isEnabled) {
+                etxtSave.isEnabled = false
+                btnSave.isEnabled = false
+                viewModel.createUpdateAcceptance(acceptance)
+            }
+        }
+    }
+
+    private fun saveAcceptanceConfirmationDialog(documentsCount: Int) {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("Save $documentsCount previously documents?")
+
+        builder.setPositiveButton("Yes") { _, _ ->
+            acceptanceCopyList.forEach {
+                viewModel.createUpdateAcceptance(it)
+            }
+        }
+        builder.setNegativeButton("No") { dialog, _ ->
+            dialog.dismiss()
+        }
+
+        val dialog = builder.create()
+        dialog.show()
     }
 
     private fun createCopyForm() {
@@ -362,6 +421,7 @@ class AcceptanceFragment :
                 innerBundle.putString("acceptanceZone", etxtZone.text.toString())
                 innerBundle.putString("acceptanceClient", etxtCodeClient.text.toString())
                 innerBundle.putString("acceptanceIdCard", etxtCardNumber.text.toString())
+                innerBundle.putString("acceptanceTrackNumber", etxtTrackNumber.text.toString())
                 innerBundle.putString("acceptancePassport", etxtPassport.text.toString())
             }
             findNavController().navigate(
@@ -375,7 +435,8 @@ class AcceptanceFragment :
         with(binding) {
             acceptance.autoNumber = etxtAutoNumber.text.toString()
             acceptance.idCard = etxtCardNumber.text.toString()
-            acceptance.passport = etxtPassport.text.toString()
+            acceptance.trackNumber = etxtTrackNumber.text.toString()
+            acceptance.client = acceptance.client.copy(numberDoc = etxtPassport.text.toString())
             acceptance.storeName = etxtStoreNumber.text.toString()
             acceptance.representativeName = etxtRepresentative.text.toString()
             acceptance.phoneNumber = etxtStorePhone.text.toString()
@@ -406,13 +467,16 @@ class AcceptanceFragment :
                 if (NEXT_IS_NEED) {
                     acceptance.countPackage = args.getString("acceptancePackageCount")!!.toInt()
                     acceptance.zone = args.getString("acceptanceZone").toString()
-                    acceptance.client = args.getString("acceptanceClient").toString()
+                    acceptance.client = Client(
+                        code = args.get("acceptanceClient").toString(),
+                        numberDoc = args.getString("acceptancePassport").toString()
+                    )
                     acceptance.idCard = args.getString("acceptanceIdCard").toString()
-                    acceptance.passport = args.getString("acceptancePassport").toString()
+                    acceptance.trackNumber = args.getString("acceptanceTrackNumber").toString()
                     acceptance.productTypeName = ""
                     acceptance._package = ""
                     acceptance.batchGuid = BATCH_GUID
-                    viewModel.getClient(acceptance.client)
+                    viewModel.getClient(acceptance.client.code)
                 }
                 isCopiedAcceptance = true
             }
@@ -661,7 +725,7 @@ class AcceptanceFragment :
     }
 
     private fun customSetOnKeyListener(view: View, key: Int, keyEvent: KeyEvent): Boolean {
-        if (key == 66 && keyEvent.action == KeyEvent.ACTION_DOWN) {
+        if (key == 66 && keyEvent.action == KeyEvent.ACTION_UP) {
             with(binding) {
                 val etxtView = view as TextInputEditText
 //                if (etxtView.text!!.isEmpty()) {
@@ -682,12 +746,19 @@ class AcceptanceFragment :
                     }
 
                     etxtPassport -> {
-                        if (clientPassport != etxtPassport.text.toString()) {
-                            etxtPassport.error = "wrong passport"
+                        val passportIsValid =
+                            acceptance.client.isPassportNumberMatching(etxtPassport.text.toString())
+                        if (passportIsValid.first) {
+                            acceptance.correctPassport = true
+                            enableFieldsAfterFieldClient(true)
+                        } else {
+                            errorDialog(resources.getString(passportIsValid.second), false)
+                            acceptance.correctPassport = false
                             etxtPassport.requestFocus()
                             return false
                         }
                         if (etxtCardNumber.isEnabled && etxtCardNumber.isVisible) {
+                            etxtCardNumber.text = etxtPassport.text
                             etxtCardNumber.requestFocus()
                             return true
                         }
@@ -695,6 +766,14 @@ class AcceptanceFragment :
                     }
 
                     etxtCardNumber -> {
+                        if (etxtTrackNumber.isEnabled && etxtTrackNumber.isVisible) {
+                            etxtTrackNumber.requestFocus()
+                            return true
+                        }
+                        return false
+                    }
+
+                    etxtTrackNumber -> {
                         if (etxtStoreAddress.isEnabled && etxtStoreAddress.isVisible) {
                             etxtStoreAddress.requestFocus()
                             return true
@@ -763,10 +842,14 @@ class AcceptanceFragment :
         with(binding) {
             etxtAutoNumber.isEnabled = enable
             etxtCardNumber.isEnabled = enable
+            etxtTrackNumber.isEnabled = enable
             etxtPassport.isEnabled = enable
+            etxtStoreAddress.isEnabled = enable
             etxtStoreNumber.isEnabled = enable
             etxtRepresentative.isEnabled = enable
             etxtStorePhone.isEnabled = enable
+            etxtProductType.isEnabled = enable
+            etxtPackage.isEnabled = enable
             etxtSeatsNumber.isEnabled = enable
             etxtPackageCount.isEnabled = enable
             etxtCountInPackage.isEnabled = enable
@@ -776,7 +859,7 @@ class AcceptanceFragment :
             chbCurrency.isEnabled = enable
             chbExclamation.isEnabled = enable
             chbZ.isEnabled = enable
-            chPassport.isEnabled = enable
+            //chPassportCopy.isEnabled = enable
         }
     }
 
@@ -786,8 +869,9 @@ class AcceptanceFragment :
             etxtSeatsNumber.isEnabled = enable
             etxtCodeClient.isEnabled = enable
             etxtAutoNumber.isEnabled = enable
-            chPassport.isEnabled = enable
+            chPassportCopy.isEnabled = enable
             etxtCardNumber.isEnabled = enable
+            etxtTrackNumber.isEnabled = enable
             etxtPassport.isEnabled = enable
             chbArrow.isEnabled = enable
             chbBrand.isEnabled = enable
@@ -809,7 +893,7 @@ class AcceptanceFragment :
                     disabilityReason,
                     showCheckBox = true,
                     navigateToLog = false
-                )
+                ) { false }
             }
         }
     }
@@ -819,11 +903,6 @@ class AcceptanceFragment :
             pbLoading.isVisible = show
             scrollMain.isVisible = !show
         }
-    }
-
-    private fun closeActivity() {
-        acceptanceCopyList.clear()
-        activity?.onBackPressed()
     }
 
     private fun showDetails(triple: Triple<Acceptance, FieldsAccess, String>) {
@@ -837,6 +916,8 @@ class AcceptanceFragment :
             return
         }
         clientFound = true
+        acceptance.correctPassport = true
+
         showAcceptance()
         setInitFocuses()
         showPbLoading(false)
@@ -878,93 +959,15 @@ class AcceptanceFragment :
         }
     }
 
-//    private fun enableVisibleList() {
-//        val enableVisibleMap = mutableMapOf<View, AcceptanceEnableVisible>()
-//        with(binding) {
-//            propertyList.forEach { enableVisible ->
-//                when (enableVisible.field) {
-//                    AcceptanceRepository.CLIENT_KEY -> enableVisibleMap[etxtCodeClient] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.NUMBER_KEY -> {
-//                        enableVisibleMap[etxtDocumentNumber] = enableVisible
-//                        enableVisibleMap[etxtDocumentNumberCopy] = enableVisible
-//                    }
-//
-//                    AcceptanceRepository.AUTO_NUMBER_KEY -> enableVisibleMap[etxtAutoNumber] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.ID_CARD_KEY -> enableVisibleMap[etxtCardNumber] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.ZONE_KEY -> enableVisibleMap[elayoutZone] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.COUNT_SEAT_KEY -> {
-//                        enableVisibleMap[etxtSeatsNumber] =
-//                            enableVisible
-//                        enableVisibleMap[etxtSeatsNumberCopy] =
-//                            enableVisible
-//                    }
-//
-//                    AcceptanceRepository.COUNT_IN_PACKAGE_KEY -> enableVisibleMap[etxtCountInPackage] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.COUNT_PACKAGE_KEY -> enableVisibleMap[etxtPackageCount] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.PACKAGE_UID_KEY -> enableVisibleMap[elayoutPackage] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.PRODUCT_TYPE_KEY -> enableVisibleMap[elayoutProductType] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.STORE_UID_KEY -> enableVisibleMap[elayoutStoreAddress] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.PHONE_KEY -> enableVisibleMap[etxtStorePhone] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.STORE_NAME_KEY -> enableVisibleMap[etxtStoreNumber] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.REPRESENTATIVE_NAME_KEY -> enableVisibleMap[etxtRepresentative] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.Z_KEY -> enableVisibleMap[chbZ] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.BRAND_KEY -> enableVisibleMap[chbBrand] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.GLASS_KEY -> enableVisibleMap[chbExclamation] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.EXPENSIVE_KEY -> enableVisibleMap[chbCurrency] =
-//                        enableVisible
-//
-//                    AcceptanceRepository.NOT_TURN_OVER_KEY -> enableVisibleMap[chbArrow] =
-//                        enableVisible
-//
-//                    else -> {}
-//                }
-//            }
-//        }
-//        enableVisibleMap.forEach {
-//            val enableVisible = it.value
-//            val view = it.key
-//            view.isVisible = enableVisible.visible
-//            view.isEnabled = enableVisible.enable
-//        }
-//    }
 
     private fun showAcceptance() {
         with(binding) {
             etxtAutoNumber.setText(acceptance.autoNumber)
             etxtZone.setText(acceptance.zone)
             etxtCardNumber.setText(acceptance.idCard)
-            etxtPassport.setText(acceptance.passport)
-            etxtCodeClient.setText(acceptance.client)
+            etxtTrackNumber.setText(acceptance.trackNumber)
+            etxtPassport.setText(acceptance.client.numberDoc)
+            etxtCodeClient.setText(acceptance.client.code)
             etxtSeatsNumber.setText(acceptance.countSeat.toString())
             etxtDocumentNumber.setText(acceptance.number)
             etxtStoreAddress.setText(acceptance.storeAddressName)
@@ -1014,18 +1017,11 @@ class AcceptanceFragment :
         }
     }
 
-    private fun getMacAddressFromCache(context: Context): String? {
-        val cacheFile = File(context.cacheDir, "mac_address.txt")
-        if (cacheFile.exists()) {
-            return cacheFile.readText().trim()
-        }
-        return null
-    }
-
-    private fun checkEditRights() {
-        if ((user.username != acceptance.whoAccept && !user.isAdmin)) {
-            fieldsEnable(false)
-        }
+    private fun navigateToPrint(acceptance: Acceptance) {
+        goToPrint = false
+        ACCEPTANCE = acceptance
+        val intent = Intent(requireContext(), PrinterActivity::class.java)
+        startActivity(intent)
     }
 
     companion object {

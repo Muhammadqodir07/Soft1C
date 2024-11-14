@@ -44,7 +44,7 @@ class BaseViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
 //        toastMutableData.postValue("Error on ${coroutineContext}, text ${throwable.message}")
-        Network.refreshConnection()
+        Network.refreshConnection(Utils.authorizationTimeout)
     }
     private val repository = BaseRepository(Utils.lang)
 

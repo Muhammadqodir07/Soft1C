@@ -7,6 +7,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
+import android.widget.Toast
 import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
@@ -14,7 +15,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.soft1c.R
 import com.example.soft1c.adapter.AcceptanceSizeAdapter
 import com.example.soft1c.databinding.FragmentAcceptanceSizeBinding
-import com.example.soft1c.repository.model.*
+import com.example.soft1c.repository.model.Acceptance
+import com.example.soft1c.repository.model.DocumentType
+import com.example.soft1c.repository.model.FieldsAccess
+import com.example.soft1c.repository.model.ItemClicked
+import com.example.soft1c.repository.model.SizeAcceptance
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.viewmodel.AcceptanceViewModel
 import timber.log.Timber
@@ -50,15 +55,23 @@ class AcceptanceSizeFragment :
     }
 
     private fun observeViewModels() {
+        viewModel.connectionLiveData.observe(viewLifecycleOwner){
+            if (it) {
+                Toast.makeText(requireContext(), "Success connection", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), "No connection", Toast.LENGTH_SHORT).show()
+            }
+        }
         viewModel.toastLiveData.observe(viewLifecycleOwner) {
             errorDialog(it, true)
         }
         viewModel.toastResIdLiveData.observe(viewLifecycleOwner) {
-            errorDialog(getString(it), true)
+            errorDialog(getString(it), false)
         }
         viewModel.acceptanceSizeLiveData.observe(viewLifecycleOwner, ::acceptanceSizeDetail)
         viewModel.acceptanceLiveData.observe(viewLifecycleOwner, ::showAcceptanceDetail)
         viewModel.updateAcceptanceSizeLiveData.observe(viewLifecycleOwner) {
+            binding.ivSave.isEnabled = true
             if (it.second) {
                 if (it.first.isEmpty())
                     toast(resources.getString(R.string.text_successfully_saved))
@@ -90,7 +103,7 @@ class AcceptanceSizeFragment :
         acceptance = triple.first
         with(binding) {
             txtDocNumber.text = acceptance.number
-            txtCode.text = acceptance.client
+            txtCode.text = acceptance.client.code
             txtSeatCount.text = acceptance.countSeat.toString()
             txtPackage.text = acceptance._package.filter { !it.isDigit() }
         }
@@ -104,6 +117,9 @@ class AcceptanceSizeFragment :
         }
         acceptanceSize = pair.first
         showPbLoading(false)
+        if (!acceptanceSize.recordAllowed){
+            errorDialog(getString(R.string.txt_doc_not_printed), false)
+        }
         with(binding) {
             txtWeight.text = acceptanceSize.allWeight.toString()
             txtSum.text = acceptanceSize.sum.toString()
@@ -222,6 +238,7 @@ class AcceptanceSizeFragment :
             etxtSave.setOnFocusChangeListener(::setAutoCompleteFocusListener)
 
             ivSave.setOnClickListener {
+                ivSave.isEnabled = false
                 viewModel.updateAcceptanceSize(acceptanceGuid, acceptanceSize)
                 showDialogLoading()
             }
@@ -243,7 +260,9 @@ class AcceptanceSizeFragment :
                     disabilityReason,
                     showCheckBox = false,
                     navigateToLog = true
-                )
+                ){
+                    viewModel.checkConnection()
+                }
             }
         }
     }
@@ -306,6 +325,8 @@ class AcceptanceSizeFragment :
                         else saveSize = true
                         lastChangedItemIndex = indexList
                     }
+                    if (listData.lastIndex != lastChangedItemIndex)
+                        lastChangedItemIndex++
                 }
             }
             etxtChangeColumnsNumber.setText("1")
@@ -318,13 +339,8 @@ class AcceptanceSizeFragment :
         sizeAdapter.submitList(listData)
         sizeAdapter.notifyDataSetChanged()
         binding.rvMain.scrollToPosition(lastChangedItemIndex)
-        if (lastChangedItemIndex + 1 < sizeAdapter.currentList.size) {
-            sizeAdapter.focusNumber = sizeAdapter.currentList[lastChangedItemIndex + 1].seatNumber
-            fillIndexSeatNumber(lastChangedItemIndex + 1)
-        } else {
-            sizeAdapter.focusNumber = sizeAdapter.currentList[lastChangedItemIndex].seatNumber
-            fillIndexSeatNumber(lastChangedItemIndex)
-        }
+        sizeAdapter.focusNumber = sizeAdapter.currentList[lastChangedItemIndex].seatNumber
+        fillIndexSeatNumber(lastChangedItemIndex)
         acceptanceSize.dataArray = listData
         if (!saveSize) {
             binding.etxtLength.requestFocus()
@@ -392,7 +408,7 @@ class AcceptanceSizeFragment :
                     disabilityReason,
                     showCheckBox = true,
                     navigateToLog = false
-                )
+                ){}
             }
         }
     }

@@ -204,16 +204,6 @@
 
             </LinearLayout>
 
-            <CheckBox
-                android:id="@+id/ch_passport"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/default_chb_width"
-                android:layout_marginTop="@dimen/default_margin"
-                android:layoutDirection="rtl"
-                android:text="@string/text_passport"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/lienar_zone_auto" />
-
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/elayout_passport"
                 android:layout_width="match_parent"
@@ -223,7 +213,7 @@
                 android:textColorHint="@color/black"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/ch_passport">
+                app:layout_constraintTop_toBottomOf="@id/ch_passport_copy">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etxt_passport"
@@ -234,6 +224,16 @@
                     android:maxLength="18"/>
 
             </com.google.android.material.textfield.TextInputLayout>
+
+            <CheckBox
+                android:id="@+id/ch_passport_copy"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/default_chb_width"
+                android:layout_marginTop="@dimen/default_margin"
+                android:layoutDirection="rtl"
+                android:text="@string/text_passport"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/lienar_zone_auto" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/elayout_card_number"
@@ -257,6 +257,26 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/elayout_track_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/default_margin"
+                android:textColorHint="@color/black"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/elayout_card_number">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etxt_track_number"
+                    style="@style/TextInputDefault"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/text_track_number"
+                    android:inputType="textAutoCorrect" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/elayout_document_number"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -264,7 +284,7 @@
                 android:enabled="false"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/elayout_card_number">
+                app:layout_constraintTop_toBottomOf="@id/elayout_track_number">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etxt_document_number"

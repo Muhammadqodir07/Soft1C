@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.Button
 import android.widget.CheckBox
 import android.widget.TextView
 import android.widget.Toast
@@ -40,6 +41,11 @@ open class BaseFragment<T : ViewBinding>(
     ): View? {
         _binding = layoutInflater.invoke(inflater, container, false)
         return _binding?.root
+    }
+
+    override fun onResume() {
+        super.onResume()
+        closeDialogLoading()
     }
 
     override fun onDestroyView() {
@@ -92,6 +98,9 @@ open class BaseFragment<T : ViewBinding>(
         val logTextView = dialogView.findViewById<TextView>(R.id.txt_doc_info)
         logTextView.text = Utils.logFor1C
 
+        val checkConnectionButton = dialogView.findViewById<Button>(R.id.btn_check_connection)
+        checkConnectionButton.visibility = View.GONE
+
         val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.doc_log_info))
             .setView(dialogView)
@@ -130,14 +139,18 @@ open class BaseFragment<T : ViewBinding>(
     /**
      * Диалог с информацией о том, почему нельзя редактировать документ
      */
-    fun showEditWarningDialog(reason: SpannableStringBuilder, showCheckBox: Boolean, navigateToLog: Boolean){
+    fun showEditWarningDialog(reason: SpannableStringBuilder?, showCheckBox: Boolean, navigateToLog: Boolean, networkCheck: () -> Unit){
         val dialogView =
             LayoutInflater.from(requireContext()).inflate(R.layout.dialog_default, null)
         val reasonTextView = dialogView.findViewById<TextView>(R.id.txt_reason)
         reasonTextView.setText(reason, TextView.BufferType.SPANNABLE)
-            val checkbox = dialogView.findViewById<CheckBox>(R.id.chb_dont_show)
+        val checkbox = dialogView.findViewById<CheckBox>(R.id.chb_dont_show)
+        val checkConnectionButton = dialogView.findViewById<Button>(R.id.btn_check_connection)
         if (showCheckBox){
             checkbox.visibility = View.VISIBLE
+        }
+        if(reasonTextView.text.isEmpty()){
+            reasonTextView.visibility = View.GONE
         }
 
         val dialogBuilder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
@@ -154,6 +167,11 @@ open class BaseFragment<T : ViewBinding>(
                 dialog.dismiss()
                 logFileDialog()
             }
+            checkConnectionButton.setOnClickListener {
+                networkCheck()
+            }
+        }else{
+            checkConnectionButton.visibility = View.GONE
         }
 
         val dialog = dialogBuilder.create()

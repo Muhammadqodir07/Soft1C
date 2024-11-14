@@ -1,10 +1,13 @@
 package com.example.soft1c.fragment
 
+import android.content.Context
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
+import android.widget.CheckBox
+import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
@@ -17,12 +20,13 @@ import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.LoadingModel
 import com.example.soft1c.utils.MainActivity
 import com.example.soft1c.utils.Utils
+import com.example.soft1c.utils.Utils.Settings.fillBarcodes
+import com.example.soft1c.utils.Utils.Settings.macAddress
 import com.example.soft1c.utils.Utils.password
 import com.example.soft1c.utils.Utils.user
 import com.example.soft1c.viewmodel.BaseViewModel
 import com.google.android.material.textfield.TextInputEditText
 import com.phearme.macaddressedittext.MacAddressEditText
-import java.io.File
 
 class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::inflate) {
 
@@ -70,10 +74,10 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                             item.isChecked = !item.isChecked
                             if (item.isChecked) {
                                 Utils.debugMode = true
-                                Utils.clientTimeout = 80L
+                                Utils.authorizationTimeout = 80L
                             } else {
                                 Utils.debugMode = false
-                                Utils.clientTimeout = 30L
+                                Utils.authorizationTimeout = 30L
                             }
                         }
 
@@ -97,6 +101,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                 toast(getString(R.string.text_no_rights))
                 return@observe
             }
+            binding.txtError.text = ""
             try {
                 if (user.acceptanceAccess) {
                     if (Utils.packages.isEmpty()) {
@@ -105,13 +110,17 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                         baseViewModel.downloadType(Utils.ObjectModelType.ADDRESS)
                     } else {
                         if (user.loadingAccess) {
-                            findNavController().navigate(R.id.action_authFragment_to_mainFragment)
+                            if (Utils.warehouse.isEmpty()) {
+                                baseViewModel.loadType(Utils.ObjectModelType.CAR)
+                            } else {
+                                findNavController().navigate(R.id.action_authFragment_to_mainFragment)
+                            }
                         } else
                             findNavController().navigate(R.id.action_authFragment_to_acceptanceFragment)
                     }
                 } else if (user.loadingAccess) {
                     if (Utils.cars.isEmpty()) {
-                        requiredTypes = 3
+                        requiredTypes = 2
                         showDialogLoading()
                         baseViewModel.loadType(Utils.ObjectModelType.CAR)
                     } else {
@@ -235,10 +244,12 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
             val url = getSharedPref(Network.KEY_BASE_URL)
             val baseName = getSharedPref(Network.KEY_BASENAME)
             val username = getSharedPref(Network.KEY_USERNAME)
+            val protocol = getSharedPref(Network.KEY_PROTOCOL).toIntOrNull() ?: 0
             etxtUrlAdress.setText(address)
             etxtUrlPort.setText(port)
             etxtBasename.setText(baseName)
             etxtUsername.setText(username)
+            spinnerProtocols.setSelection(protocol)
             Utils.setAttributes(
                 url,
                 baseName,
@@ -257,6 +268,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
             var port = etxtUrlPort.text.toString()
             setSharedPref(Network.KEY_PORT, port)
             if (port.isEmpty()) port = "" else port = ":${port}"
+            setSharedPref(Network.KEY_PROTOCOL, spinnerProtocols.selectedItemPosition.toString())
             val url = "${spinnerProtocols.selectedItem}://${address}${port}"
 
             setSharedPref(Network.KEY_BASE_URL, url)
@@ -265,7 +277,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
             val username = checkFieldReturn(etxtUsername)
             if (username.isEmpty()) return else setSharedPref(Network.KEY_USERNAME, username)
             val password = checkFieldReturn(etxtPassword)
-            if (password.isEmpty()) return else setSharedPref(Network.KEY_PASSWORD, password)
+            if (password.isNotEmpty()) setSharedPref(Network.KEY_PASSWORD, password)
             Utils.setAttributes(
                 url,
                 baseName,
@@ -310,23 +322,31 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
     private fun macAddressDialog() {
         val dialogView =
             LayoutInflater.from(requireContext()).inflate(R.layout.dialog_mac_address, null)
-        val macAddressEditText = dialogView.findViewById<MacAddressEditText>(R.id.item_mac_addres)
+        val etxtMacAddress = dialogView.findViewById<MacAddressEditText>(R.id.item_mac_addres)
+        val chbFillBarcode = dialogView.findViewById<CheckBox>(R.id.chb_fill_barcode)
 
-        // Check if the cache file exists
-        val cacheFile = File(requireActivity().cacheDir, "mac_address.txt")
-        if (cacheFile.exists()) {
-            val macAddress = cacheFile.readText()
-            macAddressEditText.setText(macAddress)
+        // Get the shared preferences
+        val sharedPreferences = requireActivity().getSharedPreferences(Utils.Settings.SETTINGS_PREF_NAME, Context.MODE_PRIVATE)
+
+        // Check if the MAC address exists in shared preferences
+        macAddress = sharedPreferences.getString(Utils.Settings.MAC_ADDRESS_PREF, "")
+        fillBarcodes = sharedPreferences.getString(Utils.Settings.FILL_BARCODE_PREF, "").toString()
+        if (!macAddress.isNullOrEmpty()) {
+            etxtMacAddress.setText(macAddress)
         }
+        chbFillBarcode.isChecked = fillBarcodes.isNotEmpty() && fillBarcodes == "true"
 
         val dialog = AlertDialog.Builder(requireContext())
             .setTitle(R.string.text_enter_mac_address)
             .setView(dialogView)
             .setPositiveButton(R.string.text_save) { dialog, _ ->
-                val macAddress = macAddressEditText.text.toString().trim()
+                macAddress = etxtMacAddress.text.toString().trim()
+                fillBarcodes = chbFillBarcode.isChecked.toString()
 
-                // Save the Mac address to the cache
-                cacheFile.writeText(macAddress)
+
+                // Save the MAC address to shared preferences
+                sharedPreferences.edit().putString(Utils.Settings.MAC_ADDRESS_PREF, macAddress).apply()
+                sharedPreferences.edit().putString(Utils.Settings.FILL_BARCODE_PREF, fillBarcodes).apply()
 
                 // Close the dialog
                 dialog.dismiss()
@@ -376,12 +396,12 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                     } else {
                         closeDialogLoading()
                         if (findNavController().currentDestination?.id == R.id.authFragment)
-                            findNavController().navigate(R.id.action_authFragment_to_loadingFragment)
+                            navigate(R.id.action_authFragment_to_loadingFragment)
                     }
                 } else {
                     closeDialogLoading()
                     if (findNavController().currentDestination?.id == R.id.authFragment)
-                        findNavController().navigate(R.id.action_authFragment_to_acceptanceFragment)
+                        navigate(R.id.action_authFragment_to_acceptanceFragment)
                 }
             }
         }
@@ -395,6 +415,14 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
         when (pairOf.first) {
             Utils.ObjectModelType.CAR -> {
                 Utils.cars = pairOf.second
+//                setTextDialogLoading(resources.getString(R.string.text_container))
+//                baseViewModel.loadType(Utils.ObjectModelType.CONTAINER)
+                setTextDialogLoading(resources.getString(R.string.text_warehouse))
+                baseViewModel.loadType(Utils.ObjectModelType.WAREHOUSE)
+            }
+
+            Utils.ObjectModelType.CONTAINER -> {
+                Utils.container = pairOf.second
                 setTextDialogLoading(resources.getString(R.string.text_warehouse))
                 baseViewModel.loadType(Utils.ObjectModelType.WAREHOUSE)
             }
@@ -407,13 +435,16 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                 }
                 closeDialogLoading()
                 if (user.acceptanceAccess)
-                    if (findNavController().currentDestination?.id == R.id.authFragment)
-                        findNavController().navigate(R.id.action_authFragment_to_mainFragment)
+                    navigate(R.id.action_authFragment_to_mainFragment)
                 else
-                    if (findNavController().currentDestination?.id == R.id.authFragment)
-                        findNavController().navigate(R.id.action_authFragment_to_loadingFragment)
+                    navigate(R.id.action_authFragment_to_loadingFragment)
             }
         }
+    }
+
+    private fun navigate(@IdRes action: Int){
+        Network.refreshConnection(Utils.clientTimeout)
+        findNavController().navigate(action)
     }
 
 }

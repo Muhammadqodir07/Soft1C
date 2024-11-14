@@ -29,6 +29,7 @@
     <string name="text_zone">Zone</string>
     <string name="text_number_of_auto">Number of auto</string>
     <string name="text_number">Number</string>
+    <string name="text_track_number">Track number</string>
     <string name="text_exclamation">!!!</string>
     <string name="text_currency">$</string>
     <string name="text_arrow">↑↑</string>
@@ -122,5 +123,26 @@
     <string name="text_back">Back</string>
     <string name="text_volume">Volume</string>
     <string name="err_dublicate_barcode">Barcode is already added</string>
+    <string name="car_parts_1">Front</string>
+    <string name="car_parts_2">Back</string>
+
+    <string-array name="car_parts">
+         <item>@string/car_parts_1</item>
+         <item>@string/car_parts_2</item>
+    </string-array>
+
+    <string name="text_container">Container</string>
+    <string name="seat_number">Seat</string>
+
+    <string name="txt_error_passport">Wrong passport</string>
+    <string name="txt_is_blacklist">Client is in blacklist</string>
+    <string name="txt_client_acceptance_blocked">Client temporarily blocked</string>
+    <string name="txt_doc_not_printed">Document is not printed</string>
+    <string name="stg_fill_barcodes">Fill barcodes of acceptance</string>
+
+    <string name="txt_success_connection">Success connection</string>
+    <string name="txt_no_connection">No connection</string>
+    <string name="txt_check_connection">Check connection</string>
+
 
 </resources>

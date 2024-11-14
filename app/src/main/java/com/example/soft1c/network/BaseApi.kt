@@ -3,7 +3,11 @@ package com.example.soft1c.network
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.PATCH
+import retrofit2.http.POST
+import retrofit2.http.Query
 
 //Интерфейс определяет, какие методы и параметры необходимы для взаимодействия клиента и сервера, но не реализует их.
 interface BaseApi {
@@ -45,7 +49,10 @@ interface BaseApi {
     fun client(@Query("Kod") clientCode: String): Call<ResponseBody>
 
     @PATCH("Priemki")
-    fun createUpdateAcceptance(@Body requestBody: RequestBody): Call<ResponseBody>
+    fun createUpdateAcceptance(
+        @Query("FillBarcodes") fillBarcodes: String,
+        @Body requestBody: RequestBody
+    ): Call<ResponseBody>
 
     @GET("VvodRazmerov")
     fun getAcceptanceSizeData(@Query("GUID") guid: String): Call<ResponseBody>
@@ -58,7 +65,6 @@ interface BaseApi {
 }
 
 interface LoadingApi{
-    // Метод HTTP GET для получения списка машин из сервера. Метод вернет объект Call с телом ответа ResponseBody
     @GET("autorization")
     fun loadAuth(): Call<ResponseBody>
 
@@ -68,6 +74,9 @@ interface LoadingApi{
     @GET("Sklads")
     fun warehouseList(): Call<ResponseBody>
 
+    @GET("container")
+    fun containerList(): Call<ResponseBody>
+
     @POST("pogruzka")
     fun createUpdateLoading(@Body requestBody: RequestBody): Call<ResponseBody>
 
@@ -75,8 +84,14 @@ interface LoadingApi{
     fun loadingList(
     ): Call<ResponseBody>
 
+    @GET("Razgruzka")
+    fun reloadingList(): Call<ResponseBody>
+
     @GET("pogruzka")
     fun loading(@Query("GUIDНаСервере") number: String): Call<ResponseBody>
+
+    @GET("Razgruzka")
+    fun reloading(@Query("GUIDНаСервере") number: String): Call<ResponseBody>
 
     @GET("Barcodes")
     fun barcodeList(
@@ -88,4 +103,7 @@ interface LoadingApi{
 interface AutoApi{
     @GET("AUTO")
     fun auto(): Call<ResponseBody>
+
+    @GET("/")
+    fun check(): Call<ResponseBody>
 }

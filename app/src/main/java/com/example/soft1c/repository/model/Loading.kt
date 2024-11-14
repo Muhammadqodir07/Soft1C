@@ -11,7 +11,8 @@ data class Loading(
     // Штрих-коды передней части машины
     var barcodesFront: List<LoadingBarcode> = listOf(),
     //Штрих-коды задней части машины
-    var barcodesBack: List<LoadingBarcode> = listOf()
+    var barcodesBack: List<LoadingBarcode> = listOf(),
+    var container: LoadingModel.Container = LoadingModel.Container()
 ){
     companion object{
         const val REF_KEY = "GUID"

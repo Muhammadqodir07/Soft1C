@@ -8,15 +8,17 @@ import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.Client
 import com.example.soft1c.repository.model.FieldsAccess
 import com.example.soft1c.utils.Utils
+import com.example.soft1c.utils.withRefreshedConnection
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import org.json.JSONArray
-import org.json.JSONException
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -27,202 +29,34 @@ class AcceptanceRepository {
         number: String,
         operation: String
     ): Triple<Acceptance, FieldsAccess, String> {
-        return suspendCoroutine { continuation ->
-            Network.api.acceptance(number, operation).enqueue(object : Callback<ResponseBody> {
-                override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>,
-                ) {
-                    if (response.isSuccessful) {
-                        Utils.logFor1C = response.body()?.string() ?: ""
-                        continuation.resume(getAcceptanceJson(Utils.logFor1C))
-                    } else {
-                        try {
-                            val errorBody = response.errorBody()?.string()
-                            continuation.resume(Triple(Acceptance(""), FieldsAccess(), errorBody.toString()))
-                        }catch (e: Exception){
-                            continuation.resume(Triple(Acceptance(""), FieldsAccess(), e.message.toString()))
-                        }
-                    }
-                }
-
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    continuation.resumeWithException(t)
-                }
-            })
-        }
-    }
-
-    suspend fun getFieldsApi(guid: String, operation: String): FieldsAccess {
-        return suspendCoroutine { continuation ->
-            Network.api.fieldsAccess(guid, operation).enqueue(object : Callback<ResponseBody> {
-                override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>,
-                ) {
-                    if (response.isSuccessful) {
-                        val responseBody = response.body()?.string() ?: ""
-                        continuation.resume(getFieldsJson(responseBody))
-                    } else {
-                        continuation.resume(FieldsAccess())
-                    }
-                }
-
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    continuation.resumeWithException(t)
-                }
-
-            })
-        }
-    }
-
-    suspend fun getAcceptanceListApi(): List<Acceptance> {
-        return suspendCoroutine { continuation ->
-            Network.api.acceptanceList().enqueue(object : Callback<ResponseBody> {
-                override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>,
-                ) {
-                    if (response.isSuccessful) {
-                        val responseBody = response.body()?.string() ?: ""
-                        continuation.resume(getAcceptanceList(responseBody))
-                    } else {
-                        continuation.resume(emptyList())
-                    }
-                }
-
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    continuation.resumeWithException(t)
-                }
-
-            })
-        }
-
-    }
-
-    suspend fun getClientApi(clientCode: String): Pair<Client, Boolean> {
-        return suspendCoroutine { continuation ->
-            Network.api.client(clientCode).enqueue(object : Callback<ResponseBody> {
-                override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>,
-                ) {
-                    if (response.isSuccessful) {
-                        val responseBody = response.body()?.string() ?: ""
-                        val jsonObject = JSONArray(responseBody).getJSONObject(0)
-                        val code = jsonObject.getString(Client.CODE_KEY)
-                        val serialDoc = jsonObject.getString(Client.SERAIL_DOC_KEY)
-                        val numberDoc = jsonObject.getString(Client.NUMBER_DOC_KEY)
-                        continuation.resume(Pair(Client(code, serialDoc, numberDoc), true))
-                    } else {
-                        continuation.resume(Pair(Client(), false))
-                    }
-                }
-
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    continuation.resumeWithException(t)
-                }
-
-            })
-        }
-    }
-
-    suspend fun createUpdateAccApi(acceptance: Acceptance): Pair<Acceptance, String> {
-        return suspendCoroutine { continuation ->
-            val jsonObject = JSONObject()
-            if (acceptance.ref.isNotEmpty())
-                jsonObject.put(REF_KEY, acceptance.ref)
-            else
-                jsonObject.put(REF_KEY, null)
-            if (acceptance.batchGuid.isNotEmpty())
-                jsonObject.put(BATCH_GUID_KEY, acceptance.batchGuid)
-            else
-                jsonObject.put(BATCH_GUID_KEY, null)
-            jsonObject.put(CLIENT_KEY, acceptance.client)
-            jsonObject.put(PACKAGE_UID_KEY, acceptance.packageUid)
-            jsonObject.put(ZONE_KEY, acceptance.zoneUid)
-            jsonObject.put(ID_CARD_KEY, acceptance.idCard)
-            jsonObject.put(STORE_UID_KEY, acceptance.storeUid)
-            jsonObject.put(PHONE_KEY, acceptance.phoneNumber)
-            jsonObject.put(STORE_NAME_KEY, acceptance.storeName)
-            jsonObject.put(PRODUCT_TYPE_KEY, acceptance.productType)
-            jsonObject.put(PASSPORT_KEY, acceptance.passport)
-            jsonObject.put(REPRESENTATIVE_NAME_KEY, acceptance.representativeName)
-            jsonObject.put(AUTO_NUMBER_KEY, acceptance.autoNumber)
-            jsonObject.put(COUNT_SEAT_KEY, acceptance.countSeat)
-            jsonObject.put(COUNT_IN_PACKAGE_KEY, acceptance.countInPackage)
-            jsonObject.put(ALL_WEIGHT_KEY, acceptance.allWeight)
-            jsonObject.put(GLASS_KEY, acceptance.glass)
-            jsonObject.put(EXPENSIVE_KEY, acceptance.expensive)
-            jsonObject.put(Z_KEY, acceptance.z)
-            jsonObject.put(NOT_TURN_OVER_KEY, acceptance.notTurnOver)
-            jsonObject.put(BRAND_KEY, acceptance.brand)
-            jsonObject.put(COUNT_PACKAGE_KEY, acceptance.countPackage)
-            jsonObject.put(CREATOR_KEY, acceptance.creator)
-            jsonObject.put(TYPE_KEY, acceptance.type)
-            jsonObject.put(PRINTED_KEY, acceptance.isPrinted)
-            val requestBody =
-                jsonObject.toString().toRequestBody("application/json".toMediaTypeOrNull())
-            Network.api.createUpdateAcceptance(requestBody)
-                .enqueue(object : Callback<ResponseBody> {
+        return withRefreshedConnection{
+            suspendCoroutine { continuation ->
+                Network.api.acceptance(number, operation).enqueue(object : Callback<ResponseBody> {
                     override fun onResponse(
                         call: Call<ResponseBody>,
                         response: Response<ResponseBody>,
                     ) {
                         if (response.isSuccessful) {
-                            val body = response.body()?.string() ?: ""
-                            if (body.isEmpty())
-                                continuation.resume(Pair(acceptance, ""))
-                            val jsonObject = JSONArray(body).getJSONObject(0)
-                            try {
-                                if (jsonObject.getString(RESULT_KEY).equals("Ошибка")) {
-                                    continuation.resume(
-                                        Pair(
-                                            acceptance,
-                                            jsonObject.getString(ERROR_REASON_KEY)
-                                        )
-                                    )
-                                }
-                            } catch (_: Exception) {
-                            }
-                            val ref = jsonObject.getString(REF_KEY)
-                            val nextIsNeed =
-                                jsonObject.getString(NEXT_IS_NEED_KEY)
-                                    .toBoolean()
-                            val guid =
-                                jsonObject.getString(BATCH_GUID_KEY)
-                            acceptance.ref = ref
-                            AcceptanceAdapter.ACCEPTANCE_GUID = ref
-                            AcceptanceFragment.NEXT_IS_NEED = nextIsNeed
-
-                            acceptance.batchGuid = guid
-                            AcceptanceFragment.BATCH_GUID = guid
-
-                            continuation.resume(Pair(acceptance, ""))
+                            Utils.logFor1C = response.body()?.string() ?: ""
+                            continuation.resume(getAcceptanceJson(Utils.logFor1C))
                         } else {
-                            val errorBody = response.errorBody()?.string() ?: ""
-                            if (errorBody.isNotEmpty()) {
-                                try {
-                                    val json = JSONObject(errorBody)
-                                    val jsonError = json.optString("error", "Error in 1C")
-                                    continuation.resume(Pair(acceptance, jsonError))
-                                } catch (e: JSONException) {
-                                    try {
-                                        val jsonArray = JSONArray(errorBody)
-                                        if (jsonArray.length() > 0) {
-                                            val jsonObject = jsonArray.getJSONObject(0)
-                                            val errorReason =
-                                                jsonObject.optString(ERROR_ARRAY, "Error in 1C")
-                                            continuation.resume(Pair(acceptance, errorReason))
-                                        } else {
-                                            continuation.resume(Pair(acceptance, "Error in 1C"))
-                                        }
-                                    } catch (e: JSONException) {
-                                        continuation.resume(Pair(acceptance, "Error in 1C"))
-                                    }
-                                }
-                            } else {
-                                continuation.resume(Pair(acceptance, response.message()))
+                            try {
+                                val errorBody = response.errorBody()?.string()
+                                continuation.resume(
+                                    Triple(
+                                        Acceptance(""),
+                                        FieldsAccess(),
+                                        errorBody.toString()
+                                    )
+                                )
+                            } catch (e: Exception) {
+                                continuation.resume(
+                                    Triple(
+                                        Acceptance(""),
+                                        FieldsAccess(),
+                                        e.message.toString()
+                                    )
+                                )
                             }
                         }
                     }
@@ -230,38 +64,194 @@ class AcceptanceRepository {
                     override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                         continuation.resumeWithException(t)
                     }
-
                 })
+            }
         }
     }
 
-    suspend fun sendLogs(logs: String): Boolean {
-        return suspendCoroutine { continuation ->
-            Network.api.sendLog(logs)
-                .enqueue(object : Callback<ResponseBody> {
+    suspend fun checkConnection(): Boolean {
+        return withRefreshedConnection{
+            suspendCoroutine { continuation ->
+                Network.checkConnectionApi.check().enqueue(object : Callback<ResponseBody> {
                     override fun onResponse(
                         call: Call<ResponseBody>,
-                        response: Response<ResponseBody>
+                        response: Response<ResponseBody>,
                     ) {
-                        if (response.isSuccessful) {
-                            continuation.resume(true)
-                        } else {
-                            continuation.resume(false)
-                        }
+                        continuation.resume(response.isSuccessful)
                     }
 
                     override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                        continuation.resumeWithException(t)
+                        continuation.resume(false)
                     }
+
                 })
+            }
+        }
+    }
+
+    suspend fun getAcceptanceListApi(): List<Acceptance> {
+        return withRefreshedConnection{
+            suspendCoroutine { continuation ->
+                if (Utils.debugMode) {
+                    continuation.resume(getAcceptanceList(Acceptance.LIST_DEFAULT_DATA))
+                } else {
+                    Network.api.acceptanceList().enqueue(object : Callback<ResponseBody> {
+                        override fun onResponse(
+                            call: Call<ResponseBody>,
+                            response: Response<ResponseBody>,
+                        ) {
+                            if (response.isSuccessful) {
+                                val responseBody = response.body()?.string() ?: ""
+                                continuation.resume(getAcceptanceList(responseBody))
+                            } else {
+                                continuation.resume(emptyList())
+                            }
+                        }
+
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            continuation.resumeWithException(t)
+                        }
+
+                    })
+                }
+            }
+        }
+
+    }
+
+    suspend fun getClientApi(clientCode: String): Pair<Client, Boolean> {
+        return withRefreshedConnection{
+            suspendCoroutine { continuation ->
+                if (Utils.debugMode) {
+                    val jsonObject = JSONArray(Client.DEFAULT_DATA).getJSONObject(0)
+                    val client = getClientFromJsonObject(jsonObject)
+                    continuation.resume(Pair(client, true))
+                } else {
+                    Network.api.client(clientCode).enqueue(object : Callback<ResponseBody> {
+                        override fun onResponse(
+                            call: Call<ResponseBody>,
+                            response: Response<ResponseBody>,
+                        ) {
+                            if (response.isSuccessful) {
+                                val responseBody = response.body()?.string() ?: ""
+                                val jsonObject = JSONArray(responseBody).getJSONObject(0)
+                                val client = getClientFromJsonObject(jsonObject)
+                                continuation.resume(Pair(client, true))
+                            } else {
+                                continuation.resume(Pair(Client(), false))
+                            }
+                        }
+
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            continuation.resumeWithException(t)
+                        }
+
+                    })
+                }
+            }
+        }
+    }
+
+    suspend fun createUpdateAccApi(acceptance: Acceptance): Pair<Acceptance, String> {
+        return withRefreshedConnection{
+            suspendCoroutine { continuation ->
+                val jsonObject = JSONObject()
+                if (acceptance.ref.isNotEmpty())
+                    jsonObject.put(REF_KEY, acceptance.ref)
+                else
+                    jsonObject.put(REF_KEY, null)
+                if (acceptance.batchGuid.isNotEmpty())
+                    jsonObject.put(BATCH_GUID_KEY, acceptance.batchGuid)
+                else
+                    jsonObject.put(BATCH_GUID_KEY, null)
+                jsonObject.put(CLIENT_KEY, acceptance.client.code)
+                jsonObject.put(PACKAGE_UID_KEY, acceptance.packageUid)
+                jsonObject.put(ZONE_KEY, acceptance.zoneUid)
+                jsonObject.put(ID_CARD_KEY, acceptance.idCard)
+                jsonObject.put(TRACK_NUMBER_KEY, acceptance.trackNumber)
+                jsonObject.put(STORE_UID_KEY, acceptance.storeUid)
+                jsonObject.put(PHONE_KEY, acceptance.phoneNumber)
+                jsonObject.put(STORE_NAME_KEY, acceptance.storeName)
+                jsonObject.put(PRODUCT_TYPE_KEY, acceptance.productType)
+                jsonObject.put(REPRESENTATIVE_NAME_KEY, acceptance.representativeName)
+                jsonObject.put(AUTO_NUMBER_KEY, acceptance.autoNumber)
+                jsonObject.put(COUNT_SEAT_KEY, acceptance.countSeat)
+                jsonObject.put(COUNT_IN_PACKAGE_KEY, acceptance.countInPackage)
+                jsonObject.put(ALL_WEIGHT_KEY, acceptance.allWeight)
+                jsonObject.put(GLASS_KEY, acceptance.glass)
+                jsonObject.put(EXPENSIVE_KEY, acceptance.expensive)
+                jsonObject.put(Z_KEY, acceptance.z)
+                jsonObject.put(NOT_TURN_OVER_KEY, acceptance.notTurnOver)
+                jsonObject.put(BRAND_KEY, acceptance.brand)
+                jsonObject.put(COUNT_PACKAGE_KEY, acceptance.countPackage)
+                jsonObject.put(CREATOR_KEY, acceptance.creator)
+                jsonObject.put(TYPE_KEY, acceptance.type)
+                jsonObject.put(PRINTED_KEY, acceptance.isPrinted)
+                val requestBody =
+                    jsonObject.toString().toRequestBody("application/json".toMediaTypeOrNull())
+                if (Utils.debugMode) {
+                    continuation.resume(Pair(acceptance, ""))
+                } else {
+                    Network.api.createUpdateAcceptance(Utils.Settings.fillBarcodes, requestBody)
+                        .enqueue(object : Callback<ResponseBody> {
+                            override fun onResponse(
+                                call: Call<ResponseBody>,
+                                response: Response<ResponseBody>,
+                            ) {
+                                if (response.isSuccessful) {
+                                    val body = response.body()?.string() ?: ""
+                                    if (body.isEmpty())
+                                        continuation.resume(Pair(acceptance, ""))
+                                    val jsonObject = JSONArray(body).getJSONObject(0)
+                                    var ref = ""
+                                    var guid = ""
+                                    var nextIsNeed = false
+                                    try {
+                                        if (jsonObject.getString(RESULT_KEY).equals("Ошибка")) {
+                                            continuation.resume(
+                                                Pair(
+                                                    acceptance,
+                                                    jsonObject.getString(ERROR_REASON_KEY)
+                                                )
+                                            )
+                                        }
+                                        ref = jsonObject.getString(REF_KEY)
+                                        guid = jsonObject.getString(BATCH_GUID_KEY)
+                                        nextIsNeed = jsonObject.getString(NEXT_IS_NEED_KEY).toBoolean()
+                                    } catch (e: Exception) {
+                                        continuation.resume(Pair(acceptance, e.message.toString()))
+                                    }
+                                    acceptance.ref = ref
+                                    AcceptanceAdapter.ACCEPTANCE_GUID = ref
+                                    AcceptanceFragment.NEXT_IS_NEED = nextIsNeed
+
+                                    acceptance.number = jsonObject.getString(NUMBER_KEY).toString()
+                                    acceptance.date = jsonObject.optString(DATE_KEY, LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).toString()
+
+                                    acceptance.batchGuid = guid
+                                    AcceptanceFragment.BATCH_GUID = guid
+
+                                    continuation.resume(Pair(acceptance, ""))
+                                } else {
+                                    val errorBody = response.errorBody()?.string() ?: response.message()
+                                    continuation.resume(Pair(acceptance, errorBody))
+                                }
+                            }
+
+                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                continuation.resumeWithException(t)
+                            }
+                        })
+                }
+            }
         }
     }
 
     private fun getAcceptanceJson(responseString: String): Triple<Acceptance, FieldsAccess, String> {
         val jsonArray = JSONArray(responseString)
-        val jsonObject = jsonArray.getJSONObject(0)
-        val acceptance = getaAcceptanceFromJsonObject(jsonObject, true)
-        val property = jsonObject.getString(FIELDS_PROPERTY_KEY)
+        val jsonAcceptance = jsonArray.getJSONObject(0)
+        val acceptance = getaAcceptanceFromJsonObject(jsonAcceptance, true)
+        val property = jsonAcceptance.getString(FIELDS_PROPERTY_KEY)
         val fieldAccess = getFieldsJson(property)
         return Triple(acceptance, fieldAccess, "")
     }
@@ -306,7 +296,6 @@ class AcceptanceRepository {
         val ref = acceptJson.getString(REF_KEY)
         val date = acceptJson.getString(DATE_KEY)
         val number = acceptJson.getString(NUMBER_KEY)
-        val client = acceptJson.getString(CLIENT_KEY)
         val packageUid = acceptJson.getString(PACKAGE_UID_KEY)
         val packageName = getPackageNameFromUid(packageUid)
         val zoneUid = acceptJson.getString(ZONE_KEY)
@@ -314,9 +303,11 @@ class AcceptanceRepository {
         val weight = acceptJson.getBoolean(WEIGHT_KEY)
         val capacity = acceptJson.getBoolean(CAPACITY_KEY)
         if (hasAdditionalFields) {
+            val clientObject = acceptJson.getJSONArray("ДанныеКлиента").getJSONObject(0)
+            val client = getClientFromJsonObject(clientObject)
             val autoNumber = acceptJson.getString(AUTO_NUMBER_KEY)
             val idCard = acceptJson.getString(ID_CARD_KEY)
-            val passport = acceptJson.optString(PASSPORT_KEY, "")
+            val trackNumber = acceptJson.getString(TRACK_NUMBER_KEY)
             val countSeat = acceptJson.getInt(COUNT_SEAT_KEY)
             val countInPackage = acceptJson.getInt(COUNT_IN_PACKAGE_KEY)
             val countPackage = acceptJson.getInt(COUNT_PACKAGE_KEY)
@@ -360,7 +351,7 @@ class AcceptanceRepository {
                 countSeat = countSeat,
                 storeUid = storeUid,
                 idCard = idCard,
-                passport = passport,
+                trackNumber = trackNumber,
                 zone = zoneName,
                 _package = packageName,
                 allWeight = allWeight,
@@ -375,6 +366,7 @@ class AcceptanceRepository {
                 whoWeigh = whoWeigh
             )
         }
+        val client = acceptJson.getString(CLIENT_KEY)
         return Acceptance(
             _package = packageName,
             zoneUid = zoneUid,
@@ -382,10 +374,34 @@ class AcceptanceRepository {
             packageUid = packageUid,
             ref = ref,
             number = number,
-            client = client,
+            client = Client(
+                code = client
+            ),
             weight = weight,
             date = date,
             capacity = capacity
+        )
+    }
+
+    private fun getClientFromJsonObject(jsonObject: JSONObject): Client {
+        val code = jsonObject.getString(Client.CODE_KEY)
+        val serialDoc = jsonObject.getString(Client.SERAIL_DOC_KEY)
+        val numberDoc = jsonObject.getString(Client.NUMBER_DOC_KEY)
+        val haveRepresentative = jsonObject.getBoolean(Client.HAVE_REPRESENTATIVE_KEY)
+        val serialRepr = jsonObject.getString(Client.SERIAL_REPRESENTATIVE_KEY)
+        val numberRepr = jsonObject.getString(Client.NUMBER_REPRESENTATIVE_KEY)
+        val blockAcceptance = jsonObject.getBoolean(Client.BLOCK_ACCEPTANCE_KEY)
+        val blacklist = jsonObject.getBoolean(Client.BLACKLIST_KEY)
+
+        return Client(
+            code = code,
+            serialDoc = serialDoc,
+            numberDoc = numberDoc,
+            haveRepresentative = haveRepresentative,
+            serialRepr = serialRepr,
+            numberRepr = numberRepr,
+            blockAcceptance = blockAcceptance,
+            blacklist = blacklist
         )
     }
 
@@ -427,6 +443,7 @@ class AcceptanceRepository {
         const val WEIGHT_KEY = "Вес"
         const val CAPACITY_KEY = "Замер"
         const val ZONE_KEY = "Зона"
+        const val TRACK_NUMBER_KEY = "ТрекКод"
         const val COUNT_SEAT_KEY = "КоличествоМест"
         const val COUNT_IN_PACKAGE_KEY = "КоличествоВУпаковке"
         const val COUNT_PACKAGE_KEY = "КоличествоТиповУпаковок"
@@ -444,7 +461,6 @@ class AcceptanceRepository {
         const val EXPENSIVE_KEY = "Дорогой"
         const val NOT_TURN_OVER_KEY = "НеКантовать"
         const val PRINTED_KEY = "Напечатан"
-        const val PASSPORT_KEY = "Паспорт"
 
         const val READ_ONLY = "ViewOnly"
         const val WEIGHT_ENABLE = "InputWeight"
@@ -460,7 +476,6 @@ class AcceptanceRepository {
         const val WHO_MEASURE_KEY = "ТоварИзмерил"
         const val CREATOR_KEY = "Создатель"
         const val TYPE_KEY = "Тип"
-        const val ERROR_ARRAY = "ПричинаОшибки"
         const val FIELDS_PROPERTY_KEY = "ПараметрыВидимости"
         const val ON_CHINESE = "НаКитайском"
         const val NEXT_IS_NEED_KEY = "НуженСледующий"

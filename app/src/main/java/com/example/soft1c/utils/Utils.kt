@@ -1,5 +1,9 @@
 package com.example.soft1c.utils
 
+import android.content.Context
+import android.util.DisplayMetrics
+import android.view.WindowManager
+import com.example.soft1c.network.Network
 import com.example.soft1c.repository.model.Acceptance
 import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.LoadingModel
@@ -18,7 +22,8 @@ object Utils {
     var auth = ""
     var lang = ""
 
-    var clientTimeout = 30L
+    var authorizationTimeout = 30L
+    var clientTimeout = 20L
     var logFor1C = ""
 
     var productTypes: List<AnyModel> = listOf()
@@ -29,11 +34,11 @@ object Utils {
     //Переменная для хранения списка машин
     var cars: List<LoadingModel> = listOf()
     var warehouse: List<LoadingModel> = listOf()
+    var container: List<LoadingModel> = listOf()
 
     var acceptanceCopyList: MutableList<Acceptance> = mutableListOf()
 
     var user = User()
-    var anyModel: AnyModel? = null
     var refreshList: Boolean = false
 
     var debugMode = false
@@ -71,7 +76,8 @@ object Utils {
         const val ZONE = 4
         const val CAR = 5
         const val WAREHOUSE = 6
-        const val EMPTY = 7
+        const val CONTAINER = 7
+        const val EMPTY = 0
     }
 
     object OperationType {
@@ -82,6 +88,33 @@ object Utils {
 
     object Settings {
         var passportClientControl: Boolean = true
+        var fillBarcodes: String = false.toString()
+        var macAddress: String? = null
         const val SHOW_DISABILITY_DIALOG = "ПоказатьОкноСИнфойНедоступности"
+        const val SETTINGS_PREF_NAME = "settings_pref"
+        const val MAC_ADDRESS_PREF = "mac_address"
+        const val FILL_BARCODE_PREF = "fill_barcode"
     }
+}
+
+fun getDisplayWidth(context: Context): Int {
+    val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    val displayMetrics = DisplayMetrics()
+
+    // Get the default display
+    windowManager.defaultDisplay.getMetrics(displayMetrics)
+
+    val screenWidthPixels = displayMetrics.widthPixels
+    val density = context.resources.displayMetrics.density
+    val paddingInPixels = (8 * density + 0.5f).toInt() // Converting dp to pixels
+
+    return screenWidthPixels - paddingInPixels * 2 // Subtracting padding from both sides
+}
+
+suspend fun <T> withRefreshedConnection(action: suspend () -> T): T {
+    // Ensure the connection is refreshed before proceeding
+    Network.refreshConnection(Utils.clientTimeout)
+
+    // Now execute the actual suspend function
+    return action()
 }

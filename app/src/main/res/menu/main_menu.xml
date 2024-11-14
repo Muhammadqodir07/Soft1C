@@ -13,14 +13,14 @@
         android:title="Russian" />
     <item
         android:id="@+id/item_macAddress"
-        android:title="Mac address" />
+        android:title="Settings" />
     <item
         android:id="@+id/checkable_item"
         android:title="Debug mode"
         android:checkable="true"
         android:visible="false"/>
     <item
-        android:title="2.0"
+        android:title="@string/versionName"
         android:enabled="false"/>
 
 </menu>

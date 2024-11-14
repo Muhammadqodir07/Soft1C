@@ -24,20 +24,6 @@
     </fragment>
 
     <fragment
-        android:id="@+id/testFragment"
-        android:name="com.example.soft1c.fragment.TestFragment"
-        android:label="TestFragment"
-        tools:layout="@layout/fragment_test">
-        <action
-            android:id="@+id/action_testFragment_to_searchFragment"
-            app:destination="@id/searchFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/searchFragment"
-        android:name="com.example.soft1c.fragment.SearchFragment"
-        android:label="SearchFragment"
-        tools:layout="@layout/fragment_search" />
-    <fragment
         android:id="@+id/acceptanceListFragment"
         android:name="com.example.soft1c.fragment.AcceptanceListFragment"
         android:label="AcceptanceFragment"
@@ -48,24 +34,21 @@
             app:enterAnim="@anim/anim_in_right"
             app:exitAnim="@anim/anim_out_left"
             app:popEnterAnim="@anim/anim_in_left"
-            app:popExitAnim="@anim/anim_out_right"/>
-        <action
-            android:id="@+id/action_acceptanceListFragment_to_mainFragment"
-            app:destination="@id/mainFragment"/>
+            app:popExitAnim="@anim/anim_out_right" />
         <action
             android:id="@+id/action_acceptanceListFragment_to_acceptanceWeightFragment"
             app:destination="@id/acceptanceWeightFragment"
             app:enterAnim="@anim/anim_in_right"
             app:exitAnim="@anim/anim_out_left"
             app:popEnterAnim="@anim/anim_in_left"
-            app:popExitAnim="@anim/anim_out_right"/>
+            app:popExitAnim="@anim/anim_out_right" />
         <action
             android:id="@+id/action_acceptanceListFragment_to_acceptanceSizeFragment"
             app:destination="@id/acceptanceSizeFragment"
             app:enterAnim="@anim/anim_in_right"
             app:exitAnim="@anim/anim_out_left"
             app:popEnterAnim="@anim/anim_in_left"
-            app:popExitAnim="@anim/anim_out_right"/>
+            app:popExitAnim="@anim/anim_out_right" />
     </fragment>
 
     <fragment
@@ -74,20 +57,17 @@
         android:label="AcceptanceFragment"
         tools:layout="@layout/fragment_acceptance">
         <action
-            android:id="@+id/action_acceptanceFragment_to_searchFragment"
-            app:destination="@id/searchFragment" />
-        <action
             android:id="@+id/action_acceptanceFragment_to_barcodePrinter"
             app:destination="@id/barcodePrintActivity"
             app:enterAnim="@anim/anim_in_right"
             app:exitAnim="@anim/anim_out_left"
             app:popEnterAnim="@anim/anim_in_left"
-            app:popExitAnim="@anim/anim_out_right"/>
+            app:popExitAnim="@anim/anim_out_right" />
         <action
             android:id="@+id/action_acceptanceFragment_to_acceptanceFragment"
             app:destination="@id/acceptanceFragment"
             app:popUpTo="@id/acceptanceFragment"
-            app:popUpToInclusive="true"/>
+            app:popUpToInclusive="true" />
     </fragment>
     <fragment
         android:id="@+id/acceptanceWeightFragment"
@@ -119,12 +99,12 @@
         android:name="com.example.soft1c.fragment.LoadingListFragment"
         android:label="LoadingListFragment"
         tools:layout="@layout/fragment_loading_list">
-    <action
-        android:id="@+id/action_loadingListFragment_to_loadingFragment"
-        app:destination="@id/loadingFragment"/>
         <action
-            android:id="@+id/action_loadingListFragment_to_mainFragment"
-            app:destination="@id/mainFragment" />
+            android:id="@+id/action_loadingListFragment_to_loadingFragment"
+            app:destination="@id/loadingFragment" />
+        <action
+            android:id="@+id/action_loadingListFragment_to_reloadingFragment"
+            app:destination="@id/reloadingFragment" />
     </fragment>
 
 
@@ -146,4 +126,10 @@
             android:id="@+id/action_mainFragment_to_loadingFragment"
             app:destination="@id/loadingListFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/reloadingFragment"
+        android:name="com.example.soft1c.fragment.ReloadingFragment"
+        android:label="ReloadingFragment"
+        tools:layout="@layout/fragment_reloading" />
 </navigation>

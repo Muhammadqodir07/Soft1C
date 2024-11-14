@@ -39,7 +39,7 @@ class AcceptanceAdapter(
                     binding.linearContainer.setBackgroundResource(R.color.selectedItem)
                 txtDocumentNumber.text =
                     acceptance.number.replace("[A-Z]".toRegex(), "").trimStart('0')
-                txtClient.text = acceptance.client.trimStart('0')
+                txtClient.text = acceptance.client.code.trimStart('0')
                 txtPackage.text = acceptance._package.filter { !it.isDigit() }
                 txtZone.text = acceptance.zone
                 txtZone.isVisible = showColumnZone
@@ -136,7 +136,7 @@ class AcceptanceAdapter(
             val query = selectedTextView!!.text.toString()
             val filteredItems = currentList.filter { acceptance ->
                 when (selectedTextView!!.id) {
-                    binding.txtClient.id -> acceptance.client.trimStart('0') == query
+                    binding.txtClient.id -> acceptance.client.code.trimStart('0') == query
                     binding.txtPackage.id -> acceptance._package.filter { !it.isDigit() } == query
                     binding.txtZone.id -> acceptance.zone == query
                     binding.txtEmptyWeight.id -> !acceptance.weight

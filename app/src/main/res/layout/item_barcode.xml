@@ -9,13 +9,23 @@
     android:orientation="horizontal">
 
     <TextView
+        android:id="@+id/txt_doc_number"
+        style="@style/TextNumber"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.7"
+        android:gravity="center|start"
+        tools:text="YI000045324"
+        android:textSize="16sp"/>
+
+    <TextView
         android:id="@+id/txt_code_client"
         style="@style/TextNumber"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="0.7"
         android:gravity="center|start"
-        tools:text="@tools:sample/last_names"
+        tools:text="99999"
         android:textSize="16sp"/>
 
     <TextView
@@ -26,18 +36,18 @@
         android:layout_marginStart="@dimen/default_margin_item"
         android:layout_weight="0.8"
         android:gravity="center|start"
-        tools:text="@tools:sample/last_names"
+        tools:text="01/01/01 \n 10:08"
         android:textSize="14sp"/>
 
     <TextView
-        android:id="@+id/txt_package"
+        android:id="@+id/txt_seat_number"
         style="@style/TextNumber"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_marginStart="@dimen/default_margin_item"
-        android:layout_weight="1"
+        android:layout_weight="0.5"
         android:gravity="center|start"
-        tools:text="@tools:sample/last_names"
+        tools:text="999"
         android:textSize="14sp"/>
 
     <ImageButton
