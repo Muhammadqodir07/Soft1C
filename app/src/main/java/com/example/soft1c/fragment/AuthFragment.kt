@@ -158,8 +158,6 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
         with(binding) {
             cardLogin.setOnClickListener {
                 setBase()
-//                val demo = Demo()
-//                demo.loadProfile()
                 baseViewModel.acceptanceAuth()
                 showPbLoading(true)
             }

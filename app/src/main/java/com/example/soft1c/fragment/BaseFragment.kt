@@ -126,12 +126,12 @@ open class BaseFragment<T : ViewBinding>(
 
 
     fun showDialogLoading() {
-        viewDialog = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_loading, null)
-        dialogLoading = AlertDialog.Builder(requireContext())
-            .setView(viewDialog)
-            .setCancelable(false)
-            .create()
-        if (!dialogLoading.isShowing) {
+        if (!::dialogLoading.isInitialized || !dialogLoading.isShowing) {
+            viewDialog = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_loading, null)
+            dialogLoading = AlertDialog.Builder(requireContext())
+                .setView(viewDialog)
+                .setCancelable(false)
+                .create()
             dialogLoading.show()
         }
     }
@@ -183,8 +183,7 @@ open class BaseFragment<T : ViewBinding>(
             return
         }
         if (dialogLoading.isShowing) {
-            dialogLoading.setCancelable(true)
-            dialogLoading.cancel()
+            dialogLoading.dismiss()  // Use dismiss instead of cancel
         }
     }
 

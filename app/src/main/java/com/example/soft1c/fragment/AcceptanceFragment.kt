@@ -314,7 +314,6 @@ class AcceptanceFragment :
             btnSave.setOnClickListener {
                 isBottomSaveButton = true
                 createUpdateAcceptance()
-                showDialogLoading()
             }
             btnCopy.setOnClickListener {
                 createCopyForm()
@@ -350,7 +349,7 @@ class AcceptanceFragment :
             when (view) {
                 etxtSave -> if (hasFocus) {
                     if (hasFocusCanSave) {
-                        hasFocusCanSave = !hasFocusCanSave
+                        hasFocusCanSave = false
                         return@with
                     }
                     createUpdateAcceptance()
@@ -374,6 +373,7 @@ class AcceptanceFragment :
             return
         }
         if (acceptanceCopyList.isNotEmpty()) {
+            showDialogLoading()
             acceptanceCopyList.forEach { acceptance ->
                 viewModel.createUpdateAcceptance(acceptance)
             }
@@ -382,6 +382,7 @@ class AcceptanceFragment :
             if (etxtSave.isEnabled) {
                 etxtSave.isEnabled = false
                 btnSave.isEnabled = false
+                showDialogLoading()
                 viewModel.createUpdateAcceptance(acceptance)
             }
         }
@@ -893,7 +894,7 @@ class AcceptanceFragment :
                     disabilityReason,
                     showCheckBox = true,
                     navigateToLog = false
-                ) { false }
+                ) {}
             }
         }
     }

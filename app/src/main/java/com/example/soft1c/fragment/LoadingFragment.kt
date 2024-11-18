@@ -23,6 +23,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.soft1c.R
 import com.example.soft1c.adapter.BarcodeAdapter
+import com.example.soft1c.adapter.CarAdapter
 import com.example.soft1c.databinding.FragmentLoadingBinding
 import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.LoadingBarcode
@@ -145,7 +146,6 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         }
     }
 
-    //Функция устанавливания слушателей для поля НомераМашин
     private fun initUI() {
         showLoading()
         with(binding) {
@@ -157,10 +157,12 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                 elayoutTxtDate.visibility = View.GONE
             }
             tvAuto.setAdapter(
-                ArrayAdapter(
+                CarAdapter(
                     requireContext(),
                     android.R.layout.simple_list_item_1,
-                    cars.map { (it as LoadingModel.Car).number })
+                    android.R.id.text1,
+                    cars.map { (it as LoadingModel.Car).number }.toMutableList()
+                )
             )
             elayoutBarcode.setEndIconOnClickListener {
                 etxtBarcode.clearFocus()
@@ -237,7 +239,6 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                             1 -> {
                                 fullScroll(ScrollView.FOCUS_RIGHT)
                             }
-
                             else -> {}
                         }
                     }
@@ -409,24 +410,25 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     }
 
     private fun updateWeightAndVolume() {
-        if (binding.tabLayout.selectedTabPosition == 0) {
-            frontWeight = barcodeFrontList.sumOf { it.weight }
-            frontVolume = barcodeFrontList.sumOf { it.volume }
-
-        } else {
-            backWeight = barcodeBackList.sumOf { it.weight }
-            backVolume = barcodeBackList.sumOf { it.volume }
-        }
+        frontWeight = barcodeFrontList.sumOf { it.weight }
+        frontVolume = barcodeFrontList.sumOf { it.volume }
+        backWeight = barcodeBackList.sumOf { it.weight }
+        backVolume = barcodeBackList.sumOf { it.volume }
         updateWeightAndVolumeUI()
     }
 
+    @SuppressLint("DefaultLocale")
     private fun updateWeightAndVolumeUI() {
-        if (binding.tabLayout.selectedTabPosition == 0) {
-            binding.txtWeightValue.text = String.format("%.2f", frontWeight)
-            binding.txtVolumeValue.text = String.format("%.6f", frontVolume)
-        } else {
-            binding.txtWeightValue.text = String.format("%.2f", backWeight)
-            binding.txtVolumeValue.text = String.format("%.6f", backVolume)
+        with(binding) {
+            if (tabLayout.selectedTabPosition == 0) {
+                txtWeightValue.text = String.format("%.2f", frontWeight)
+                txtVolumeValue.text = String.format("%.6f", frontVolume)
+                txtSeats.text = barcodeFrontList.count().toString()
+            } else {
+                txtWeightValue.text = String.format("%.2f", backWeight)
+                txtVolumeValue.text = String.format("%.6f", backVolume)
+                txtSeats.text = barcodeBackList.count().toString()
+            }
         }
     }
 

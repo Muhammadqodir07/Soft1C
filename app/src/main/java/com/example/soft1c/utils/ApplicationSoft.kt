@@ -1,7 +1,7 @@
 package com.example.soft1c.utils
 
 import android.app.Application
-import com.example.soft1c.BuildConfig
+import androidx.viewbinding.BuildConfig
 import com.example.soft1c.utils.UCE.UnhandledExceptionHandler
 import timber.log.Timber
 
