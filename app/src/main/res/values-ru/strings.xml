@@ -131,5 +131,5 @@
     <string name="stg_fill_barcodes">Заполнить ШК приёмки</string>
     <string name="txt_success_connection">Успешное соединение</string>
     <string name="txt_no_connection">Нет соединения</string>
-    <string name="txt_check_connection">Проверить свзяь</string>
+    <string name="txt_check_connection">Проверить связь</string>
 </resources>

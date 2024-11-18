@@ -1,5 +1,6 @@
 package com.example.soft1c.utils
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.DisplayMetrics
 import android.view.WindowManager
@@ -23,7 +24,7 @@ object Utils {
     var lang = ""
 
     var authorizationTimeout = 30L
-    var clientTimeout = 20L
+    var clientTimeout = 10L
     var logFor1C = ""
 
     var productTypes: List<AnyModel> = listOf()
@@ -42,7 +43,9 @@ object Utils {
     var refreshList: Boolean = false
 
     var debugMode = false
+    @SuppressLint("ConstantLocale")
     val inputDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+    @SuppressLint("ConstantLocale")
     val outputDateFormat = SimpleDateFormat("dd/MM/yy\nHH:mm", Locale.getDefault())
 
 
