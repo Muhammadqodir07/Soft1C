@@ -9,9 +9,9 @@ data class Loading(
     var senderWarehouse: LoadingModel.Warehouse = LoadingModel.Warehouse(),
     var getterWarehouse: LoadingModel.Warehouse = LoadingModel.Warehouse(),
     // Штрих-коды передней части машины
-    var barcodesFront: List<LoadingBarcode> = listOf(),
+    var barcodesFront: List<ExpandableLoadingList> = listOf(),
     //Штрих-коды задней части машины
-    var barcodesBack: List<LoadingBarcode> = listOf(),
+    var barcodesBack: List<ExpandableLoadingList> = listOf(),
     var container: LoadingModel.Container = LoadingModel.Container()
 ){
     companion object{

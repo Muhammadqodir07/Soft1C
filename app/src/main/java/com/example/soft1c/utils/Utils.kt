@@ -42,7 +42,7 @@ object Utils {
     var user = User()
     var refreshList: Boolean = false
 
-    var debugMode = false
+    var debugMode = true
     @SuppressLint("ConstantLocale")
     val inputDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
     @SuppressLint("ConstantLocale")

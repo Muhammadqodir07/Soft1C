@@ -90,6 +90,7 @@ dependencies {
     //Zebra file
     implementation files("libs/ZSDK_ANDROID_API.jar")
     implementation files("libs/tscsdk.jar")
+    implementation files("libs/CPCL_SDK_V1.22.01.jar")
 
     implementation 'com.github.phearme:macaddress-edittext:1.0.1'
 

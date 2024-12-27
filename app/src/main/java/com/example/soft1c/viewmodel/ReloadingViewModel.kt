@@ -8,8 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.soft1c.R
 import com.example.soft1c.network.Network
 import com.example.soft1c.repository.ReloadingRepository
+import com.example.soft1c.repository.model.ExpandableLoadingList
 import com.example.soft1c.repository.model.Loading
-import com.example.soft1c.repository.model.LoadingBarcode
 import com.example.soft1c.repository.model.LoadingEnableVisible
 import com.example.soft1c.utils.SingleLiveEvent
 import com.example.soft1c.utils.Utils
@@ -35,7 +35,7 @@ class ReloadingViewModel(application: Application): AndroidViewModel(application
     private val toastResIdMutableData = SingleLiveEvent<Int>()
     private val createUpdateMutableData = SingleLiveEvent<Pair<Loading, String>>()
     private val reloadingListMutableData = MutableLiveData<List<Loading>>()
-    private val barcodeListMutableData = MutableLiveData<List<LoadingBarcode>>()
+    private val barcodeListMutableData = MutableLiveData<List<ExpandableLoadingList>>()
     private val reloadingMutableData = SingleLiveEvent<Pair<Loading, List<LoadingEnableVisible>>>()
 
     val toastLiveDat: LiveData<String>
@@ -44,7 +44,7 @@ class ReloadingViewModel(application: Application): AndroidViewModel(application
         get() = toastResIdMutableData
     val createUpdateLiveDat: LiveData<Pair<Loading, String>>
         get() = createUpdateMutableData
-    val barcodeListLiveData: LiveData<List<LoadingBarcode>>
+    val barcodeListLiveData: LiveData<List<ExpandableLoadingList>>
         get() = barcodeListMutableData
     val reloadingLiveData: LiveData<Pair<Loading, List<LoadingEnableVisible>>>
         get() = reloadingMutableData

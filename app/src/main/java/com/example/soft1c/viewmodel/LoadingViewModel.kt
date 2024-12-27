@@ -8,8 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.soft1c.R
 import com.example.soft1c.network.Network
 import com.example.soft1c.repository.LoadingRepository
+import com.example.soft1c.repository.model.ExpandableLoadingList
 import com.example.soft1c.repository.model.Loading
-import com.example.soft1c.repository.model.LoadingBarcode
 import com.example.soft1c.repository.model.LoadingEnableVisible
 import com.example.soft1c.utils.SingleLiveEvent
 import com.example.soft1c.utils.Utils
@@ -45,7 +45,7 @@ class LoadingViewModel(application: Application): AndroidViewModel(application) 
     private val toastResIdMutableData = SingleLiveEvent<Int>()
     private val createUpdateMutableData = SingleLiveEvent<Pair<Loading, String>>()
     private val loadingListMutableData = MutableLiveData<List<Loading>>()
-    private val barcodeListMutableData = MutableLiveData<List<LoadingBarcode>>()
+    private val barcodeListMutableData = MutableLiveData<List<ExpandableLoadingList>>()
     private val loadingMutableData = SingleLiveEvent<Pair<Loading, List<LoadingEnableVisible>>>()
 
     val toastLiveDat: LiveData<String>
@@ -56,7 +56,7 @@ class LoadingViewModel(application: Application): AndroidViewModel(application) 
         get() = createUpdateMutableData
     val loadingListLiveData: LiveData<List<Loading>>
         get() = loadingListMutableData
-    val barcodeListLiveData: LiveData<List<LoadingBarcode>>
+    val barcodeListLiveData: LiveData<List<ExpandableLoadingList>>
         get() = barcodeListMutableData
     val loadingLiveData: LiveData<Pair<Loading, List<LoadingEnableVisible>>>
         get() = loadingMutableData

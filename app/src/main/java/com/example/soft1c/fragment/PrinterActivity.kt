@@ -25,6 +25,7 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.WriterException
 import com.journeyapps.barcodescanner.BarcodeEncoder
+import cpcl.PrinterHelper
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -84,7 +85,7 @@ class PrinterActivity : AppCompatActivity() {
                     } else {
                         if (etxtPageCount.text!!.isEmpty())
                             etxtPageCount.setText("1")
-                        doPhotoPrint()
+                        doPhotoPrintTSC()
                     }
                 } else {
                     Toast.makeText(
@@ -135,7 +136,7 @@ class PrinterActivity : AppCompatActivity() {
         onBackPressed()
     }
 
-    private fun doPhotoPrint() {
+    private fun doPhotoPrintTSC() {
         Thread {
             try {
                 Looper.prepare()
@@ -165,6 +166,64 @@ class PrinterActivity : AppCompatActivity() {
                 Looper.myLooper()?.quit()
                 acceptance.type = 2
                 createUpdateAcceptance()
+            } catch (e: Exception) {
+                runOnUiThread {
+                    binding.testTV.text = e.message
+                }
+                e.printStackTrace()
+            }
+        }.start()
+    }
+
+    private fun doPhotoPrintCPCL() {
+        Thread {
+            try {
+                Looper.prepare()
+                PrinterHelper.portOpenBT(this, macAddress)
+
+                PrinterHelper.printAreaSize("0", "576", "1440", "500", "1")
+                PrinterHelper.WriteData("! 0 200 200 1000 1\r\n".toByteArray())
+                PrinterHelper.WriteData("PW 576\r\n".toByteArray())
+                PrinterHelper.WriteData("GAP-SENSE\r\n".toByteArray())
+                PrinterHelper.WriteData("DIR 0\r\n".toByteArray())
+                PrinterHelper.WriteData("OFFSET 0 mm\r\n".toByteArray())
+                PrinterHelper.WriteData("SET PEEL OFF\r\n".toByteArray())
+                PrinterHelper.WriteData("SET CUTTER OFF\r\n".toByteArray())
+                PrinterHelper.WriteData("SET PARTIAL_CUTTER OFF\r\n".toByteArray())
+                PrinterHelper.WriteData("SET TEAR ON\r\n".toByteArray())
+
+                // Print a barcode
+                PrinterHelper.Barcode(
+                    PrinterHelper.BARCODE,
+                    PrinterHelper.code128,
+                    "3", "3", "120",
+                    "10", "50",
+                    true, "7", "2", "5", barcodeInput
+                )
+
+                // Set codepage
+                PrinterHelper.Country("ISO8859-1")
+                PrinterHelper.Encoding("1251")
+
+                // Print text
+                PrinterHelper.Text(PrinterHelper.TEXT, "7", "0", "50", "200", acceptance.number)
+                PrinterHelper.Text(PrinterHelper.TEXT, "7", "0", "300", "300", acceptance.client.code)
+                PrinterHelper.Text(PrinterHelper.TEXT, "7", "0", "50", "100", "SEATS:")
+                PrinterHelper.Text(PrinterHelper.TEXT, "7", "0", "150", "100", acceptance.countSeat.toString())
+                PrinterHelper.Text(PrinterHelper.TEXT, "7", "0", "400", "200", "DATE:")
+                PrinterHelper.Text(PrinterHelper.TEXT, "7", "0", "500", "200", date)
+
+                // Start printing
+                PrinterHelper.Print()
+
+                Thread.sleep(500)
+                PrinterHelper.portClose()
+
+                // Update acceptance type
+                acceptance.type = 2
+                createUpdateAcceptance()
+
+                Looper.myLooper()?.quit()
             } catch (e: Exception) {
                 runOnUiThread {
                     binding.testTV.text = e.message

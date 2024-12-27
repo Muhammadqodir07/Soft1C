@@ -2,95 +2,220 @@ package com.example.soft1c.adapter
 
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.soft1c.R
 import com.example.soft1c.extension.inflateLayout
-import com.example.soft1c.repository.model.LoadingBarcode
+import com.example.soft1c.repository.model.ExpandableLoadingList
+import com.example.soft1c.repository.model.LoadingBarcodeChild
+import com.example.soft1c.repository.model.LoadingBarcodeParent
 import com.example.soft1c.utils.Utils.inputDateFormat
 import com.example.soft1c.utils.Utils.outputDateFormat
 
 //Класс определяет, как должен отображаться каждый элемент списка сканированных штрих-кодов.
-class BarcodeAdapter(val onRemoveBarcode: (LoadingBarcode) -> Unit) :
-    RecyclerView.Adapter<BarcodeAdapter.BarcodeViewHolder>() {
+class BarcodeAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private val scannedBarcodes = mutableListOf<LoadingBarcode>()
+    private val scannedBarcodes = mutableListOf<ExpandableLoadingList>()
 
     //Внутренний класс предоставляющий ссылки на элементы пользовательского интерфейса, которые будут отображаться для каждого элемента списка.
-    inner class BarcodeViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    inner class BarcodeChildViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        private val barcodeNumber: TextView = view.findViewById(R.id.txt_barcode)
+        private val barcodeSeatNumber: TextView = view.findViewById(R.id.txt_seat_number)
+//        private val actionButton: ImageButton = view.findViewById(R.id.action_button)
+
+        fun bind(barcode: LoadingBarcodeChild, position: Int) {
+            barcodeNumber.text = barcode.barcode
+            barcodeSeatNumber.text = barcode.seatNumber.toString()
+//            actionButton.setOnClickListener {
+//                removeBarcode(position)
+//                onRemoveBarcode(barcode)
+//            }
+        }
+    }
+
+    inner class BarcodeParentViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val barcodeDocNumber: TextView = view.findViewById(R.id.txt_doc_number)
         private val barcodeClient: TextView = view.findViewById(R.id.txt_code_client)
         private val barcodeDate: TextView = view.findViewById(R.id.txt_date)
-        private val barcodeSeatNumber: TextView = view.findViewById(R.id.txt_seat_number)
-        private val actionButton: ImageButton = view.findViewById(R.id.action_button)
+        private val barcodeSeatsCount: TextView = view.findViewById(R.id.txt_total_seats)
 
-        fun bind(barcode: LoadingBarcode, position: Int) {
-            barcodeDocNumber.text = barcode.acceptanceNumber.replace("[A-Z]".toRegex(), "").trimStart('0')
-            barcodeClient.text = barcode.clientCode
-            barcodeDate.text = inputDateFormat.parse(barcode.date)
+        fun bind(barcodeGroup: LoadingBarcodeParent, position: Int) {
+            barcodeDocNumber.text = barcodeGroup.acceptanceNumber.replace("[A-Z]".toRegex(), "").trimStart('0')
+            barcodeClient.text = barcodeGroup.clientCode
+            barcodeDate.text = inputDateFormat.parse(barcodeGroup.date)
                 ?.let { outputDateFormat.format(it) }
-            barcodeSeatNumber.text = barcode.seatNumber.toString()
-            actionButton.setOnClickListener {
-                removeBarcode(position)
-                onRemoveBarcode(barcode)
+            barcodeSeatsCount.text = barcodeGroup.totalSeats.toString()
+            itemView.setOnClickListener {
+                when (scannedBarcodes[position].isExpanded) {
+                    true -> {
+                        scannedBarcodes[position].isExpanded = false
+                        collapseRow(position)
+                    }
+                    false -> {
+                        scannedBarcodes[position].isExpanded = true
+                        expandRow(position)
+                    }
+                }
             }
         }
     }
 
     //Создает новый объект BarcodeViewHolder, который будет использоваться для отображения каждого элемента списка.
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BarcodeViewHolder {
-        val view = parent.inflateLayout(R.layout.item_barcode)
-        return BarcodeViewHolder(view)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return when(viewType){
+            ExpandableLoadingList.PARENT -> {
+                val view = parent.inflateLayout(R.layout.item_barcode_parent)
+                return BarcodeParentViewHolder(view)
+            }
+            ExpandableLoadingList.CHILD -> {
+                val view = parent.inflateLayout(R.layout.item_barcode_child)
+                return BarcodeChildViewHolder(view)
+            }
+            else -> {
+                val view = parent.inflateLayout(R.layout.item_barcode_parent)
+                return BarcodeParentViewHolder(view)
+            }
+        }
     }
 
     //Связывает данные элемента списка с элементом пользовательского интерфейса, который предоставляется объектом BarcodeViewHolder.
-    override fun onBindViewHolder(holder: BarcodeViewHolder, position: Int) {
-        holder.bind(scannedBarcodes[position], position)
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        //holder.bind(scannedBarcodes[position], position)
+        val row = scannedBarcodes[position]
+        when(row.type){
+            ExpandableLoadingList.PARENT -> {
+                (holder as BarcodeParentViewHolder)
+                holder.bind(row.loadingParent, position)
+            }
+
+
+            ExpandableLoadingList.CHILD -> {
+                (holder as BarcodeChildViewHolder)
+                holder.bind(row.loadingChild, position)
+            }
+        }
     }
+
+    override fun getItemViewType(position: Int): Int = scannedBarcodes[position].type
 
     //Возвращает количество элементов в списке
-    override fun getItemCount(): Int {
-        return scannedBarcodes.size
-    }
+    override fun getItemCount(): Int = scannedBarcodes.size
 
     //Добавляет новый элемент в список сканированных штрих-кодов и обновляет представление RecyclerView (Элемент пользовательского интерфейса).
-    fun addBarcodeData(barcodeData: LoadingBarcode) {
-        scannedBarcodes.add(barcodeData)
-        notifyItemInserted(scannedBarcodes.size - 1)
+    fun addBarcodeData(barcodeData: ExpandableLoadingList) {
+        if (barcodeData.type == ExpandableLoadingList.CHILD) {
+            val parent = scannedBarcodes.find { it.type == ExpandableLoadingList.PARENT && it.loadingParent.acceptanceUid == barcodeData.loadingChild.parentUid }
+            if (parent != null) {
+                val barcodes: MutableList<LoadingBarcodeChild> =
+                    parent.loadingParent.barcodes.toMutableList()
+                barcodes.add(barcodeData.loadingChild)
+                parent.loadingParent.barcodes = barcodes
+                parent.loadingParent.totalSeats = barcodes.size
+            }
+        }else{
+            scannedBarcodes.add(barcodeData)
+            notifyItemInserted(scannedBarcodes.size - 1)
+        }
+
     }
 
-    fun removeBarcode(position: Int) {
-        scannedBarcodes.removeAt(position)
-        notifyItemRemoved(position)
-        notifyDataSetChanged()
+    private fun expandRow(position: Int){
+        val row = scannedBarcodes[position]
+        var nextPosition = position
+        when (row.type) {
+            ExpandableLoadingList.PARENT -> {
+                for(child in row.loadingParent.barcodes){
+                    scannedBarcodes.add(++nextPosition, ExpandableLoadingList(ExpandableLoadingList.CHILD, child))
+                }
+                notifyDataSetChanged()
+            }
+            ExpandableLoadingList.CHILD -> {
+                notifyDataSetChanged()
+            }
+        }
+    }
+
+    private fun collapseRow(position: Int){
+        val row = scannedBarcodes[position]
+        var nextPosition = position + 1
+        when (row.type) {
+            ExpandableLoadingList.PARENT -> {
+                outerloop@ while (true) {
+                    //  println("Next Position during Collapse $nextPosition size is ${shelfModelList.size} and parent is ${shelfModelList[nextPosition].type}")
+
+                    if (nextPosition == scannedBarcodes.size || scannedBarcodes[nextPosition].type == ExpandableLoadingList.PARENT) {
+
+                        break@outerloop
+                    }
+
+                    scannedBarcodes.removeAt(nextPosition)
+                }
+
+                notifyDataSetChanged()
+            }
+        }
     }
 
     fun removeBarcodeByBarcode(barcode: String) {
-        val barcodeForDelete = scannedBarcodes.find { it.barcode == barcode }
-        if (barcodeForDelete != null) {
-            scannedBarcodes.remove(barcodeForDelete)
-            onRemoveBarcode(barcodeForDelete)
-            notifyDataSetChanged()
+        // Find and update the parent of the child
+        val parentIndex = scannedBarcodes.indexOfFirst {
+            it.type == ExpandableLoadingList.PARENT &&
+                    it.loadingParent.barcodes.any { child -> child.barcode == barcode }
         }
-    }
 
-    fun removeBarcodeByUid(acceptanceUid: String) {
-        val barcodesToRemove = scannedBarcodes.filter { it.acceptanceUid == acceptanceUid }
+        if (parentIndex != -1) {
+            val parent = scannedBarcodes[parentIndex].loadingParent
 
-        barcodesToRemove.forEach { barcode ->
-            scannedBarcodes.remove(barcode)
-            onRemoveBarcode(barcode)
+            parent.barcodes = parent.barcodes.filter { it.barcode != barcode }
+            parent.totalSeats = parent.barcodes.size
+
+            // If the parent now has no children, optionally remove it
+            if (parent.barcodes.isEmpty()) {
+                scannedBarcodes.removeAt(parentIndex)
+            }
+        }
+
+        // Remove the child from ExpandableLoadingList
+        scannedBarcodes.removeIf {
+            it.type == ExpandableLoadingList.CHILD &&
+                    it.loadingChild.barcode == barcode
         }
 
         notifyDataSetChanged()
     }
-    fun getList(): List<LoadingBarcode>{
+
+    fun removeBarcodeByUid(acceptanceUid: String) {
+        scannedBarcodes.removeIf {
+            it.type == ExpandableLoadingList.PARENT &&
+                    it.loadingParent.acceptanceUid == acceptanceUid
+        }
+
+        scannedBarcodes.removeIf {
+            it.type == ExpandableLoadingList.CHILD &&
+                    it.loadingChild.parentUid == acceptanceUid
+        }
+
+        notifyDataSetChanged()
+    }
+    fun getList(): List<ExpandableLoadingList>{
         return scannedBarcodes
     }
 
-    fun find(barcode: String): LoadingBarcode?{
-        return scannedBarcodes.find{it.barcode == barcode}
+    fun find(barcode: String): ExpandableLoadingList? {
+        val child =
+            scannedBarcodes.find { it.type == ExpandableLoadingList.CHILD && it.loadingChild.barcode == barcode }
+        if (child == null) {
+            val parents =
+                scannedBarcodes.find { it.type == ExpandableLoadingList.PARENT }?.loadingParent
+            if (parents == null) return null
+            val childOfParent = parents.barcodes.find { it.barcode == barcode }
+            if (childOfParent == null) return null
+            return ExpandableLoadingList(
+                type = ExpandableLoadingList.CHILD,
+                loadingChild = childOfParent
+            )
+        } else
+            return child
     }
 
     //Очищает список сканированных штрих-кодов и обновляет представление RecyclerView.
@@ -99,4 +224,3 @@ class BarcodeAdapter(val onRemoveBarcode: (LoadingBarcode) -> Unit) :
         notifyDataSetChanged()
     }
 }
-

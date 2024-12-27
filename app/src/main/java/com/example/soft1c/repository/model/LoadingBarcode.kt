@@ -1,5 +1,24 @@
 package com.example.soft1c.repository.model
 
+data class LoadingBarcodeParent(
+    var barcodes: List<LoadingBarcodeChild> = emptyList(),
+    val acceptanceNumber: String = "",
+    val acceptanceUid: String = "",
+    var totalSeats: Int = -1,
+    val clientCode: String = "",
+    val date: String = ""
+)
+
+data class LoadingBarcodeChild(
+    val parentUid: String = "",
+    val barcode: String = "",
+    val weight: Double = 0.0,
+    val volume: Double = 0.0,
+    val packageTypeUid: String = "",
+    val packageType: String = "",
+    val seatNumber: Int = -1
+)
+
 data class LoadingBarcode(
     val barcode: String = "",
     val weight: Double = 0.0,
@@ -11,7 +30,7 @@ data class LoadingBarcode(
     val packageType: String = "",
     val clientCode: String = "",
     val date: String = ""
-) {
+){
     companion object {
         const val BARCODE_KEY = "ШтрихКод"
         const val WEIGHT_KEY = "Вес"
@@ -52,9 +71,9 @@ data class LoadingBarcode(
 {
 "Объем": 0.06032,
 "Вес": 29.45,
-"ПриемТовара": "e164a1f5-a23e-11eb-80da-b88303f1228d",
+"ПриемТовара": "e164a1f5-a23e-11eb-80da-b88303f1228e",
 "Дата": "2021-04-21T06:14:12",
-"НомерПриема": "GZ0005731",
+"НомерПриема": "GZ0005732",
 "ШтрихКод": "90000353423210421",
 "НомерМеста": 3,
 "КоличествоМест": 1,
@@ -64,9 +83,9 @@ data class LoadingBarcode(
 {
 "Объем": 0.072504,
 "Вес": 35.39,
-"ПриемТовара": "e164a1f5-a23e-11eb-80da-b88303f1228d",
+"ПриемТовара": "e164a1f5-a23e-11eb-80da-b88303f1228e",
 "Дата": "2021-04-21T06:14:12",
-"НомерПриема": "GZ0005731",
+"НомерПриема": "GZ0005732",
 "ШтрихКод": "90000453424210421",
 "НомерМеста": 4,
 "КоличествоМест": 1,
