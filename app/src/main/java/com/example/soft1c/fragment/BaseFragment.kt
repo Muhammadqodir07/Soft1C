@@ -178,6 +178,21 @@ open class BaseFragment<T : ViewBinding>(
         dialog.show()
     }
 
+    fun showYesNoDialog(context: Context, title: String, onYes: () -> Unit, onNo: () -> Unit) {
+        val dialogBuilder = androidx.appcompat.app.AlertDialog.Builder(context)
+        dialogBuilder.setTitle(title)
+            .setCancelable(true)
+            .setPositiveButton("Yes") { _, _ ->
+                onYes()
+            }
+            .setNegativeButton("No") { _, _ ->
+                onNo()
+            }
+
+        val alert = dialogBuilder.create()
+        alert.show()
+    }
+
     fun closeDialogLoading() {
         if (!::dialogLoading.isInitialized) {
             return

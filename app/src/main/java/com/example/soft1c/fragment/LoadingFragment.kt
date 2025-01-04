@@ -27,6 +27,7 @@ import com.example.soft1c.adapter.CarAdapter
 import com.example.soft1c.databinding.FragmentLoadingBinding
 import com.example.soft1c.repository.model.ExpandableLoadingList
 import com.example.soft1c.repository.model.Loading
+import com.example.soft1c.repository.model.LoadingBarcodeParent
 import com.example.soft1c.repository.model.LoadingEnableVisible
 import com.example.soft1c.repository.model.LoadingModel
 import com.example.soft1c.utils.Utils
@@ -48,11 +49,13 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     private val CATEGORY_DEFAULT = Intent.CATEGORY_DEFAULT
 
     // Объект класса позволяющего связывать штрих-коды с элементами интерфейса
-    private var barcodeFrontAdapter: BarcodeAdapter = BarcodeAdapter()
-    private var barcodeBackAdapter: BarcodeAdapter = BarcodeAdapter()
+    private var barcodeFrontAdapter: BarcodeAdapter = BarcodeAdapter { barcode ->
+        updateWeightAndVolume()
+    }
+    private var barcodeBackAdapter: BarcodeAdapter = BarcodeAdapter { barcode ->
+        updateWeightAndVolume()
+    }
 
-    private var barcodeFrontList: ArrayList<ExpandableLoadingList> = arrayListOf()
-    private var barcodeBackList: ArrayList<ExpandableLoadingList> = arrayListOf()
     private lateinit var scannedData: String
     private var frontWeight = 0.0
     private var frontVolume = 0.0
@@ -67,18 +70,23 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     private lateinit var dialog: AlertDialog
 
     private var documentCreate = false
+    private var closingFromDialog = false
     private val inputDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
     private val outputDateFormat = SimpleDateFormat("dd/MM/yy || HH:mm", Locale.getDefault())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val loadingNumber = arguments?.getString(KEY_LOADING_NUMBER, "") ?: ""
+        val loadingData = arguments?.getString(KEY_LOADING_DATA, "") ?: ""
         loading = if (loadingNumber.isNotEmpty()) {
             showDialogLoading()
             viewModel.getLoading(loadingNumber)
             Loading(number = loadingNumber)
         } else {
-            Loading(number = "")
+            if (loadingData.isNotEmpty()) {
+                fillLoadingFromCache(loadingData)
+            } else
+                Loading(number = "")
         }
     }
 
@@ -254,7 +262,16 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
             etxtSave.setOnClickListener {
                 createUpdateLoading()
             }
-            btnClose.setOnClickListener { closeActivity() }
+            btnClose.setOnClickListener {
+                showYesNoDialog(requireContext(), "Save document?", onYes = {
+                    saveLoading()
+                    closingFromDialog = true
+                    closeActivity()
+                }, onNo = {
+                    closingFromDialog = true
+                    closeActivity()
+                })
+            }
         }
     }
 
@@ -337,8 +354,8 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
 
     private fun createUpdateLoading() {
         if (documentCreate) return
-        loading.barcodesFront = barcodeFrontList
-        loading.barcodesBack = barcodeBackList
+        loading.barcodesFront = barcodeFrontAdapter.getList()
+        loading.barcodesBack = barcodeBackAdapter.getList()
         if (loading.car == LoadingModel.Car()) {
             binding.tvAuto.error = resources.getString(R.string.text_field_is_empyt)
         } else if (loading.getterWarehouse == LoadingModel.Warehouse()) {
@@ -351,11 +368,11 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         }
     }
 
-    private fun getCreateUpdateLoadingInfo(pair: Pair<Loading, String>) {
+    private fun getCreateUpdateLoadingInfo(errorMessage: String) {
         closeDialogLoading()
         binding.etxtSave.isEnabled = true
-        if (pair.second.isNotEmpty()) {
-            toast(pair.second)
+        if (errorMessage.isNotEmpty()) {
+            toast(errorMessage)
             return
         }
         Utils.refreshList = true
@@ -379,38 +396,44 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
 
     private fun fillBarcodeList(barcodes: List<ExpandableLoadingList>?) {
         closeDialogLoading()
+
         barcodes?.forEach { barcode ->
-            if (binding.radioAcceptance.isChecked && !(barcodeFrontList + barcodeBackList).contains(
-                    barcode
-                )
-            ) {
+            if (barcode.type == ExpandableLoadingList.PARENT) {
+                if (barcode.loadingParent.barcodes.isEmpty())
+                    return@forEach
+            }
+            if (binding.radioAcceptance.isChecked) {
                 if (binding.tabLayout.selectedTabPosition == 0) {
                     barcodeFrontAdapter.addBarcodeData(barcode)
-                    barcodeFrontList.add(barcode)
+                    //addItemToBarcodeList(barcode, barcodeFrontList)
                 } else {
                     barcodeBackAdapter.addBarcodeData(barcode)
-                    barcodeBackList.add(barcode)
+                    //addItemToBarcodeList(barcode, barcodeBackList)
                 }
             } else if (!binding.radioAcceptance.isChecked) {
-                if (!(barcodeFrontList + barcodeBackList).contains(barcode)) {
+                val child = barcode.loadingParent.barcodes.find { it.barcode == scannedData }
 
-                    val child = if (barcode.type == ExpandableLoadingList.PARENT)
-                        barcode.loadingParent.barcodes.find { it.barcode == scannedData }
-                    else{
-                        barcode.loadingChild
-                    }
-
-                    if (child != null) {
-                        val expandItem = ExpandableLoadingList(type = ExpandableLoadingList.CHILD, loadingChild = child)
-                        if (binding.tabLayout.selectedTabPosition == 0) {
-                            barcodeFrontAdapter.addBarcodeData(expandItem)
-                            barcodeFrontList.add(expandItem)
-                        } else {
-                            barcodeBackAdapter.addBarcodeData(expandItem)
-                            barcodeBackList.add(expandItem)
-                        }
+                if (child != null) {
+                    val expandItem = ExpandableLoadingList(
+                        type = ExpandableLoadingList.PARENT,
+                        loadingParent = LoadingBarcodeParent(
+                            barcodes = listOf(child),
+                            acceptanceUid = barcode.loadingParent.acceptanceUid,
+                            acceptanceNumber = barcode.loadingParent.acceptanceNumber,
+                            clientCode = barcode.loadingParent.clientCode,
+                            date = barcode.loadingParent.date,
+                            totalSeats = 1
+                        )
+                    )
+                    if (binding.tabLayout.selectedTabPosition == 0) {
+                        barcodeFrontAdapter.addBarcodeData(expandItem)
+                        //addItemToBarcodeList(expandItem, barcodeFrontList)
+                    } else {
+                        barcodeBackAdapter.addBarcodeData(expandItem)
+                        //addItemToBarcodeList(expandItem, barcodeBackList)
                     }
                 }
+
             }
         }
 
@@ -418,8 +441,8 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     }
 
     private fun updateWeightAndVolume() {
-        val pairWeightVolumeFront = calculateTotalWeightAndVolume(barcodeFrontList)
-        val pairWeightVolumeBack = calculateTotalWeightAndVolume(barcodeBackList)
+        val pairWeightVolumeFront = calculateTotalWeightAndVolume(barcodeFrontAdapter.getList())
+        val pairWeightVolumeBack = calculateTotalWeightAndVolume(barcodeBackAdapter.getList())
         frontWeight = pairWeightVolumeFront.first
         frontVolume = pairWeightVolumeFront.second
         backWeight = pairWeightVolumeBack.first
@@ -433,11 +456,11 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
             if (tabLayout.selectedTabPosition == 0) {
                 txtWeightValue.text = String.format("%.2f", frontWeight)
                 txtVolumeValue.text = String.format("%.6f", frontVolume)
-                txtSeats.text = barcodeFrontList.count().toString()
+                txtSeats.text = barcodeFrontAdapter.getCount().toString()
             } else {
                 txtWeightValue.text = String.format("%.2f", backWeight)
                 txtVolumeValue.text = String.format("%.6f", backVolume)
-                txtSeats.text = barcodeBackList.count().toString()
+                txtSeats.text = barcodeBackAdapter.getCount().toString()
             }
         }
     }
@@ -629,12 +652,10 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                 etxtRoute.setText("${loading.senderWarehouse.prefix} — ${loading.getterWarehouse.prefix}")
             tvRecipient.setText(loading.getterWarehouse.name)
             loading.barcodesFront.forEach {
-                barcodeFrontList.add(it)
                 barcodeFrontAdapter.addBarcodeData(it)
 
             }
             loading.barcodesBack.forEach {
-                barcodeBackList.add(it)
                 barcodeBackAdapter.addBarcodeData(it)
             }
             updateWeightAndVolume()
@@ -656,37 +677,34 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         with(binding) {
             scannedData = data.replace(Regex("[\\s\\n]"), "")
 
-            if (::scannedData.isInitialized && scannedData.length >= 17) {
-                scannedData = scannedData.takeLast(17)
+//            if (::scannedData.isInitialized && scannedData.length >= 17) {
+//                scannedData = scannedData.takeLast(17)
 
-                if (Utils.debugMode)
-                    scannedData = "90000153429210421"
-
-                if (chbDelete.isChecked) {
-                    if (radioAcceptance.isChecked) {
-                        val adapter =
-                            if (tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
-                        val parentUid =
-                            adapter.find(scannedData)?.loadingChild
-                        parentUid?.let { adapter.removeBarcodeByUid(it.parentUid) }
-                    } else {
-                        val adapter =
-                            if (tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
-                        adapter.removeBarcodeByBarcode(scannedData)
-                    }
-
+            if (chbDelete.isChecked) {
+                if (radioAcceptance.isChecked) {
+                    val adapter =
+                        if (tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
+                    val parentUid =
+                        adapter.find(scannedData)?.loadingChild
+                    parentUid?.let { adapter.removeBarcodeByUid(it.parentUid) }
                 } else {
                     val adapter =
-                        if (binding.tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
-                    if (adapter.find(scannedData) == null || radioAcceptance.isChecked
-                    ) {
-                        viewModel.getBarcodeList(scannedData, user.warehouse)
-                        showDialogLoading()
-                    } else {
-                        toast(requireContext().getString(R.string.err_dublicate_barcode))
-                    }
+                        if (tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
+                    adapter.removeBarcodeByBarcode(scannedData)
+                }
+
+            } else {
+                val adapter =
+                    if (binding.tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
+                if (adapter.find(scannedData) == null || radioAcceptance.isChecked
+                ) {
+                    viewModel.getBarcodeList(scannedData, user.warehouse)
+                    showDialogLoading()
+                } else {
+                    toast(requireContext().getString(R.string.err_dublicate_barcode))
                 }
             }
+//            }
         }
     }
 
@@ -705,33 +723,59 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         dialog.show()
     }
 
-//    private fun onRemoveBarcodeClick(barcode: LoadingBarcodeChild) {
-//        if (binding.tabLayout.selectedTabPosition == 0) {
-//            val parentIndex = barcodeFrontList.indexOfFirst {
-//                it.type == ExpandableLoadingList.PARENT &&
-//                        it.loadingParent.acceptanceUid == barcode.parentUid
-//            }
-//
-//            if (parentIndex != -1) {
-//                val parent = barcodeFrontList[parentIndex].loadingParent
-//
-//                parent.barcodes = parent.barcodes.filter { it.barcode != barcode.barcode }
-//
-//                if (parent.barcodes.isEmpty()) {
-//                    barcodeFrontList.removeAt(parentIndex)
-//                }
-//            }
-//            // Remove the child from ExpandableLoadingList
-//            barcodeFrontList.removeIf {
-//                it.type == ExpandableLoadingList.CHILD &&
-//                        it.loadingChild.barcode == barcode.barcode &&
-//                        it.loadingChild.parentUid == barcode.parentUid
-//            }
-//        } else {
-//            barcodeBackList.remove(barcode)
-//        }
-//        updateWeightAndVolume()
-//    }
+    private fun saveLoadingConfirmationDialog() {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("Save the document?")
+
+        builder.setPositiveButton("Yes") { dialog, _ ->
+            saveLoading()
+            dialog.dismiss()
+        }
+        builder.setNegativeButton("No") { dialog, _ ->
+            dialog.dismiss()
+        }
+        builder.setOnDismissListener {
+            closingFromDialog = true
+            closeActivity()
+        }
+
+        val dialog = builder.create()
+        dialog.show()
+    }
+
+    private fun saveLoading() {
+        if (closingFromDialog) return
+        loading.barcodesBack = barcodeBackAdapter.getList()
+        loading.barcodesFront = barcodeFrontAdapter.getList()
+
+        //Не сохранять если ничего не заполнено
+        if ((loading.barcodesBack + loading.barcodesFront).isEmpty() && loading.car == LoadingModel.Car() && loading.getterWarehouse == LoadingModel.Warehouse()) return
+
+        val jsonBody = viewModel.getJsonBody(loading)
+        val sharedPreferences = requireContext().getSharedPreferences(
+            Loading.LOADING_SHARED_PREFS,
+            Context.MODE_PRIVATE
+        )
+        val editor = sharedPreferences.edit()
+        editor.putString(Loading.LOADING_SHARED_PREFS_KEY, jsonBody.toString())
+        editor.apply()
+    }
+
+    private fun deleteLoadingFromCache() {
+        val sharedPreferences = requireContext().getSharedPreferences(
+            Loading.LOADING_SHARED_PREFS,
+            Context.MODE_PRIVATE
+        )
+        val editor = sharedPreferences.edit()
+        editor.remove(Loading.LOADING_SHARED_PREFS_KEY)
+        editor.apply()
+    }
+
+    private fun fillLoadingFromCache(loadingData: String): Loading {
+        deleteLoadingFromCache()
+
+        return viewModel.getLoadingFromJson(loadingData)
+    }
 
     private fun clearAllFocus() {
         with(binding) {
@@ -755,7 +799,13 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         barcodeBackAdapter.clearBarcodeData()
     }
 
+    override fun onStop() {
+        super.onStop()
+        saveLoading()
+    }
+
     companion object {
         const val KEY_LOADING_NUMBER = "loading_number"
+        const val KEY_LOADING_DATA = "loading_data"
     }
 }

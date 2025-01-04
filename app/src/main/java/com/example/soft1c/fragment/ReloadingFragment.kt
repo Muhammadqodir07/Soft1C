@@ -47,8 +47,12 @@ class ReloadingFragment :
     private var isReloadRoute = true
     private var documentCreate = false
 
-    private var barcodeKeepAdapter: BarcodeAdapter = BarcodeAdapter()
-    private var barcodeAddAdapter: BarcodeAdapter = BarcodeAdapter()
+    private var barcodeKeepAdapter: BarcodeAdapter = BarcodeAdapter { barcode ->
+        //onRemoveBarcodeClick(barcode)
+    }
+    private var barcodeAddAdapter: BarcodeAdapter = BarcodeAdapter { barcode ->
+        //onRemoveBarcodeClick(barcode)
+    }
     private var barcodeKeepList: ArrayList<ExpandableLoadingList> = arrayListOf()
     private var barcodeAddList: ArrayList<ExpandableLoadingList> = arrayListOf()
     private lateinit var dialog: AlertDialog
@@ -469,9 +473,9 @@ class ReloadingFragment :
         loading.barcodesBack = backList
     }
 
-    private fun createUpdateLoading(pair: Pair<Loading, String>) {
-        if (pair.second.isNotEmpty()) {
-            toast(pair.second)
+    private fun createUpdateLoading(errorMessage: String) {
+        if (errorMessage.isNotEmpty()) {
+            toast(errorMessage)
             return
         }
         Utils.refreshList = true

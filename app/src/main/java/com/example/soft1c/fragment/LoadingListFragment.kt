@@ -1,5 +1,6 @@
 package com.example.soft1c.fragment
 
+import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -65,7 +66,7 @@ class LoadingListFragment :
     private fun showReloadingList(list: List<Loading>) {
         showPbLoading(false)
         reloadingAdapter.submitList(list)
-        if(binding.chbReloading.isChecked){
+        if (binding.chbReloading.isChecked) {
             binding.scrollRvLayout.fullScroll(ScrollView.FOCUS_RIGHT)
         }
     }
@@ -108,7 +109,22 @@ class LoadingListFragment :
             }
 
             ivAdd.setOnClickListener {
-                findNavController().navigate(R.id.action_loadingListFragment_to_loadingFragment)
+                val cacheData = getLoadingFromCache()
+                val args = Bundle()
+                if (cacheData != null) {
+                    showYesNoDialog(requireContext(), "Open the saved document?",
+                        onYes = {
+                            args.putString(LoadingFragment.KEY_LOADING_NUMBER, "")
+                            args.putString(LoadingFragment.KEY_LOADING_DATA, cacheData)
+                            findNavController().navigate(
+                                R.id.action_loadingListFragment_to_loadingFragment,
+                                args
+                            )
+                        }, onNo = {
+                            findNavController().navigate(R.id.action_loadingListFragment_to_loadingFragment)
+                        })
+                }else
+                    findNavController().navigate(R.id.action_loadingListFragment_to_loadingFragment)
             }
             etxtDocumentNumber.setOnKeyListener(::findOpenDocumentByNumber)
             etxtDocumentNumber.addTextChangedListener(object : TextWatcher {
@@ -176,7 +192,7 @@ class LoadingListFragment :
             )
         }
 
-        with(binding.rvReloadingList){
+        with(binding.rvReloadingList) {
             adapter = reloadingAdapter
             setHasFixedSize(true)
             layoutManager = LinearLayoutManager(requireContext())
@@ -206,7 +222,10 @@ class LoadingListFragment :
         if (binding.chbLoading.isChecked)
             findNavController().navigate(R.id.action_loadingListFragment_to_loadingFragment, bundle)
         else
-            findNavController().navigate(R.id.action_loadingListFragment_to_reloadingFragment, bundle)
+            findNavController().navigate(
+                R.id.action_loadingListFragment_to_reloadingFragment,
+                bundle
+            )
     }
 
     private fun loadingByNumber(pair: Pair<Loading, List<LoadingEnableVisible>>) {
@@ -227,6 +246,14 @@ class LoadingListFragment :
             onItemClicked(ItemClicked.ITEM, reloading)
         else
             toast(resources.getString(R.string.text_element_not_found))
+    }
+
+    private fun getLoadingFromCache(): String? {
+        val sharedPreferences = requireContext().getSharedPreferences(
+            Loading.LOADING_SHARED_PREFS,
+            Context.MODE_PRIVATE
+        )
+        return sharedPreferences.getString(Loading.LOADING_SHARED_PREFS_KEY, null)
     }
 
 

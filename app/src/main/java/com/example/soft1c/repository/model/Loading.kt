@@ -27,6 +27,8 @@ data class Loading(
         const val ITEMS_FRONT_KEY = "ТоварыПеред"
         const val ITEMS_BACK_KEY = "ТоварыЗад"
         const val BARCODE_KEY = "Штрихкод"
+        const val LOADING_SHARED_PREFS  = "LoadingCache"
+        const val LOADING_SHARED_PREFS_KEY = "jsonBody"
 
         const val DEFAULT_DATA_LIST ="""[
             {

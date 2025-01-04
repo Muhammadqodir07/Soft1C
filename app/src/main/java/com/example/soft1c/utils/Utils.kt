@@ -10,6 +10,7 @@ import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.LoadingModel
 import com.example.soft1c.repository.model.User
 import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 object Utils {
@@ -47,6 +48,7 @@ object Utils {
     val inputDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
     @SuppressLint("ConstantLocale")
     val outputDateFormat = SimpleDateFormat("dd/MM/yy\nHH:mm", Locale.getDefault())
+    val dateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
 
 
     fun setAttributes(
