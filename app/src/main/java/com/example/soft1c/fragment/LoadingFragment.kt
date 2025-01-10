@@ -70,7 +70,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     private lateinit var dialog: AlertDialog
 
     private var documentCreate = false
-    private var closingFromDialog = false
+    private var manualClosing = false
     private val inputDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
     private val outputDateFormat = SimpleDateFormat("dd/MM/yy || HH:mm", Locale.getDefault())
 
@@ -79,7 +79,6 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         val loadingNumber = arguments?.getString(KEY_LOADING_NUMBER, "") ?: ""
         val loadingData = arguments?.getString(KEY_LOADING_DATA, "") ?: ""
         loading = if (loadingNumber.isNotEmpty()) {
-            showDialogLoading()
             viewModel.getLoading(loadingNumber)
             Loading(number = loadingNumber)
         } else {
@@ -151,6 +150,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     }
 
     private fun initUI() {
+        if (loading.number.isNotEmpty()) showPbLoading(true)
         showLoading()
         with(binding) {
             if (loading.date.isNotEmpty()) {
@@ -263,14 +263,20 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                 createUpdateLoading()
             }
             btnClose.setOnClickListener {
-                showYesNoDialog(requireContext(), "Save document?", onYes = {
-                    saveLoading()
-                    closingFromDialog = true
+                if (getAccessForSaving()) {
+                    showYesNoDialog(
+                        requireContext(),
+                        getString(R.string.text_title_saving),
+                        onYes = {
+                            saveLoading()
+                            closeActivity()
+                        },
+                        onNo = {
+                            closeActivity()
+                        })
+                }else{
                     closeActivity()
-                }, onNo = {
-                    closingFromDialog = true
-                    closeActivity()
-                })
+                }
             }
         }
     }
@@ -665,6 +671,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     private fun showDetails(pair: Pair<Loading, List<LoadingEnableVisible>>) {
         loading = pair.first
         closeDialogLoading()
+        showPbLoading(false)
         if (this.loading.ref.isEmpty()) {
             binding.pbLoading.isVisible = false
             return
@@ -677,34 +684,34 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         with(binding) {
             scannedData = data.replace(Regex("[\\s\\n]"), "")
 
-//            if (::scannedData.isInitialized && scannedData.length >= 17) {
-//                scannedData = scannedData.takeLast(17)
+            if (::scannedData.isInitialized && scannedData.length >= 17) {
+                scannedData = scannedData.takeLast(17)
 
-            if (chbDelete.isChecked) {
-                if (radioAcceptance.isChecked) {
-                    val adapter =
-                        if (tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
-                    val parentUid =
-                        adapter.find(scannedData)?.loadingChild
-                    parentUid?.let { adapter.removeBarcodeByUid(it.parentUid) }
+                if (chbDelete.isChecked) {
+                    if (radioAcceptance.isChecked) {
+                        val adapter =
+                            if (tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
+                        val parentUid =
+                            adapter.find(scannedData)?.loadingChild
+                        parentUid?.let { adapter.removeBarcodeByUid(it.parentUid) }
+                    } else {
+                        val adapter =
+                            if (tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
+                        adapter.removeBarcodeByBarcode(scannedData)
+                    }
+
                 } else {
                     val adapter =
-                        if (tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
-                    adapter.removeBarcodeByBarcode(scannedData)
-                }
-
-            } else {
-                val adapter =
-                    if (binding.tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
-                if (adapter.find(scannedData) == null || radioAcceptance.isChecked
-                ) {
-                    viewModel.getBarcodeList(scannedData, user.warehouse)
-                    showDialogLoading()
-                } else {
-                    toast(requireContext().getString(R.string.err_dublicate_barcode))
+                        if (binding.tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
+                    if (adapter.find(scannedData) == null || radioAcceptance.isChecked
+                    ) {
+                        viewModel.getBarcodeList(scannedData, user.warehouse)
+                        showDialogLoading()
+                    } else {
+                        toast(requireContext().getString(R.string.err_dublicate_barcode))
+                    }
                 }
             }
-//            }
         }
     }
 
@@ -723,33 +730,10 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         dialog.show()
     }
 
-    private fun saveLoadingConfirmationDialog() {
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Save the document?")
-
-        builder.setPositiveButton("Yes") { dialog, _ ->
-            saveLoading()
-            dialog.dismiss()
-        }
-        builder.setNegativeButton("No") { dialog, _ ->
-            dialog.dismiss()
-        }
-        builder.setOnDismissListener {
-            closingFromDialog = true
-            closeActivity()
-        }
-
-        val dialog = builder.create()
-        dialog.show()
-    }
-
     private fun saveLoading() {
-        if (closingFromDialog) return
-        loading.barcodesBack = barcodeBackAdapter.getList()
-        loading.barcodesFront = barcodeFrontAdapter.getList()
-
+        if (manualClosing) return
         //Не сохранять если ничего не заполнено
-        if ((loading.barcodesBack + loading.barcodesFront).isEmpty() && loading.car == LoadingModel.Car() && loading.getterWarehouse == LoadingModel.Warehouse()) return
+        if (!getAccessForSaving()) return
 
         val jsonBody = viewModel.getJsonBody(loading)
         val sharedPreferences = requireContext().getSharedPreferences(
@@ -757,8 +741,18 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
             Context.MODE_PRIVATE
         )
         val editor = sharedPreferences.edit()
-        editor.putString(Loading.LOADING_SHARED_PREFS_KEY, jsonBody.toString())
+        val prefsKey = user.warehouse.ifEmpty { Loading.LOADING_SHARED_PREFS_KEY }
+        editor.putString(prefsKey, jsonBody.toString())
         editor.apply()
+    }
+
+    private fun getAccessForSaving(): Boolean{
+        loading.barcodesBack = barcodeBackAdapter.getList()
+        loading.barcodesFront = barcodeFrontAdapter.getList()
+
+        return (loading.barcodesBack + loading.barcodesFront).isNotEmpty()
+                && loading.car != LoadingModel.Car()
+                && loading.getterWarehouse != LoadingModel.Warehouse()
     }
 
     private fun deleteLoadingFromCache() {
@@ -767,7 +761,8 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
             Context.MODE_PRIVATE
         )
         val editor = sharedPreferences.edit()
-        editor.remove(Loading.LOADING_SHARED_PREFS_KEY)
+        val prefsKey = user.warehouse.ifEmpty { Loading.LOADING_SHARED_PREFS_KEY }
+        editor.remove(prefsKey)
         editor.apply()
     }
 
@@ -787,7 +782,15 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         }
     }
 
+    private fun showPbLoading(show: Boolean) {
+        with(binding) {
+            pbLoading.isVisible = show
+            constraintLayout.isVisible = !show
+        }
+    }
+
     private fun closeActivity() {
+        manualClosing = true
         activity?.onBackPressed()
     }
 

@@ -11,7 +11,6 @@ import com.example.soft1c.repository.LoadingRepository
 import com.example.soft1c.repository.model.ExpandableLoadingList
 import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.Loading.Companion.CAR_KEY
-import com.example.soft1c.repository.model.Loading.Companion.CAR_NUMBER_KEY
 import com.example.soft1c.repository.model.Loading.Companion.DATE_KEY
 import com.example.soft1c.repository.model.Loading.Companion.GUID_KEY
 import com.example.soft1c.repository.model.Loading.Companion.ITEMS_BACK_KEY
@@ -123,7 +122,6 @@ class LoadingViewModel(application: Application) : AndroidViewModel(application)
             jsonObject.put(DATE_KEY, LocalDateTime.now().format(Utils.dateFormat))
         }
         jsonObject.put(CAR_KEY, loading.car.ref)
-        jsonObject.put(CAR_NUMBER_KEY, loading.car.ref)
         jsonObject.put(WAREHOUSE_BEGIN_KEY, loading.senderWarehouse.ref)
         jsonObject.put(WAREHOUSE_END_KEY, loading.getterWarehouse.ref)
         // Создаем массив товаров и заполняем его штрих-кодами

@@ -3,6 +3,7 @@ package com.example.soft1c.repository
 import com.example.soft1c.network.Network
 import com.example.soft1c.repository.model.ExpandableLoadingList
 import com.example.soft1c.repository.model.Loading
+import com.example.soft1c.repository.model.Loading.Companion.CAR_KEY
 import com.example.soft1c.repository.model.Loading.Companion.CAR_NUMBER_KEY
 import com.example.soft1c.repository.model.Loading.Companion.DATE_KEY
 import com.example.soft1c.repository.model.Loading.Companion.DOCUMENT_DATE_KEY
@@ -100,7 +101,7 @@ open class LoadingRepository {
     }
 
     fun getBarcodeListJson(responseBody: String, debugBarcode: String? = null): List<ExpandableLoadingList>? {
-        var barcodeList = mutableListOf<LoadingBarcode>()
+        val barcodeList = mutableListOf<LoadingBarcode>()
         try {
             val arrayJson = JSONArray(responseBody)
             for (item in 0 until arrayJson.length()) {
@@ -124,12 +125,12 @@ open class LoadingRepository {
                 )
             }
 
-            if (Utils.debugMode && debugBarcode != null){
-                val acceptanceUid = barcodeList.find { it.barcode == debugBarcode }?.acceptanceUid
-                acceptanceUid?.let {
-                    barcodeList = barcodeList.filter { it.acceptanceUid == acceptanceUid }.toMutableList()
-                }
-            }
+//            if (Utils.debugMode && debugBarcode != null){
+//                val acceptanceUid = barcodeList.find { it.barcode == debugBarcode }?.acceptanceUid
+//                acceptanceUid?.let {
+//                    barcodeList = barcodeList.filter { it.acceptanceUid == acceptanceUid }.toMutableList()
+//                }
+//            }
 
             return groupToExpandableList(barcodeList)
         } catch (e: Exception) {
@@ -255,6 +256,8 @@ open class LoadingRepository {
     }
 
     fun getLoadingFromJsonObject(loadingJson: JSONObject, hasBarcodes: Boolean): Loading {
+        val carKey = if (hasBarcodes) CAR_KEY else CAR_NUMBER_KEY
+
         val ref = loadingJson.optString(REF_KEY, "")
         val guid = loadingJson.optString(GUID_KEY, "")
         val number = loadingJson.optString(NUMBER_KEY, "")
@@ -262,7 +265,7 @@ open class LoadingRepository {
         val getterWarehouseUid = loadingJson.getString(WAREHOUSE_END_KEY)
         val sender = getWarehouseFromUid(senderWarehouseUid)
         val getter = getWarehouseFromUid(getterWarehouseUid)
-        val carUid = loadingJson.getString(CAR_NUMBER_KEY)
+        val carUid = loadingJson.getString(carKey)
         val car = getCarNumberFromUid(carUid)
         if (hasBarcodes) {
             val barcodesFrontJson = loadingJson.getJSONArray(ITEMS_FRONT_KEY)

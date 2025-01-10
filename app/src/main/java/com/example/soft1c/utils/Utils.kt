@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.util.DisplayMetrics
 import android.view.WindowManager
-import com.example.soft1c.network.Network
 import com.example.soft1c.repository.model.Acceptance
 import com.example.soft1c.repository.model.AnyModel
 import com.example.soft1c.repository.model.LoadingModel
@@ -43,7 +42,7 @@ object Utils {
     var user = User()
     var refreshList: Boolean = false
 
-    var debugMode = true
+    var debugMode = false
     @SuppressLint("ConstantLocale")
     val inputDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
     @SuppressLint("ConstantLocale")
@@ -95,9 +94,11 @@ object Utils {
         var passportClientControl: Boolean = true
         var fillBarcodes: String = false.toString()
         var macAddress: String? = null
+        var printerType: String? = null
         const val SHOW_DISABILITY_DIALOG = "ПоказатьОкноСИнфойНедоступности"
         const val SETTINGS_PREF_NAME = "settings_pref"
         const val MAC_ADDRESS_PREF = "mac_address"
+        const val PRINTER_TYPE_PREF = "printer_type"
         const val FILL_BARCODE_PREF = "fill_barcode"
     }
 }
@@ -118,7 +119,7 @@ fun getDisplayWidth(context: Context): Int {
 
 suspend fun <T> withRefreshedConnection(action: suspend () -> T): T {
     // Ensure the connection is refreshed before proceeding
-    Network.refreshConnection(Utils.clientTimeout)
+    //Network.refreshConnection(Utils.clientTimeout)
 
     // Now execute the actual suspend function
     return action()

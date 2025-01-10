@@ -60,8 +60,12 @@
     <string name="txt_number">№</string>
     <string name="text_date">Date</string>
     <string name="text_page_nums">Number of pages</string>
+    <string name="text_printer_type">Printer model</string>
+    <string name="text_printer_type_empty">Printer model is not configured</string>
     <string name="text_mac_address">MAC address</string>
     <string name="text_enter_mac_address">Enter MAC address</string>
+    <string name="text_mac_address_empty">MAC address is not configured</string>
+    <string name="text_bluetooth_off">Bluetooth is not turned on</string>
     <string name="text_seats">Seats</string>
     <string name="text_scan">Scan</string>
 
@@ -76,6 +80,8 @@
     <string name="text_sender_warehouse">Sender\'s warehouse</string>
     <string name="text_getter_warehouse">Receiving warehouse</string>
     <string name="text_title_loading_list">Loading of goods</string>
+    <string name="text_title_saving">Save the data?</string>
+    <string name="text_title_open_saved">Open the saved data?</string>
     <string name="text_no_rights">No rights</string>
     <string name="ask_for_error_log">An unexpected error has occurred. Help developers by providing error details. Thank you for your support.</string>
     <string name="email_welcome_note" translatable="false">Dear Dev Team,\n\nApplication is just crashed, please check following error log for more details.\n\n\n</string>
@@ -96,6 +102,8 @@
     <string name="calc_dialog_clear">Clear</string>
     <string name="calc_dialog_cancel">Cancel</string>
     <string name="dialog_ok">OK</string>
+    <string name="dialog_yes">Yes</string>
+    <string name="dialog_no">No</string>
 
     <string name="calc_answer">Ans</string>
 

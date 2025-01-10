@@ -22,6 +22,7 @@ import com.example.soft1c.repository.model.ItemClicked
 import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.LoadingEnableVisible
 import com.example.soft1c.utils.Utils
+import com.example.soft1c.utils.Utils.user
 import com.example.soft1c.utils.getDisplayWidth
 import com.example.soft1c.viewmodel.LoadingViewModel
 import com.example.soft1c.viewmodel.ReloadingViewModel
@@ -112,7 +113,7 @@ class LoadingListFragment :
                 val cacheData = getLoadingFromCache()
                 val args = Bundle()
                 if (cacheData != null) {
-                    showYesNoDialog(requireContext(), "Open the saved document?",
+                    showYesNoDialog(requireContext(), getString(R.string.text_title_open_saved),
                         onYes = {
                             args.putString(LoadingFragment.KEY_LOADING_NUMBER, "")
                             args.putString(LoadingFragment.KEY_LOADING_DATA, cacheData)
@@ -253,7 +254,8 @@ class LoadingListFragment :
             Loading.LOADING_SHARED_PREFS,
             Context.MODE_PRIVATE
         )
-        return sharedPreferences.getString(Loading.LOADING_SHARED_PREFS_KEY, null)
+        val prefsKey = user.warehouse.ifEmpty { Loading.LOADING_SHARED_PREFS_KEY }
+        return sharedPreferences.getString(prefsKey, null)
     }
 
 

@@ -182,10 +182,10 @@ open class BaseFragment<T : ViewBinding>(
         val dialogBuilder = androidx.appcompat.app.AlertDialog.Builder(context)
         dialogBuilder.setTitle(title)
             .setCancelable(true)
-            .setPositiveButton("Yes") { _, _ ->
+            .setPositiveButton(R.string.dialog_yes) { _, _ ->
                 onYes()
             }
-            .setNegativeButton("No") { _, _ ->
+            .setNegativeButton(R.string.dialog_no) { _, _ ->
                 onNo()
             }
 

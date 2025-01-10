@@ -132,4 +132,12 @@
     <string name="txt_success_connection">成功连接</string>
     <string name="txt_no_connection">无连接</string>
     <string name="txt_check_connection">检查连接</string>
+    <string name="text_printer_type">打印机型号</string>
+    <string name="text_printer_type_empty">未配置打印机型号</string>
+    <string name="text_mac_address_empty">未配置MAC地址</string>
+    <string name="text_bluetooth_off">蓝牙未打开</string>
+    <string name="text_title_saving">保存数据？</string>
+    <string name="dialog_yes">是的</string>
+    <string name="dialog_no">非也</string>
+    <string name="text_title_open_saved">打开保存的数据？</string>
 </resources>

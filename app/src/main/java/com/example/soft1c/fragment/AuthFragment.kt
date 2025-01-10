@@ -402,6 +402,11 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                         navigate(R.id.action_authFragment_to_acceptanceFragment)
                 }
             }
+
+            Utils.ObjectModelType.EMPTY -> {
+                closeDialogLoading()
+                binding.txtError.text = "Error loading data"
+            }
         }
     }
 
