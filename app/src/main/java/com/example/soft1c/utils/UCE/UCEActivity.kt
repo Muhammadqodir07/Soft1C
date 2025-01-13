@@ -15,7 +15,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.FileProvider
 import com.example.soft1c.R
 import com.example.soft1c.databinding.ActivityUceactivityBinding
 import timber.log.Timber
@@ -24,7 +23,8 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.text.DateFormat
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 
 class UCEActivity : AppCompatActivity() {
@@ -109,23 +109,16 @@ class UCEActivity : AppCompatActivity() {
     }
 
     private fun emailErrorLog() {
-        saveErrorLogToFile(false)
+        saveErrorLogToFile()
         val errorLog = getAllErrorDetailsFromIntent(this@UCEActivity, intent)
-        val emailAddressArray = UCEHandler.COMMA_SEPARATED_EMAIL_ADDRESSES?.trim()?.split("\\s*,\\s*".toRegex())?.toTypedArray()
-        val emailIntent = Intent(Intent.ACTION_SEND)
-        emailIntent.type = "plain/text"
-        emailIntent.putExtra(Intent.EXTRA_EMAIL, emailAddressArray)
-        emailIntent.putExtra(Intent.EXTRA_SUBJECT, getApplicationName(this@UCEActivity) + " Application Crash Error Log")
-        emailIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.email_welcome_note) + errorLog)
-        if (txtFile.exists()) {
-            val filePath = FileProvider.getUriForFile(this, applicationContext.packageName + ".provider", txtFile)
-            emailIntent.putExtra(Intent.EXTRA_STREAM, filePath)
-        }
-        emailIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        startActivity(Intent.createChooser(emailIntent, "Email Error Log"))
+        val mSubject= getApplicationName(this@UCEActivity) + " Application Crash Error Log"
+        val mMessage = getString(R.string.email_welcome_note) + errorLog
+        val javaMailAPI = JavaMailAPI(this, "qodirhcr@gmail.com", mSubject, mMessage)
+
+        javaMailAPI.sendMail()
     }
 
-    private fun saveErrorLogToFile(isShowToast: Boolean) {
+    private fun saveErrorLogToFile() {
         val isSDPresent = Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
         if (isSDPresent && isExternalStorageWritable()) {
             val currentDate = Date()
@@ -144,15 +137,9 @@ class UCEActivity : AppCompatActivity() {
                 outputStream = FileOutputStream(txtFile)
                 outputStream.write(errorLog.toByteArray())
                 outputStream.close()
-                if (txtFile.exists() && isShowToast) {
-                    Toast.makeText(this, "File Saved Successfully", Toast.LENGTH_SHORT).show()
-                }
             } catch (e: IOException) {
                 Timber.tag("REQUIRED")
                     .e("This app does not have write storage permission to save log file.")
-                if (isShowToast) {
-                    Toast.makeText(this, "Storage Permission Not Found", Toast.LENGTH_SHORT).show()
-                }
                 e.printStackTrace()
             } finally {
                 try {
@@ -186,52 +173,52 @@ class UCEActivity : AppCompatActivity() {
 
     private fun getAllErrorDetailsFromIntent(context: Context, intent: Intent): String {
         if (strCurrentErrorLog.isNullOrEmpty()) {
-            val LINE_SEPARATOR = "\n"
+            val lineSeparator = "\n"
             val errorReport = StringBuilder()
             errorReport.append("***** UCE HANDLER Library ")
             errorReport.append("\n***** by Rohit Surwase \n")
             errorReport.append("\n***** DEVICE INFO \n")
             errorReport.append("Brand: ${Build.BRAND}")
-            errorReport.append(LINE_SEPARATOR)
+            errorReport.append(lineSeparator)
             errorReport.append("Device: ${Build.DEVICE}")
-            errorReport.append(LINE_SEPARATOR)
+            errorReport.append(lineSeparator)
             errorReport.append("Model: ${Build.MODEL}")
-            errorReport.append(LINE_SEPARATOR)
+            errorReport.append(lineSeparator)
             errorReport.append("Manufacturer: ${Build.MANUFACTURER}")
-            errorReport.append(LINE_SEPARATOR)
+            errorReport.append(lineSeparator)
             errorReport.append("Product: ${Build.PRODUCT}")
-            errorReport.append(LINE_SEPARATOR)
+            errorReport.append(lineSeparator)
             errorReport.append("SDK: ${Build.VERSION.SDK}")
-            errorReport.append(LINE_SEPARATOR)
+            errorReport.append(lineSeparator)
             errorReport.append("Release: ${Build.VERSION.RELEASE}")
-            errorReport.append(LINE_SEPARATOR)
+            errorReport.append(lineSeparator)
             errorReport.append("\n***** APP INFO \n")
             val versionName = getVersionName(context)
             errorReport.append("Version: $versionName")
-            errorReport.append(LINE_SEPARATOR)
+            errorReport.append(lineSeparator)
             val currentDate = Date()
             val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINESE)
             val firstInstallTime = getFirstInstallTimeAsString(context, dateFormat)
             if (!firstInstallTime.isNullOrEmpty()) {
                 errorReport.append("Installed On: $firstInstallTime")
-                errorReport.append(LINE_SEPARATOR)
+                errorReport.append(lineSeparator)
             }
             val lastUpdateTime = getLastUpdateTimeAsString(context, dateFormat)
             if (!lastUpdateTime.isNullOrEmpty()) {
                 errorReport.append("Updated On: $lastUpdateTime")
-                errorReport.append(LINE_SEPARATOR)
+                errorReport.append(lineSeparator)
             }
             errorReport.append("Current Date: ${dateFormat.format(currentDate)}")
-            errorReport.append(LINE_SEPARATOR)
+            errorReport.append(lineSeparator)
             errorReport.append("\n***** ERROR LOG \n")
             errorReport.append(getStackTraceFromIntent(intent))
-            errorReport.append(LINE_SEPARATOR)
+            errorReport.append(lineSeparator)
             val activityLog = getActivityLogFromIntent(intent)
-            errorReport.append(LINE_SEPARATOR)
+            errorReport.append(lineSeparator)
             if (activityLog != null) {
                 errorReport.append("\n***** USER ACTIVITIES \n")
                 errorReport.append("User Activities: $activityLog")
-                errorReport.append(LINE_SEPARATOR)
+                errorReport.append(lineSeparator)
             }
             errorReport.append("\n***** END OF LOG *****\n")
             strCurrentErrorLog = errorReport.toString()
