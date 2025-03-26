@@ -161,7 +161,6 @@ class BarcodeAdapter(val onRemoveBarcode: (LoadingBarcodeChild) -> Unit) : Recyc
         when (row.type) {
             ExpandableLoadingList.PARENT -> {
                 outerloop@ while (true) {
-                    //  println("Next Position during Collapse $nextPosition size is ${shelfModelList.size} and parent is ${shelfModelList[nextPosition].type}")
 
                     if (nextPosition == scannedBarcodes.size || scannedBarcodes[nextPosition].type == ExpandableLoadingList.PARENT) {
 

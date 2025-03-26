@@ -22,7 +22,6 @@ class JavaMailAPI(
 ) {
 
     fun sendMail() {
-        // Launch the email sending process in a coroutine
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val properties = Properties().apply {
@@ -47,19 +46,15 @@ class JavaMailAPI(
                     setText(message)
                 }
 
-                // Send the email
                 Transport.send(mimeMessage)
 
-                // Notify on success (optional, requires switching to Main thread)
                 withContext(Dispatchers.Main) {
-                    // Show a toast or update UI if necessary
                     Toast.makeText(context, "Email sent successfully", Toast.LENGTH_SHORT).show()
                 }
 
             } catch (e: Exception) {
                 e.printStackTrace()
 
-                // Notify on failure (optional, requires switching to Main thread)
                 withContext(Dispatchers.Main) {
                     // Show an error message or update UI if necessary
                     println("Failed to send email: ${e.message}")

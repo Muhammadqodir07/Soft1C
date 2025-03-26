@@ -113,7 +113,7 @@ class UCEActivity : AppCompatActivity() {
         val errorLog = getAllErrorDetailsFromIntent(this@UCEActivity, intent)
         val mSubject= getApplicationName(this@UCEActivity) + " Application Crash Error Log"
         val mMessage = getString(R.string.email_welcome_note) + errorLog
-        val javaMailAPI = JavaMailAPI(this, "qodirhcr@gmail.com", mSubject, mMessage)
+        val javaMailAPI = JavaMailAPI(this, "errorlogssoftteam@gmail.com", mSubject, mMessage)
 
         javaMailAPI.sendMail()
     }
