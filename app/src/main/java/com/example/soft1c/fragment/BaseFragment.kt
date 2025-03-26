@@ -126,12 +126,12 @@ open class BaseFragment<T : ViewBinding>(
 
 
     fun showDialogLoading() {
-        viewDialog = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_loading, null)
-        dialogLoading = AlertDialog.Builder(requireContext())
-            .setView(viewDialog)
-            .setCancelable(false)
-            .create()
-        if (!dialogLoading.isShowing) {
+        if (!::dialogLoading.isInitialized || !dialogLoading.isShowing) {
+            viewDialog = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_loading, null)
+            dialogLoading = AlertDialog.Builder(requireContext())
+                .setView(viewDialog)
+                .setCancelable(false)
+                .create()
             dialogLoading.show()
         }
     }
@@ -178,13 +178,27 @@ open class BaseFragment<T : ViewBinding>(
         dialog.show()
     }
 
+    fun showYesNoDialog(context: Context, title: String, onYes: () -> Unit, onNo: () -> Unit) {
+        val dialogBuilder = androidx.appcompat.app.AlertDialog.Builder(context)
+        dialogBuilder.setTitle(title)
+            .setCancelable(true)
+            .setPositiveButton(R.string.dialog_yes) { _, _ ->
+                onYes()
+            }
+            .setNegativeButton(R.string.dialog_no) { _, _ ->
+                onNo()
+            }
+
+        val alert = dialogBuilder.create()
+        alert.show()
+    }
+
     fun closeDialogLoading() {
         if (!::dialogLoading.isInitialized) {
             return
         }
         if (dialogLoading.isShowing) {
-            dialogLoading.setCancelable(true)
-            dialogLoading.cancel()
+            dialogLoading.dismiss()  // Use dismiss instead of cancel
         }
     }
 

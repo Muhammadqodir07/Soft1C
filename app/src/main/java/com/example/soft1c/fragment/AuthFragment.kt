@@ -158,8 +158,6 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
         with(binding) {
             cardLogin.setOnClickListener {
                 setBase()
-//                val demo = Demo()
-//                demo.loadProfile()
                 baseViewModel.acceptanceAuth()
                 showPbLoading(true)
             }
@@ -403,6 +401,11 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>(FragmentAuthBinding::infl
                     if (findNavController().currentDestination?.id == R.id.authFragment)
                         navigate(R.id.action_authFragment_to_acceptanceFragment)
                 }
+            }
+
+            Utils.ObjectModelType.EMPTY -> {
+                closeDialogLoading()
+                binding.txtError.text = "Error loading data"
             }
         }
     }

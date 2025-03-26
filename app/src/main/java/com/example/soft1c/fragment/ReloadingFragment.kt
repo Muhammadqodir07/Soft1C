@@ -23,8 +23,8 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.soft1c.adapter.BarcodeAdapter
 import com.example.soft1c.databinding.FragmentReloadingBinding
+import com.example.soft1c.repository.model.ExpandableLoadingList
 import com.example.soft1c.repository.model.Loading
-import com.example.soft1c.repository.model.LoadingBarcode
 import com.example.soft1c.repository.model.LoadingEnableVisible
 import com.example.soft1c.repository.model.LoadingModel
 import com.example.soft1c.utils.Utils
@@ -48,13 +48,13 @@ class ReloadingFragment :
     private var documentCreate = false
 
     private var barcodeKeepAdapter: BarcodeAdapter = BarcodeAdapter { barcode ->
-        onRemoveBarcodeClick(barcode)
+        //onRemoveBarcodeClick(barcode)
     }
     private var barcodeAddAdapter: BarcodeAdapter = BarcodeAdapter { barcode ->
-        onRemoveBarcodeClick(barcode)
+        //onRemoveBarcodeClick(barcode)
     }
-    private var barcodeKeepList: ArrayList<LoadingBarcode> = arrayListOf()
-    private var barcodeAddList: ArrayList<LoadingBarcode> = arrayListOf()
+    private var barcodeKeepList: ArrayList<ExpandableLoadingList> = arrayListOf()
+    private var barcodeAddList: ArrayList<ExpandableLoadingList> = arrayListOf()
     private lateinit var dialog: AlertDialog
 
     private lateinit var senderWarehouse: AutoCompleteTextView
@@ -420,7 +420,7 @@ class ReloadingFragment :
         dialog.show()
     }
 
-    private fun fillBarcodeList(barcodes: List<LoadingBarcode>?) {
+    private fun fillBarcodeList(barcodes: List<ExpandableLoadingList>?) {
         closeDialogLoading()
         with(binding) {
             if (barcodes != null) {
@@ -437,7 +437,7 @@ class ReloadingFragment :
                         } else {
                             barcodeAddAdapter.addBarcodeData(barcode)
                         }
-                    } else if (!binding.radioAcceptance.isChecked && barcode.barcode == scannedData) {
+                    } else if (!binding.radioAcceptance.isChecked && barcode.loadingChild.barcode == scannedData) {
                         if (targetList != null && !targetList.contains(barcode)) {
                             targetList.add(barcode)
                             if (targetList == barcodeKeepList) {
@@ -473,9 +473,9 @@ class ReloadingFragment :
         loading.barcodesBack = backList
     }
 
-    private fun createUpdateLoading(pair: Pair<Loading, String>) {
-        if (pair.second.isNotEmpty()) {
-            toast(pair.second)
+    private fun createUpdateLoading(errorMessage: String) {
+        if (errorMessage.isNotEmpty()) {
+            toast(errorMessage)
             return
         }
         Utils.refreshList = true
@@ -664,7 +664,7 @@ class ReloadingFragment :
                         val adapter =
                             if (tabLayout.selectedTabPosition == 0) barcodeKeepAdapter else barcodeAddAdapter
                         val documentUid =
-                            adapter.find(scannedData)?.acceptanceUid
+                            adapter.find(scannedData)?.loadingChild?.parentUid
                         documentUid?.let { adapter.removeBarcodeByUid(it) }
                     } else {
                         val adapter =
@@ -678,7 +678,7 @@ class ReloadingFragment :
                             showDialogLoading()
                         } else {
                             (reloading.barcodesFront + reloading.barcodesBack)
-                                .find { it.barcode == scannedData }
+                                .find { it.loadingChild.barcode == scannedData && it.type == ExpandableLoadingList.CHILD }
                                 ?.let {
                                     barcodeKeepAdapter.addBarcodeData(it)
                                     barcodeKeepList.add(it)
@@ -694,14 +694,6 @@ class ReloadingFragment :
                     }
                 }
             }
-        }
-    }
-
-    private fun onRemoveBarcodeClick(barcode: LoadingBarcode) {
-        if (binding.tabLayout.selectedTabPosition == 0) {
-            barcodeKeepList.remove(barcode)
-        } else {
-            barcodeAddList.remove(barcode)
         }
     }
 

@@ -1,6 +1,9 @@
 package com.example.soft1c.fragment
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -10,6 +13,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Looper
 import android.text.TextPaint
+import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,13 +22,17 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.soft1c.R
 import com.example.soft1c.databinding.ActivityPrinterBinding
 import com.example.soft1c.repository.model.Acceptance
+import com.example.soft1c.repository.model.PrinterTypes
+import com.example.soft1c.utils.Utils
 import com.example.soft1c.utils.Utils.Settings.macAddress
+import com.example.soft1c.utils.Utils.Settings.printerType
 import com.example.soft1c.viewmodel.AcceptanceViewModel
 import com.example.tscdll.TSCActivity
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.WriterException
 import com.journeyapps.barcodescanner.BarcodeEncoder
+import cpcl.PrinterHelper
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -38,33 +46,40 @@ class PrinterActivity : AppCompatActivity() {
     private lateinit var barcodeBitmap: Bitmap
     private lateinit var barcodeInput: String
     private val TscDll = TSCActivity()
+    private lateinit var sharedPreferences: SharedPreferences
 
+    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityPrinterBinding.inflate(layoutInflater)
         setContentView(binding.root)
         acceptance = AcceptanceFragment.ACCEPTANCE
-        val intent = intent
         date = convertDate(acceptance.date)
+        sharedPreferences = this.getSharedPreferences(Utils.Settings.SETTINGS_PREF_NAME, Context.MODE_PRIVATE)
+        loadPrinterType()
         with(binding) {
             etxtPageCount.setText(acceptance.countSeat.toString())
             txtBarcodeNumber.text =
                 (getString(R.string.txt_number) + ": " + acceptance.number)
-                    ?: "No data available"
             txtCurrentDate.text =
                 (getString(R.string.text_date) + ": " + date)
-                    ?: "No data available"
             txtClientNumber.text =
                 (getString(R.string.text_code) + ": " + acceptance.client.code)
-                    ?: "No data available"
             txtBarcodeSeats.text =
                 (getString(R.string.text_seats) + ": " + acceptance.countSeat.toString())
-                    ?: "No data available"
             generateBarcode()
             val view = findViewById<LinearLayout>(R.id.linear_for_print)
             view.setBackgroundColor(Color.WHITE)
-
             btnChoose.setOnClickListener { filePickerLauncher.launch("text/*") }
+            etxtPrinterType.setAdapter(
+                ArrayAdapter(
+                    this@PrinterActivity,
+                    android.R.layout.simple_list_item_1, PrinterTypes.values()
+                )
+            )
+            etxtPrinterType.setOnItemClickListener { parent, view, position, id ->
+                savePrinterType()
+            }
             btnPrint.setOnClickListener {
                 if (macAddress != null) {
                     requestPermissions(
@@ -78,18 +93,38 @@ class PrinterActivity : AppCompatActivity() {
                     if ((bluetoothAdapter == null) || !bluetoothAdapter.isEnabled) {
                         Toast.makeText(
                             this@PrinterActivity,
-                            "Bluetooth is not turned on",
+                            getString(R.string.text_bluetooth_off),
                             Toast.LENGTH_SHORT
                         ).show()
                     } else {
                         if (etxtPageCount.text!!.isEmpty())
                             etxtPageCount.setText("1")
-                        doPhotoPrint()
+
+                        when (printerType) {
+                            "TSC" -> {
+                                doPhotoPrintTSC()
+                            }
+
+                            "ZEBRA" -> {
+                                doPhotoPrintTSC()
+                            }
+
+                            "HPRT" -> {
+                                doPhotoPrintCPCL()
+                            }
+                            else -> {
+                                Toast.makeText(
+                                    this@PrinterActivity,
+                                    getString(R.string.text_printer_type_empty),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
                     }
                 } else {
                     Toast.makeText(
                         this@PrinterActivity,
-                        "Mac-address is not configured",
+                        getString(R.string.text_mac_address_empty),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -135,7 +170,7 @@ class PrinterActivity : AppCompatActivity() {
         onBackPressed()
     }
 
-    private fun doPhotoPrint() {
+    private fun doPhotoPrintTSC() {
         Thread {
             try {
                 Looper.prepare()
@@ -165,6 +200,55 @@ class PrinterActivity : AppCompatActivity() {
                 Looper.myLooper()?.quit()
                 acceptance.type = 2
                 createUpdateAcceptance()
+            } catch (e: Exception) {
+                runOnUiThread {
+                    binding.testTV.text = e.message
+                }
+                e.printStackTrace()
+            }
+        }.start()
+    }
+
+    private fun doPhotoPrintCPCL() {
+        Thread {
+            try {
+                Looper.prepare()
+                PrinterHelper.portOpenBT(this, macAddress)
+
+                PrinterHelper.printAreaSize("0", "576", "400", "100", acceptance.countSeat.toString())
+                PrinterHelper.Prefeed("24")
+                PrinterHelper.SetBold("3")
+                PrinterHelper.SetMag("8", "8")
+                PrinterHelper.PrintCodepageTextCPCL(PrinterHelper.TEXT, 0, "20", "220", acceptance.client.code, 15)
+                PrinterHelper.SetBold("0")
+                PrinterHelper.SetMag("1", "1")
+                PrinterHelper.SetMag("2", "1.6")
+                PrinterHelper.PrintCodepageTextCPCL(PrinterHelper.TEXT, 0, "20", "270", "DATE:", 15)
+                PrinterHelper.PrintCodepageTextCPCL(PrinterHelper.TEXT, 0, "150", "270", date, 15)
+                PrinterHelper.PrintCodepageTextCPCL(PrinterHelper.TEXT, 0, "400", "270", "ZONE:", 15)
+                PrinterHelper.SetMag("1", "1")
+                PrinterHelper.PrintCodepageTextCPCL(PrinterHelper.TEXT, 0, "530","270", acceptance.zone, 15)
+
+                // Print a barcode
+                PrinterHelper.Barcode(PrinterHelper.BARCODE, PrinterHelper.code128, "3", "3", "50", "20", "330", false, "7", "2", "5", barcodeInput)
+                PrinterHelper.SetMag("2", "1.6")
+                PrinterHelper.PrintCodepageTextCPCL(PrinterHelper.TEXT, 0, "450",  "330", "SEATS:", 15)
+                PrinterHelper.SetMag("3", "2")
+                PrinterHelper.PrintCodepageTextCPCL(PrinterHelper.TEXT, 0, "20", "390", acceptance.number, 15)
+                PrinterHelper.PrintCodepageTextCPCL(PrinterHelper.TEXT, 0, "450", "390", acceptance.countSeat.toString(), 15)
+                PrinterHelper.SetMag("1", "1")
+
+                PrinterHelper.Form()
+                PrinterHelper.Print()
+
+                Thread.sleep(500)
+                PrinterHelper.portClose()
+
+                // Update acceptance type
+                acceptance.type = 2
+                createUpdateAcceptance()
+
+                Looper.myLooper()?.quit()
             } catch (e: Exception) {
                 runOnUiThread {
                     binding.testTV.text = e.message
@@ -212,5 +296,15 @@ class PrinterActivity : AppCompatActivity() {
         } else {
             ""
         }
+    }
+
+    fun loadPrinterType(){
+        printerType = sharedPreferences.getString(Utils.Settings.PRINTER_TYPE_PREF, "")
+        binding.etxtPrinterType.setText(printerType)
+    }
+
+    fun savePrinterType(){
+        printerType = binding.etxtPrinterType.text.toString()
+        sharedPreferences.edit().putString(Utils.Settings.PRINTER_TYPE_PREF, printerType).apply()
     }
 }

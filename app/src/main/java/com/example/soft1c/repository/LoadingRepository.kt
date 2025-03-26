@@ -1,7 +1,7 @@
 package com.example.soft1c.repository
 
-import com.example.soft1c.adapter.LoadingAdapter
 import com.example.soft1c.network.Network
+import com.example.soft1c.repository.model.ExpandableLoadingList
 import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.Loading.Companion.CAR_KEY
 import com.example.soft1c.repository.model.Loading.Companion.CAR_NUMBER_KEY
@@ -23,6 +23,8 @@ import com.example.soft1c.repository.model.LoadingBarcode.Companion.PACKAGE_KEY
 import com.example.soft1c.repository.model.LoadingBarcode.Companion.SEAT_NUMBER_KEY
 import com.example.soft1c.repository.model.LoadingBarcode.Companion.VOLUME_KEY
 import com.example.soft1c.repository.model.LoadingBarcode.Companion.WEIGHT_KEY
+import com.example.soft1c.repository.model.LoadingBarcodeChild
+import com.example.soft1c.repository.model.LoadingBarcodeParent
 import com.example.soft1c.repository.model.LoadingEnableVisible
 import com.example.soft1c.repository.model.LoadingModel
 import com.example.soft1c.utils.Utils
@@ -35,15 +37,11 @@ import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 open class LoadingRepository {
-    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
 
     suspend fun getLoadingApi(number: String): Pair<Loading, List<LoadingEnableVisible>>? {
         return withRefreshedConnection {
@@ -70,11 +68,11 @@ open class LoadingRepository {
         }
     }
 
-    suspend fun getBarcodeListApi(barcode: String, warehouse: String): List<LoadingBarcode>? {
+    suspend fun getBarcodeListApi(barcode: String, warehouse: String): List<ExpandableLoadingList>? {
         return withRefreshedConnection {
             suspendCoroutine { continuation ->
                 if (Utils.debugMode) {
-                    continuation.resume(getBarcodeListJson(LoadingBarcode.DEFAULT_DATA))
+                    continuation.resume(getBarcodeListJson(LoadingBarcode.DEFAULT_DATA, barcode))
                 } else {
                     Network.loadingApi.barcodeList(barcode, warehouse)
                         .enqueue(object : Callback<ResponseBody> {
@@ -102,7 +100,7 @@ open class LoadingRepository {
         }
     }
 
-    fun getBarcodeListJson(responseBody: String): List<LoadingBarcode>? {
+    fun getBarcodeListJson(responseBody: String, debugBarcode: String? = null): List<ExpandableLoadingList>? {
         val barcodeList = mutableListOf<LoadingBarcode>()
         try {
             val arrayJson = JSONArray(responseBody)
@@ -110,6 +108,7 @@ open class LoadingRepository {
                 val objectJson = arrayJson.getJSONObject(item)
                 val packageUid = objectJson.optString(PACKAGE_KEY, "")
                 val packages = AcceptanceRepository().getPackageNameFromUid(packageUid)
+
                 barcodeList.add(
                     LoadingBarcode(
                         barcode = objectJson.optString(BARCODE_KEY, ""),
@@ -125,50 +124,64 @@ open class LoadingRepository {
                     )
                 )
             }
-            return barcodeList
+
+//            if (Utils.debugMode && debugBarcode != null){
+//                val acceptanceUid = barcodeList.find { it.barcode == debugBarcode }?.acceptanceUid
+//                acceptanceUid?.let {
+//                    barcodeList = barcodeList.filter { it.acceptanceUid == acceptanceUid }.toMutableList()
+//                }
+//            }
+
+            return groupToExpandableList(barcodeList)
         } catch (e: Exception) {
             return null
         }
     }
 
-    suspend fun createUpdateLoadingApi(loading: Loading): Pair<Loading, String> {
+    private fun groupToExpandableList(barcodes: List<LoadingBarcode>): List<ExpandableLoadingList> {
+        val grouped = barcodes.groupBy { it.acceptanceNumber to it.acceptanceUid }
+
+        val expandableList = mutableListOf<ExpandableLoadingList>()
+
+        grouped.forEach { (key, groupItems) ->
+            val (acceptanceNumber, acceptanceUid) = key
+
+            // Create parent
+            val parent = LoadingBarcodeParent(
+                barcodes = groupItems.map {
+                    LoadingBarcodeChild(
+                        parentUid = it.acceptanceUid,
+                        barcode = it.barcode,
+                        weight = it.weight,
+                        volume = it.volume,
+                        packageTypeUid = it.packageTypeUid,
+                        packageType = it.packageType,
+                        seatNumber = it.seatNumber
+                    )
+                },
+                acceptanceNumber = acceptanceNumber,
+                acceptanceUid = acceptanceUid,
+                totalSeats = groupItems.size,
+                clientCode = groupItems.firstOrNull()?.clientCode ?: "",
+                date = groupItems.firstOrNull()?.date ?: ""
+            )
+
+            expandableList.add(
+                ExpandableLoadingList(
+                    type = ExpandableLoadingList.PARENT,
+                    loadingParent = parent
+                )
+            )
+        }
+
+        return expandableList
+    }
+
+    suspend fun createUpdateLoadingApi(jsonBody: JSONObject): String {
         return withRefreshedConnection {
             suspendCoroutine { continuation ->
-                val jsonObject = JSONObject()
-                if (loading.ref.isNotEmpty())
-                    jsonObject.put(REF_KEY, loading.ref)
-                else
-                    jsonObject.put(REF_KEY, UUID.randomUUID().toString())
-                if (loading.guid.isNotEmpty())
-                    jsonObject.put(GUID_KEY, loading.guid)
-                else
-                    jsonObject.put(GUID_KEY, null)
-                if (loading.date.isNotEmpty()) {
-                    jsonObject.put(DATE_KEY, loading.date)
-                } else {
-                    jsonObject.put(DATE_KEY, LocalDateTime.now().format(formatter))
-                }
-                jsonObject.put(CAR_KEY, loading.car.ref)
-                jsonObject.put(WAREHOUSE_BEGIN_KEY, loading.senderWarehouse.ref)
-                jsonObject.put(WAREHOUSE_END_KEY, loading.getterWarehouse.ref)
-                // Создаем массив товаров и заполняем его штрих-кодами
-                val frontBarcodeArray = JSONArray()
-                for (barcode in loading.barcodesFront) {
-                    val barcodeObject = JSONObject()
-                    barcodeObject.put(BARCODE_KEY, barcode.barcode)
-                    frontBarcodeArray.put(barcodeObject)
-                }
-                jsonObject.put(ITEMS_FRONT_KEY, frontBarcodeArray)
-                val backBarcodeArray = JSONArray()
-                for (barcode in loading.barcodesBack) {
-                    val barcodeObject = JSONObject()
-                    barcodeObject.put(BARCODE_KEY, barcode.barcode)
-                    backBarcodeArray.put(barcodeObject)
-                }
-                // Добавляем массив товаров в объект JSON
-                jsonObject.put(ITEMS_BACK_KEY, backBarcodeArray)
                 val requestBody =
-                    jsonObject.toString().toRequestBody("application/json".toMediaTypeOrNull())
+                    jsonBody.toString().toRequestBody("application/json".toMediaTypeOrNull())
                 Network.loadingApi.createUpdateLoading(requestBody)
                     .enqueue(object : Callback<ResponseBody> {
                         override fun onResponse(
@@ -176,23 +189,12 @@ open class LoadingRepository {
                             response: Response<ResponseBody>
                         ) {
                             if (response.isSuccessful) {
-                                val jsonString = response.body()?.string() ?: ""
-                                if (jsonString.isEmpty())
-                                    continuation.resume(Pair(loading, ""))
-                                val ref = JSONArray(jsonString).getJSONObject(0).getString(REF_KEY)
-                                val guid =
-                                    JSONArray(jsonString).getJSONObject(0).getString(GUID_KEY)
-                                //LoadingAdapter = ref
-                                loading.ref = ref
-                                loading.guid = guid
-                                LoadingAdapter.LOADING_GUID = ref
-                                continuation.resume(Pair(loading, ""))
+                                continuation.resume("")
                             } else {
-
                                 val errorBody = response.errorBody()?.string()
                                 val jsonError =
                                     JSONArray(errorBody).getJSONObject(0).getString(ERROR_ARRAY)
-                                continuation.resume(Pair(loading, jsonError))
+                                continuation.resume(jsonError)
                             }
                         }
 
@@ -244,7 +246,7 @@ open class LoadingRepository {
         return loadingList
     }
 
-    fun getLoadingJson(responseString: String): Pair<Loading, List<LoadingEnableVisible>>? {
+    fun getLoadingJson(responseString: String): Pair<Loading, List<LoadingEnableVisible>> {
         val jsonArray = JSONArray(responseString)
         val jsonObject = jsonArray.getJSONObject(0)
         val loading = getLoadingFromJsonObject(jsonObject, true)
@@ -253,23 +255,27 @@ open class LoadingRepository {
         return Pair(loading, enableVisibleList)
     }
 
-    private fun getLoadingFromJsonObject(loadingJson: JSONObject, hasBarcodes: Boolean): Loading {
+    fun getLoadingFromJsonObject(loadingJson: JSONObject, hasBarcodes: Boolean): Loading {
+        val carKey = if (hasBarcodes) CAR_KEY else CAR_NUMBER_KEY
+
         val ref = loadingJson.optString(REF_KEY, "")
-        val guid = loadingJson.getString(GUID_KEY)
-        val number = loadingJson.getString(NUMBER_KEY)
+        val guid = loadingJson.optString(GUID_KEY, "")
+        val number = loadingJson.optString(NUMBER_KEY, "")
         val senderWarehouseUid = loadingJson.getString(WAREHOUSE_BEGIN_KEY)
         val getterWarehouseUid = loadingJson.getString(WAREHOUSE_END_KEY)
         val sender = getWarehouseFromUid(senderWarehouseUid)
         val getter = getWarehouseFromUid(getterWarehouseUid)
+        val carUid = loadingJson.getString(carKey)
+        val car = getCarNumberFromUid(carUid)
         if (hasBarcodes) {
             val barcodesFrontJson = loadingJson.getJSONArray(ITEMS_FRONT_KEY)
             val date = loadingJson.getString(DATE_KEY)
-            val carUid = loadingJson.getString(CAR_KEY)
-            val car = getCarNumberFromUid(carUid)
             val barcodesFront = mutableListOf<LoadingBarcode>()
             for (i in 0 until barcodesFrontJson.length()) {
                 val jsonObject = barcodesFrontJson.getJSONObject(i)
                 val packageUid = jsonObject.getString(PACKAGE_KEY)
+                if (jsonObject.getString(BARCODE_KEY) == "")
+                    continue
                 barcodesFront.add(
                     LoadingBarcode(
                         barcode = jsonObject.getString(BARCODE_KEY),
@@ -289,7 +295,9 @@ open class LoadingRepository {
             val barcodesBack = mutableListOf<LoadingBarcode>()
             for (i in 0 until barcodesBackJson.length()) {
                 val jsonObject = barcodesBackJson.getJSONObject(i)
-                val packageUid = jsonObject.getString(PACKAGE_KEY)
+                val packageUid = jsonObject.optString(PACKAGE_KEY, "")
+                if (jsonObject.getString(BARCODE_KEY) == "")
+                    continue
                 barcodesBack.add(
                     LoadingBarcode(
                         barcode = jsonObject.getString(BARCODE_KEY),
@@ -305,6 +313,8 @@ open class LoadingRepository {
                     )
                 )
             }
+            val expandableBarcodesFront = groupToExpandableList(barcodesFront)
+            val expandableBarcodesBack = groupToExpandableList(barcodesBack)
             return Loading(
                 number = number,
                 ref = ref,
@@ -313,12 +323,10 @@ open class LoadingRepository {
                 car = car,
                 senderWarehouse = sender,
                 getterWarehouse = getter,
-                barcodesFront = barcodesFront,
-                barcodesBack = barcodesBack
+                barcodesFront = expandableBarcodesFront,
+                barcodesBack = expandableBarcodesBack
             )
         } else {
-            val carUid = loadingJson.getString(CAR_NUMBER_KEY)
-            val car = getCarNumberFromUid(carUid)
             val date = loadingJson.getString(DOCUMENT_DATE_KEY)
             return Loading(
                 number = number,

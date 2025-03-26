@@ -23,9 +23,11 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.soft1c.R
 import com.example.soft1c.adapter.BarcodeAdapter
+import com.example.soft1c.adapter.CarAdapter
 import com.example.soft1c.databinding.FragmentLoadingBinding
+import com.example.soft1c.repository.model.ExpandableLoadingList
 import com.example.soft1c.repository.model.Loading
-import com.example.soft1c.repository.model.LoadingBarcode
+import com.example.soft1c.repository.model.LoadingBarcodeParent
 import com.example.soft1c.repository.model.LoadingEnableVisible
 import com.example.soft1c.repository.model.LoadingModel
 import com.example.soft1c.utils.Utils
@@ -48,14 +50,12 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
 
     // Объект класса позволяющего связывать штрих-коды с элементами интерфейса
     private var barcodeFrontAdapter: BarcodeAdapter = BarcodeAdapter { barcode ->
-        onRemoveBarcodeClick(barcode)
+        updateWeightAndVolume()
     }
     private var barcodeBackAdapter: BarcodeAdapter = BarcodeAdapter { barcode ->
-        onRemoveBarcodeClick(barcode)
+        updateWeightAndVolume()
     }
 
-    private var barcodeFrontList: ArrayList<LoadingBarcode> = arrayListOf()
-    private var barcodeBackList: ArrayList<LoadingBarcode> = arrayListOf()
     private lateinit var scannedData: String
     private var frontWeight = 0.0
     private var frontVolume = 0.0
@@ -70,18 +70,22 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     private lateinit var dialog: AlertDialog
 
     private var documentCreate = false
+    private var manualClosing = false
     private val inputDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
     private val outputDateFormat = SimpleDateFormat("dd/MM/yy || HH:mm", Locale.getDefault())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val loadingNumber = arguments?.getString(KEY_LOADING_NUMBER, "") ?: ""
+        val loadingData = arguments?.getString(KEY_LOADING_DATA, "") ?: ""
         loading = if (loadingNumber.isNotEmpty()) {
-            showDialogLoading()
             viewModel.getLoading(loadingNumber)
             Loading(number = loadingNumber)
         } else {
-            Loading(number = "")
+            if (loadingData.isNotEmpty()) {
+                fillLoadingFromCache(loadingData)
+            } else
+                Loading(number = "")
         }
     }
 
@@ -145,8 +149,8 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         }
     }
 
-    //Функция устанавливания слушателей для поля НомераМашин
     private fun initUI() {
+        if (loading.number.isNotEmpty()) showPbLoading(true)
         showLoading()
         with(binding) {
             if (loading.date.isNotEmpty()) {
@@ -157,14 +161,17 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                 elayoutTxtDate.visibility = View.GONE
             }
             tvAuto.setAdapter(
-                ArrayAdapter(
+                CarAdapter(
                     requireContext(),
                     android.R.layout.simple_list_item_1,
-                    cars.map { (it as LoadingModel.Car).number })
+                    android.R.id.text1,
+                    cars.map { (it as LoadingModel.Car).number }.toMutableList()
+                )
             )
             elayoutBarcode.setEndIconOnClickListener {
                 etxtBarcode.clearFocus()
                 requireContext().hideKeyboard(etxtBarcode)
+
                 displayScanResult(etxtBarcode.text.toString())
             }
             etxtBarcode.setOnKeyListener { v, keyCode, event ->
@@ -255,7 +262,22 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
             etxtSave.setOnClickListener {
                 createUpdateLoading()
             }
-            btnClose.setOnClickListener { closeActivity() }
+            btnClose.setOnClickListener {
+                if (getAccessForSaving()) {
+                    showYesNoDialog(
+                        requireContext(),
+                        getString(R.string.text_title_saving),
+                        onYes = {
+                            saveLoading()
+                            closeActivity()
+                        },
+                        onNo = {
+                            closeActivity()
+                        })
+                }else{
+                    closeActivity()
+                }
+            }
         }
     }
 
@@ -338,8 +360,8 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
 
     private fun createUpdateLoading() {
         if (documentCreate) return
-        loading.barcodesFront = barcodeFrontList
-        loading.barcodesBack = barcodeBackList
+        loading.barcodesFront = barcodeFrontAdapter.getList()
+        loading.barcodesBack = barcodeBackAdapter.getList()
         if (loading.car == LoadingModel.Car()) {
             binding.tvAuto.error = resources.getString(R.string.text_field_is_empyt)
         } else if (loading.getterWarehouse == LoadingModel.Warehouse()) {
@@ -352,11 +374,11 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         }
     }
 
-    private fun getCreateUpdateLoadingInfo(pair: Pair<Loading, String>) {
+    private fun getCreateUpdateLoadingInfo(errorMessage: String) {
         closeDialogLoading()
         binding.etxtSave.isEnabled = true
-        if (pair.second.isNotEmpty()) {
-            toast(pair.second)
+        if (errorMessage.isNotEmpty()) {
+            toast(errorMessage)
             return
         }
         Utils.refreshList = true
@@ -378,30 +400,46 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         viewModel.barcodeListLiveData.observe(viewLifecycleOwner, ::fillBarcodeList)
     }
 
-    private fun fillBarcodeList(barcodes: List<LoadingBarcode>?) {
+    private fun fillBarcodeList(barcodes: List<ExpandableLoadingList>?) {
         closeDialogLoading()
+
         barcodes?.forEach { barcode ->
-            if (binding.radioAcceptance.isChecked && !(barcodeFrontList + barcodeBackList).contains(
-                    barcode
-                )
-            ) {
+            if (barcode.type == ExpandableLoadingList.PARENT) {
+                if (barcode.loadingParent.barcodes.isEmpty())
+                    return@forEach
+            }
+            if (binding.radioAcceptance.isChecked) {
                 if (binding.tabLayout.selectedTabPosition == 0) {
                     barcodeFrontAdapter.addBarcodeData(barcode)
-                    barcodeFrontList.add(barcode)
+                    //addItemToBarcodeList(barcode, barcodeFrontList)
                 } else {
                     barcodeBackAdapter.addBarcodeData(barcode)
-                    barcodeBackList.add(barcode)
+                    //addItemToBarcodeList(barcode, barcodeBackList)
                 }
-            } else if (!binding.radioAcceptance.isChecked && barcode.barcode == scannedData) {
-                if (!(barcodeFrontList + barcodeBackList).contains(barcode)) {
+            } else if (!binding.radioAcceptance.isChecked) {
+                val child = barcode.loadingParent.barcodes.find { it.barcode == scannedData }
+
+                if (child != null) {
+                    val expandItem = ExpandableLoadingList(
+                        type = ExpandableLoadingList.PARENT,
+                        loadingParent = LoadingBarcodeParent(
+                            barcodes = listOf(child),
+                            acceptanceUid = barcode.loadingParent.acceptanceUid,
+                            acceptanceNumber = barcode.loadingParent.acceptanceNumber,
+                            clientCode = barcode.loadingParent.clientCode,
+                            date = barcode.loadingParent.date,
+                            totalSeats = 1
+                        )
+                    )
                     if (binding.tabLayout.selectedTabPosition == 0) {
-                        barcodeFrontAdapter.addBarcodeData(barcode)
-                        barcodeFrontList.add(barcode)
+                        barcodeFrontAdapter.addBarcodeData(expandItem)
+                        //addItemToBarcodeList(expandItem, barcodeFrontList)
                     } else {
-                        barcodeBackAdapter.addBarcodeData(barcode)
-                        barcodeBackList.add(barcode)
+                        barcodeBackAdapter.addBarcodeData(expandItem)
+                        //addItemToBarcodeList(expandItem, barcodeBackList)
                     }
                 }
+
             }
         }
 
@@ -409,25 +447,44 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     }
 
     private fun updateWeightAndVolume() {
-        if (binding.tabLayout.selectedTabPosition == 0) {
-            frontWeight = barcodeFrontList.sumOf { it.weight }
-            frontVolume = barcodeFrontList.sumOf { it.volume }
-
-        } else {
-            backWeight = barcodeBackList.sumOf { it.weight }
-            backVolume = barcodeBackList.sumOf { it.volume }
-        }
+        val pairWeightVolumeFront = calculateTotalWeightAndVolume(barcodeFrontAdapter.getList())
+        val pairWeightVolumeBack = calculateTotalWeightAndVolume(barcodeBackAdapter.getList())
+        frontWeight = pairWeightVolumeFront.first
+        frontVolume = pairWeightVolumeFront.second
+        backWeight = pairWeightVolumeBack.first
+        backVolume = pairWeightVolumeBack.second
         updateWeightAndVolumeUI()
     }
 
+    @SuppressLint("DefaultLocale")
     private fun updateWeightAndVolumeUI() {
-        if (binding.tabLayout.selectedTabPosition == 0) {
-            binding.txtWeightValue.text = String.format("%.2f", frontWeight)
-            binding.txtVolumeValue.text = String.format("%.6f", frontVolume)
-        } else {
-            binding.txtWeightValue.text = String.format("%.2f", backWeight)
-            binding.txtVolumeValue.text = String.format("%.6f", backVolume)
+        with(binding) {
+            if (tabLayout.selectedTabPosition == 0) {
+                txtWeightValue.text = String.format("%.2f", frontWeight)
+                txtVolumeValue.text = String.format("%.6f", frontVolume)
+                txtSeats.text = barcodeFrontAdapter.getCount().toString()
+            } else {
+                txtWeightValue.text = String.format("%.2f", backWeight)
+                txtVolumeValue.text = String.format("%.6f", backVolume)
+                txtSeats.text = barcodeBackAdapter.getCount().toString()
+            }
         }
+    }
+
+    fun calculateTotalWeightAndVolume(expandableList: List<ExpandableLoadingList>): Pair<Double, Double> {
+        var totalWeight = 0.0
+        var totalVolume = 0.0
+
+        expandableList.forEach { barcode ->
+            if (barcode.type == ExpandableLoadingList.PARENT) {
+                barcode.loadingParent.barcodes.forEach {
+                    totalWeight += it.weight
+                    totalVolume += it.volume
+                }
+            }
+        }
+
+        return totalWeight to totalVolume
     }
 
     //Функция обработчика клавиш
@@ -601,12 +658,10 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                 etxtRoute.setText("${loading.senderWarehouse.prefix} — ${loading.getterWarehouse.prefix}")
             tvRecipient.setText(loading.getterWarehouse.name)
             loading.barcodesFront.forEach {
-                barcodeFrontList.add(it)
                 barcodeFrontAdapter.addBarcodeData(it)
 
             }
             loading.barcodesBack.forEach {
-                barcodeBackList.add(it)
                 barcodeBackAdapter.addBarcodeData(it)
             }
             updateWeightAndVolume()
@@ -616,6 +671,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
     private fun showDetails(pair: Pair<Loading, List<LoadingEnableVisible>>) {
         loading = pair.first
         closeDialogLoading()
+        showPbLoading(false)
         if (this.loading.ref.isEmpty()) {
             binding.pbLoading.isVisible = false
             return
@@ -631,16 +687,13 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
             if (::scannedData.isInitialized && scannedData.length >= 17) {
                 scannedData = scannedData.takeLast(17)
 
-                if (Utils.debugMode)
-                    scannedData = "90000153429210421"
-
                 if (chbDelete.isChecked) {
                     if (radioAcceptance.isChecked) {
                         val adapter =
                             if (tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
-                        val documentUid =
-                            adapter.find(scannedData)?.acceptanceUid
-                        documentUid?.let { adapter.removeBarcodeByUid(it) }
+                        val parentUid =
+                            adapter.find(scannedData)?.loadingChild
+                        parentUid?.let { adapter.removeBarcodeByUid(it.parentUid) }
                     } else {
                         val adapter =
                             if (tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
@@ -650,8 +703,7 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
                 } else {
                     val adapter =
                         if (binding.tabLayout.selectedTabPosition == 0) barcodeFrontAdapter else barcodeBackAdapter
-                    if (adapter.getList()
-                            .find { it.barcode == scannedData } == null || radioAcceptance.isChecked
+                    if (adapter.find(scannedData) == null || radioAcceptance.isChecked
                     ) {
                         viewModel.getBarcodeList(scannedData, user.warehouse)
                         showDialogLoading()
@@ -678,13 +730,46 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         dialog.show()
     }
 
-    private fun onRemoveBarcodeClick(barcode: LoadingBarcode) {
-        if (binding.tabLayout.selectedTabPosition == 0) {
-            barcodeFrontList.remove(barcode)
-        } else {
-            barcodeBackList.remove(barcode)
-        }
-        updateWeightAndVolume()
+    private fun saveLoading() {
+        if (manualClosing) return
+        //Не сохранять если ничего не заполнено
+        if (!getAccessForSaving()) return
+
+        val jsonBody = viewModel.getJsonBody(loading)
+        val sharedPreferences = requireContext().getSharedPreferences(
+            Loading.LOADING_SHARED_PREFS,
+            Context.MODE_PRIVATE
+        )
+        val editor = sharedPreferences.edit()
+        val prefsKey = user.warehouse.ifEmpty { Loading.LOADING_SHARED_PREFS_KEY }
+        editor.putString(prefsKey, jsonBody.toString())
+        editor.apply()
+    }
+
+    private fun getAccessForSaving(): Boolean{
+        loading.barcodesBack = barcodeBackAdapter.getList()
+        loading.barcodesFront = barcodeFrontAdapter.getList()
+
+        return (loading.barcodesBack + loading.barcodesFront).isNotEmpty()
+                && loading.car != LoadingModel.Car()
+                && loading.getterWarehouse != LoadingModel.Warehouse()
+    }
+
+    private fun deleteLoadingFromCache() {
+        val sharedPreferences = requireContext().getSharedPreferences(
+            Loading.LOADING_SHARED_PREFS,
+            Context.MODE_PRIVATE
+        )
+        val editor = sharedPreferences.edit()
+        val prefsKey = user.warehouse.ifEmpty { Loading.LOADING_SHARED_PREFS_KEY }
+        editor.remove(prefsKey)
+        editor.apply()
+    }
+
+    private fun fillLoadingFromCache(loadingData: String): Loading {
+        deleteLoadingFromCache()
+
+        return viewModel.getLoadingFromJson(loadingData)
     }
 
     private fun clearAllFocus() {
@@ -697,7 +782,15 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         }
     }
 
+    private fun showPbLoading(show: Boolean) {
+        with(binding) {
+            pbLoading.isVisible = show
+            constraintLayout.isVisible = !show
+        }
+    }
+
     private fun closeActivity() {
+        manualClosing = true
         activity?.onBackPressed()
     }
 
@@ -709,7 +802,13 @@ class LoadingFragment : BaseFragment<FragmentLoadingBinding>(FragmentLoadingBind
         barcodeBackAdapter.clearBarcodeData()
     }
 
+    override fun onStop() {
+        super.onStop()
+        saveLoading()
+    }
+
     companion object {
         const val KEY_LOADING_NUMBER = "loading_number"
+        const val KEY_LOADING_DATA = "loading_data"
     }
 }

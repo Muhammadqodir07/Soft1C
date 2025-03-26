@@ -1,8 +1,11 @@
 package com.example.soft1c.repository
 
 import com.example.soft1c.network.Network
+import com.example.soft1c.repository.model.ExpandableLoadingList
 import com.example.soft1c.repository.model.Loading
 import com.example.soft1c.repository.model.LoadingBarcode
+import com.example.soft1c.repository.model.LoadingBarcodeChild
+import com.example.soft1c.repository.model.LoadingBarcodeParent
 import com.example.soft1c.repository.model.LoadingEnableVisible
 import com.example.soft1c.utils.Utils
 import com.example.soft1c.utils.withRefreshedConnection
@@ -130,6 +133,7 @@ class ReloadingRepository : LoadingRepository() {
                     )
                 )
             }
+
             return Loading(
                 number = number,
                 ref = ref,
@@ -138,8 +142,8 @@ class ReloadingRepository : LoadingRepository() {
                 car = car,
                 senderWarehouse = sender,
                 getterWarehouse = getter,
-                barcodesFront = barcodesFront,
-                barcodesBack = barcodesBack
+                barcodesFront = groupToExpandableList(barcodesFront),
+                barcodesBack = groupToExpandableList(barcodesBack)
             )
         } else {
             val carUid = loadingJson.getString(Loading.CAR_NUMBER_KEY)
@@ -155,5 +159,59 @@ class ReloadingRepository : LoadingRepository() {
                 car = car
             )
         }
+    }
+
+    private fun groupToExpandableList(barcodes: List<LoadingBarcode>): List<ExpandableLoadingList> {
+        val grouped = barcodes.groupBy { it.acceptanceNumber to it.acceptanceUid }
+
+        val expandableList = mutableListOf<ExpandableLoadingList>()
+
+        grouped.forEach { (key, groupItems) ->
+            val (acceptanceNumber, acceptanceUid) = key
+
+            // Create parent
+            val parent = LoadingBarcodeParent(
+                barcodes = groupItems.map {
+                    LoadingBarcodeChild(
+                        barcode = it.barcode,
+                        weight = it.weight,
+                        volume = it.volume,
+                        packageTypeUid = it.packageTypeUid,
+                        packageType = it.packageType,
+                        seatNumber = it.seatNumber
+                    )
+                },
+                acceptanceNumber = acceptanceNumber,
+                acceptanceUid = acceptanceUid,
+                totalSeats = groupItems.size,
+                clientCode = groupItems.firstOrNull()?.clientCode ?: "",
+                date = groupItems.firstOrNull()?.date ?: ""
+            )
+
+            expandableList.add(
+                ExpandableLoadingList(
+                    type = ExpandableLoadingList.PARENT,
+                    loadingParent = parent
+                )
+            )
+
+            groupItems.forEach { child ->
+                expandableList.add(
+                    ExpandableLoadingList(
+                        type = ExpandableLoadingList.CHILD,
+                        loadingChild = LoadingBarcodeChild(
+                            barcode = child.barcode,
+                            weight = child.weight,
+                            volume = child.volume,
+                            packageTypeUid = child.packageTypeUid,
+                            packageType = child.packageType,
+                            seatNumber = child.seatNumber
+                        )
+                    )
+                )
+            }
+        }
+
+        return expandableList
     }
 }

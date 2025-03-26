@@ -131,5 +131,13 @@
     <string name="stg_fill_barcodes">Заполнить ШК приёмки</string>
     <string name="txt_success_connection">Успешное соединение</string>
     <string name="txt_no_connection">Нет соединения</string>
-    <string name="txt_check_connection">Проверить свзяь</string>
+    <string name="txt_check_connection">Проверить связь</string>
+    <string name="text_printer_type">Модель принтера</string>
+    <string name="text_printer_type_empty">Модель принтера не заполнена</string>
+    <string name="text_mac_address_empty">MAC адрес не заполнен</string>
+    <string name="text_bluetooth_off">Bluetooth отключен</string>
+    <string name="text_title_saving">Сохранить данные?</string>
+    <string name="dialog_yes">Да</string>
+    <string name="dialog_no">Нет</string>
+    <string name="text_title_open_saved">Открыть сохраненные данные?</string>
 </resources>
